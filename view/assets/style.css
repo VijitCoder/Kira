@@ -1,0 +1,91 @@
+html { font-size: 100.01%; }
+body { 
+    font: 11pt/1.5em Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+ }
+
+#base, #header, #fempty, #footer { width: 960px; }
+#base, #footer { 
+    margin-left: auto;
+    margin-right: auto;
+ }
+
+/* Прибиваем футер */
+html, body { height: 100%; }
+#base { min-height: 100%; }
+
+/* чтоб под футер ничего не залезло, внизу #base лежит эта пустая div-ка. Она же тянет вниз #base. */
+#fempty { height: 45px; clear: both; }
+#footer { 
+    height: 40px;
+    margin-top: -41px; /* Отступ сверху: ширина + верхняя граница футера */
+ }
+
+a, Visited { text-decoration: none; color: #0099CC; }
+a:hover { text-decoration: underline; }
+
+p { margin: 0; margin-top: 10px; text-indent: 7px; }
+p.no-indent { text-indent: 0; }
+
+select, input[type="text"] { font-size: 11pt; }
+input[type="button"], input[type="submit"] { font-size: 12pt; }
+
+.top-menu-left, .top-menu-right { 
+    display: block;
+    margin: 10px;
+ }
+.top-menu-left { float: left; }
+.top-menu-right { float: right; }
+
+.clear { clear: both; }
+.float-left { display:block; float: left; }
+.float-right { display:block; float: right; }
+
+#fmLogin { margin-left: 100px; width: 290px; }
+#fmLogin p:first-child { margin: 20px 0; text-align: right; }
+#fmLogin p { text-indent: 0; }
+#fmLogin input[type="text"], #fmLogin input[type="password"] { width:100%; }
+#fmLogin input[type="submit"] { float:right; }
+
+.required:after { 
+    content: ' *';
+    font-size: 140%;
+    vertical-align: bottom;
+    color: red;
+ }
+
+.error { 
+    color: red; 
+    text-shadow: 7px 4px 8px red;
+    font-style:italic; 
+    /*text-shadow: 1px 1px 4px black, 0 0 1px red;*/
+ }
+
+.form-row { display: block; padding: 5px; }
+
+.hint { font-size: 90%; color: grey; font-style: italic; }
+
+.user-flash { 
+    padding: 10px;
+    margin: 10px 0;
+    text-align: left;
+    border: 2px solid #e0ce95;
+ }
+.uf-err  { background-color: rgba(255, 0, 0, .2); }
+.uf-info { background-color: rgba(0, 255, 0, .2); }
+.uf-warn { background-color: rgba(255, 255, 0, .3); }
+.uf-msg  { background-color: rgba(0, 150, 255, .2); } /* нетипизированное сообщение */
+
+/* для 404 */
+.head-error { color: green; }
+span#err-num { color: #0099CC; }
+#sep { color: green; }
+#marker { color: #A5A076; }
+
+.avatar { padding:5px; border: 1px solid black; }
+
+td.user-prop {  }
+td.user-value { font-style:italic; }
+
+.gif-process { margin-bottom: -7px; visibility: hidden; }
