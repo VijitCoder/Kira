@@ -7,7 +7,10 @@
 return array_merge(
     [
         'domain' => DEBUG ? 'waredom.loc' : 'waredom.ru',
-        'indexPage' => 'http://' . (DEBUG ? 'waredom.loc' : 'waredom.ru') . '/users/',
+        //@DEPRECATED ?
+        'indexPage' => 'http://' . (DEBUG ? 'waredom.loc' : 'waredom.ru') . '/',
+
+        'defaultController' => 'MainController',
 
         'minPass' => 5, //минимальная длина пароля
         'minComb' => 3, //минимальная комбинация наборов символов в пароле

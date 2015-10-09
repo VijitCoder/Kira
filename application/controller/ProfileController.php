@@ -2,7 +2,7 @@
 /**
  * Контроллер профиля юзера
  */
-class ProfileController extends AppController
+class ProfileController extends Controller
 {
     protected $title = 'Личный кабинет';
 

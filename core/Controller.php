@@ -2,29 +2,16 @@
 /**
  * Базовый класс контроллеров
  */
-class AppController
+class Controller
 {
+    /** @var string Действие контроллера по умолчанию */
+    public $defaultAction = 'index';
+
     /** @var string заголовок страницы */
     protected $title = '';
 
     /** @var string макет по умолчанию */
     protected $layout='layout';
-
-    /** @var int|false id юзера, если он на сайте. По этому значению контроллеры и шаблоны меняют свое поведение */
-    protected $userId;
-
-    /**
-     * Конструктор контроллера
-     * Не забывай вызывать его в потомках ПЕРЕД их конструкторами.
-     */
-    public function __construct()
-    {
-        if ($this->title) {
-            $this->title = App::t($this->title);
-        }
-
-        $this->userId = AuthService::checkAccess();
-    }
 
     /**
      * Очень простой пример шаблонизации проекта. Заполняем шаблон, отдаем результат в ответ браузеру.
@@ -76,13 +63,24 @@ class AppController
 
     /**
      * Редирект
-     * @param string $url
+     *
+     * Прим.: указание абсолютного URI - это требование спецификации HTTP/1.1, {@see http://php.net/manual/ru/function.header.php}
+     * Быстрая справка по кодам с редиктом {@see http://php.net/manual/ru/function.header.php#78470}
+     *
+     * @param string $uri новый относительный адрес. Возможно со слешем слева
+     * @param int $code код ответа HTTP
      * @return void
      */
-    public function redirect($url)
+    public function redirect($uri, $code = 302)
     {
-        header('location:' . WEB_ROOT . ltrim($url, '/')); //для теста.
-        //header('location:' . $url); //по-хорошему
+        //ситуация со схемой на самом деле может быть куда сложнее. Пока не усложняю, нет необходимости.
+        $scheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
+
+        $uri =  ltrim($uri, '/'); //устраняем неясность
+
+        header("location:{$scheme}://" . WEB_ROOT . $uri, true, $code); //для теста.
+        //header("location:{$scheme}://{$host}/{$uri}", true, $code); //по-хорошему
         App::end();
     }
 
@@ -92,6 +90,8 @@ class AppController
      */
     public static function error404()
     {
+        //@see http://php.net/manual/ru/function.header.php#92305
+        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
         $obj = new self;
         $obj->title = 'Тест. Страница не найдена (404)';
         $obj->render('404', [

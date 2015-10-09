@@ -21,7 +21,7 @@ class App
     public static function conf($key)
     {
         if (!self::$config) {
-            self::$config = require PATH_ROOT . '/conf/main.php';
+            self::$config = require PATH_APP . 'conf/main.php';
         }
 
         if (!isset(self::$config[$key])) {
@@ -41,7 +41,7 @@ class App
             $lang = 'ru';
             if (isset($_COOKIE['lang'])) {
                 $try = $_COOKIE['lang'];
-                if (preg_match('~[a-z]{2,}~i', $try) && file_exists("{$langPath}{$try}.php")) {
+                if (preg_match('~[a-z]{2,3}~i', $try) && file_exists("{$langPath}{$try}.php")) {
                     $lang = $try;
                 }
             }

@@ -2,7 +2,7 @@
 /**
  * Контроллер регистрации/подтверждения регистрации юзера
  */
-class RegistrationController extends AppController
+class RegistrationController extends Controller
 {
     protected $title = 'Регистрация нового пользователя';
 

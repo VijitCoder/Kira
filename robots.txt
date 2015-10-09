@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /view/
+Disallow: /files/
+Disallow: /images/
+Host: kira.loc
+
+User-Agent: Yandex
+Disallow:
+Clean-param: utm_source&utm_medium&utm_term&utm_content&utm_campaign&_openstat&_from&from
