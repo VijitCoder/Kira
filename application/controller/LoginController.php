@@ -2,7 +2,7 @@
 /**
  * Контроллер входа. Восстановление пароля тоже через него
  */
-class LoginController extends Controller
+class LoginController extends FrontController
 {
     protected $title = 'Вход на сайт';
 

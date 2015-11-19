@@ -2,7 +2,7 @@
 /**
  * Контроллер главной страницы сайта
  */
-class MainController extends AppController
+class MainController extends FrontController
 {
     public $defaultAction = 'welcome';
 

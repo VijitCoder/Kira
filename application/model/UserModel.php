@@ -5,7 +5,7 @@
 
 require_once __DIR__ . '/AddUserTrait.php';
 
-class UserModel extends DbModel
+class UserModel extends Db
 {
     //статусы учетки юзера
     const S_NEW = 'new';

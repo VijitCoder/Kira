@@ -2,7 +2,7 @@
 /**
  * Контроллер регистрации/подтверждения регистрации юзера
  */
-class RegistrationController extends Controller
+class RegistrationController extends FrontController
 {
     protected $title = 'Регистрация нового пользователя';
 
@@ -34,7 +34,7 @@ class RegistrationController extends Controller
     }
 
     /**
-     * Подтверждение учетки
+     * Шлем письмо с ссылкой "Подтверждение учетки"
      */
     public function sendconfirm()
     {
@@ -46,7 +46,7 @@ class RegistrationController extends Controller
     }
 
     /**
-     * Подтверждение учетки
+     * Собственно подтверждение учетки
      */
     public function confirm()
     {

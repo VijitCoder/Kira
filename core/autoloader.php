@@ -10,7 +10,7 @@
 function classLoader($class)
 {
     //ядерные классы движка
-    $core = ['App', 'Controller', 'DbModel', 'FormModel', 'Router', 'Session'];
+    $core = ['App', 'Controller', 'Db', 'Form', 'Router', 'Session', 'Validator'];
 
     //если имя класса совпадает с ядерным
     if (in_array($class, $core)) {

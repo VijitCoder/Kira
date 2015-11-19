@@ -81,28 +81,31 @@ class App
     }
 
     /**
-     * Перехват исключений. Самый простой вариант, только показать сообщение.
+     * Перехватчик исключений.
+     *
+     * Ловит исключения, которые не были пойманы ранее. Последний шанс обработать ошибку. Например,
+     * записать в лог или намылить админу. Можно так же вежливо откланяться юзеру.
+     *
      * После выполнения этого обработчика программа остановится, обеспечено PHP.
      *
-     * @param $ex Exception
-     * @return void
+     * @param Exception $ex
      */
     public static function exceptionHandler($ex)
     {
+        $wrapper = "<html>\n<head>\n<meta charset='utf-8'>\n</head>\n\n<body>\n%s\n</body>\n\n</html>";
         if (DEBUG) {
-            echo '<html>
-                    <head><meta charset="utf-8"></head><body>
+            $err = '<h3>'.get_class($ex)."</h3>\n"
+                 . sprintf("<p><i>%s</i></p>\n", $ex->getMessage())
+                 . sprintf("<p>%s:%d</p>\n", str_replace(ROOT_PATH, '/', $ex->getFile()), $ex->getLine())
+                 . '<pre>' . $ex->getTraceAsString() . '</pre>';
+            printf($wrapper, $err);
+        } else  {
+            $err = "<h3>Упс! Произошла ошибка</h3>\n"
+                 //. '<p><i>' . $ex->getMessage() . "</i></p>\n"
+                 . '<p>Зайдите позже, пожалуйста.</p>';
 
-                    <h4>App handled exception</h4>
-
-                    <table class="xdebug-error xe-parse-error" border=1 cellspacing=0 cellpadding=1>'
-                    . $ex->xdebug_message .
-                    '</table>
-                     <p>End of message.</p>
-                 </body></html>';
-        } else {
-           //var_dump($ex);
-            //@TODO лог, мыло..
+            printf($wrapper, $err);
+            //@TODO логирование, письмо/смс админу.
         }
     }
 

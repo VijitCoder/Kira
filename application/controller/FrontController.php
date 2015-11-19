@@ -1,10 +1,9 @@
 <?php
 /**
- * Супер-класс. Контроллер приложения
+ * Супер-класс. Контроллер фронта (публичной части сайта) приложения
  */
-class AppController extends Controller
+class FrontController extends Controller
 {
-
     /** @var int|false id юзера, если он на сайте. По этому значению контроллеры и шаблоны меняют свое поведение */
     protected $userId;
 

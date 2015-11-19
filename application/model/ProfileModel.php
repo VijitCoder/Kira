@@ -5,7 +5,7 @@
 
 require_once __DIR__ . '/AddUserTrait.php';
 
-class ProfileModel extends DbModel
+class ProfileModel extends Db
 {
     use AddUserTrait;
 

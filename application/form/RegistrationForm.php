@@ -2,7 +2,7 @@
 /**
  * Форма регистрации
  */
-class RegistrationForm extends FormModel
+class RegistrationForm extends Form
 {
     /** @var array фильтры полей html-формы. Каждая запись - описание валидатора */
     protected $filters = [

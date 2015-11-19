@@ -3,7 +3,7 @@
  * Супер-класс моделей. Подключение и методы работы с БД
  * По вопросам PDO {@see http://phpfaq.ru/pdo} Очень полезная статья.
  */
-class DbModel
+class Db
 {
     /** @var PDO объект подключения к БД. Если равен false, значит подключение не удалось. */
     private static $_dbh = null;
@@ -57,6 +57,9 @@ class DbModel
      *  p = params - массив параметров для PDOStatement
      *  fs = fetch style - в каком стиле выдать результат при SELECT
      *  one = fetch one row - (bool) ожидаем только один ряд. В результате будет меньшая вложенность массива.
+     *  gues - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
+     *  указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
+     *  количество рядов.
      *
      * @return mixed
      */
@@ -68,6 +71,7 @@ class DbModel
             'p' => array(),
             'fs' => PDO::FETCH_ASSOC,
             'one' => false,
+            'gues' => true,
         );
         $ops = array_merge($default, $ops);
         extract($ops); //теперь у нас есть все переменные, включая не переданные в параметрах функции
@@ -84,7 +88,13 @@ class DbModel
         */
         $sth->execute($p);
 
-        return (strtolower(substr(ltrim($q), 0, 6)) == 'select')
+        if ($gues === true) {
+            if (preg_match('~select|update|insert|delete~i', $q, $m)) {
+                $gues = $m[0];
+            }
+        }
+
+        return ($gues && strtolower($gues) == 'select')
              ? ($one ? $sth->fetch($fs) : $sth->fetchAll($fs))
              : $sth->rowCount();
     }

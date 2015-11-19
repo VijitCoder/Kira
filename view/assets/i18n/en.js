@@ -10,7 +10,7 @@ String.prototype.t = function() {
      //   'Неверный формат даты': 'Wrong date format',
     };
 
-  return (lexicon[this] ==  undefined) ? String(this) : lexicon[this];
+  return (lexicon[this] == undefined) ? String(this) : lexicon[this];
 }
 
 //календарь (Datepicker)
