@@ -2,6 +2,9 @@
 /**
  * Базовый класс. Будет что-то общее у многих - можно разместить тут.
  */
+
+namespace core;
+
 class App
 {
     /** @var array конфигурация приложения */
@@ -15,13 +18,15 @@ class App
 
     /**
      * Чтение конкретной настройки конфига
+     *
      * @param string $key
      * @return mixed
+     * @throws Exception
      */
     public static function conf($key)
     {
         if (!self::$config) {
-            self::$config = require PATH_APP . 'conf/main.php';
+            self::$config = require APP_PATH . 'conf/main.php';
         }
 
         if (!isset(self::$config[$key])) {
@@ -32,12 +37,13 @@ class App
 
     /**
      * Определяем язык интерфейса
+     *
      * @return string ru|en и т.д.
      */
     public static function detectLang()
     {
         if (!self::$_lang) {
-            $langPath = PATH_ROOT . 'i18n/';
+            $langPath = ROOT_PATH . 'i18n/';
             $lang = 'ru';
             if (isset($_COOKIE['lang'])) {
                 $try = $_COOKIE['lang'];
@@ -52,7 +58,8 @@ class App
     }
 
     /**
-     * Переводчик
+     * Переводчик.
+     *
      * По умолчанию принят русский. Для него нет словаря. Как создавать локализацию: заводим файл словаря,
      * переключаемся на язык, находим непереведенные фразы. Они станут ключами в массиве словаря. Значения
      * массива - те же фразы, но на заданном языке. Все просто :)
@@ -66,7 +73,7 @@ class App
     {
         //загружаем словарь, если этого еще не делали
         if (!self::$_lexicon) {
-            $langPath = PATH_ROOT . 'i18n/';
+            $langPath = ROOT_PATH . 'i18n/';
             $lang = self::detectLang();
             self::$_lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
         }

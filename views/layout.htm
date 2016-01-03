@@ -3,16 +3,16 @@
 <head>
     <meta charset="utf-8">
     <title><?=$this->title;?></title>
-    <link href="<?=URI_ASSETS . 'style.css';?>" rel="stylesheet" type="text/css" />
-    <script src="<?=URI_ASSETS . 'i18n/'. App::detectLang() . '.js';?>"></script>
+    <link href="<?=ASSETS_URL . 'style.css';?>" rel="stylesheet" type="text/css" />
+    <script src="<?=ASSETS_URL . 'i18n/'. App::detectLang() . '.js';?>"></script>
 
-    <script src="<?=URI_ASSETS . 'jquery-2.1.4.min.js';?>"></script>
-    <script src="<?=URI_ASSETS . 'jquery.cookie.js';?>"></script>
+    <script src="<?=ASSETS_URL . 'jquery-2.1.4.min.js';?>"></script>
+    <script src="<?=ASSETS_URL . 'jquery.cookie.js';?>"></script>
     <!-- JQuery UI. Маленькая сборка. Только datepicker -->
-    <script src="<?=URI_ASSETS . 'jquery-ui-1.11.4.custom/jquery-ui.min.js';?>"></script>
-    <link href="<?=URI_ASSETS . 'jquery-ui-1.11.4.custom/jquery-ui.min.css';?>" rel="stylesheet" type="text/css" />
-   
-    <script src="<?=URI_ASSETS . 'common.js';?>"></script>
+    <script src="<?=ASSETS_URL . 'jquery-ui-1.11.4.custom/jquery-ui.min.js';?>"></script>
+    <link href="<?=ASSETS_URL . 'jquery-ui-1.11.4.custom/jquery-ui.min.css';?>" rel="stylesheet" type="text/css" />
+
+    <script src="<?=ASSETS_URL . 'common.js';?>"></script>
 </head>
 <body>
 
@@ -26,7 +26,7 @@
 				    <option value="en" <?if ($lang=='en') echo 'selected';?>>english</option>
 		        </select>
 		    </div>
-		    
+
 		    <div class='top-menu-right'>
 	            <? if ($this->userId) : ?>
 			        <a href='/users/login/out'><?=App::t('Выйти');?></a>
@@ -35,22 +35,22 @@
                     <a href='/users/login'><?=App::t('Вход');?></a>
                     / <a href='/users/registration'><?=App::t('Регистрация');?></a>
 		        <? endif ?>
-		    </div> 
-		  
+		    </div>
+
 		    <hr class='clear'>
 		</div>
-	
+
 		<div id='content'>
 		    <?=$content;?>
 	    </div>
-	    
+
 	    <div id="fempty"></div>
     </div>
-    
+
     <div id='footer'>
 		<div class='float-left'><a href="<?=App::conf('indexPage');?>"><?=App::conf('domain');?></a> &copy; 7Lives, 2015</div>
 		<div class='float-right'><small><?=App::t('Работает на');?> <i>Kira Engine v1.0</i></small></div>
 	</div>
-    
+
 </body>
 </html>

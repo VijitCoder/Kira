@@ -2,7 +2,10 @@
 /**
  * Контроллер главной страницы сайта
  */
-class MainController extends FrontController
+
+namespace app\controllers;
+
+class MainController extends \app\controllers\FrontController
 {
     public $defaultAction = 'welcome';
 

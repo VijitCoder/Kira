@@ -62,8 +62,8 @@ class ImageFileService
 
         $relPath = self::TEMP_DIR;
         $fn = uniqid('ava_') . '.png';
-        $pathAndFile = PATH_ROOT . $relPath . $fn;
-        $fileURI = WEB_ROOT . $relPath . $fn;
+        $pathAndFile = ROOT_PATH . $relPath . $fn;
+        $fileURI = ROOT_URL . $relPath . $fn;
 
         //делаем тумбу
         //В размер по меньшей стороне..
@@ -223,10 +223,10 @@ class ImageFileService
     {
         $shard = $id % 10;
         //необходимый костыль с поправкой на каталоги тестового задания
-        $from = str_replace(WEB_ROOT, '', $from);
+        $from = str_replace(ROOT_URL, '', $from);
         $to = self::TEMP_DIR  . "{$shard}/{$id}.png";
 
         //Код 100 - Ошибка перемещения файла
-        return rename(PATH_ROOT . $from, PATH_ROOT . $to) ? '/' . $to : self::_errorHandler(100);
+        return rename(ROOT_PATH . $from, ROOT_PATH . $to) ? '/' . $to : self::_errorHandler(100);
     }
 }

@@ -2,6 +2,11 @@
 /**
  * Маршрутизатор запросов
  */
+
+namespace core;
+
+//use core\Controller;
+
 class Router
 {
     /**
@@ -37,7 +42,7 @@ class Router
             }
 
 //exit("$controller*$action*"); //DBG
-            if (file_exists(PATH_APP . "controller/{$controller}.php")) {
+            if (file_exists(APP_PATH . "controller/{$controller}.php")) {
                 $controller = new $controller;
                 if (!$action) {
                     $action = $controller->defaultAction;

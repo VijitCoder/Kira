@@ -22,7 +22,7 @@ class ProfileService {
         $d['sex'] = str_replace(['none', 'female', 'male'], ['не задан', 'женский', 'мужской'], $d['sex']);
 
         if ($d['status'] == 'new') {
-            $d['confirmUrl'] = WEB_ROOT . "registration/sendconfirm?m={$d['mail']}&c={$d['salt']}";
+            $d['confirmUrl'] = ROOT_URL . "registration/sendconfirm?m={$d['mail']}&c={$d['salt']}";
 
             //Достаем юзера флешками, пока не подтвердит учетку
             if (!Session::readFlash('infoConfirm', false)) {

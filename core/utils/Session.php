@@ -2,6 +2,9 @@
 /**
  * Работа с сессией
  */
+
+namespace core\utils;
+
 class Session
 {
     /**

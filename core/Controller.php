@@ -2,6 +2,9 @@
 /**
  * Базовый класс контроллеров
  */
+
+namespace core;
+
 class Controller
 {
     /** @var string Действие контроллера по умолчанию */
@@ -24,7 +27,7 @@ class Controller
     {
         $content = $this->_renderFile($view, $data);
         //выводим на единственном макете, который у нас есть :)
-        require PARTH_VIEWS . $this->layout . '.htm';
+        require VIEWS_PATH . $this->layout . '.htm';
     }
 
     /**
@@ -43,9 +46,10 @@ class Controller
      * Собственно функция отрисовки. Включаем буферизацию, заполняем шаблон и возвращаем ответ.
      *
      * @param string $_view123 шаблон для отрисовки. Имя переменной выбрано специально для уменьшения
-     * вероятности совпадения с параметрами шаблона
-     * @param array $data параметры в шаблон
+     *                         вероятности совпадения с параметрами шаблона
+     * @param array  $data     параметры в шаблон
      * @return string
+     * @throws Exception
      */
     private function _renderFile($_view123, $data)
     {
@@ -57,7 +61,7 @@ class Controller
 
         //Отрисованный шаблон буферизируем, в него уйдут распакованные параметры
         ob_start();
-        require PARTH_VIEWS . $_view123 . '.htm';
+        require VIEWS_PATH . $_view123 . '.htm';
         return ob_get_clean();
     }
 
@@ -79,7 +83,7 @@ class Controller
 
         $uri =  ltrim($uri, '/'); //устраняем неясность
 
-        header("location:{$scheme}://" . WEB_ROOT . $uri, true, $code); //для теста.
+        header("location:{$scheme}://" . ROOT_URL . $uri, true, $code); //для теста.
         //header("location:{$scheme}://{$host}/{$uri}", true, $code); //по-хорошему
         App::end();
     }

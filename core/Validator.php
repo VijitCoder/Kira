@@ -2,6 +2,9 @@
 /**
  * Супер-класс. Общие валидаторы
  */
+
+namespace core;
+
 class Validator
 {
     /**

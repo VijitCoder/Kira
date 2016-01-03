@@ -2,7 +2,10 @@
 /**
  * Супер-класс. Контроллер фронта (публичной части сайта) приложения
  */
-class FrontController extends Controller
+
+namespace app\controllers;
+
+class FrontController extends \core\Controller
 {
     /** @var int|false id юзера, если он на сайте. По этому значению контроллеры и шаблоны меняют свое поведение */
     protected $userId;
