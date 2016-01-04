@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title><?=$this->title;?></title>
     <link href="<?=ASSETS_URL . 'style.css';?>" rel="stylesheet" type="text/css" />
-    <script src="<?=ASSETS_URL . 'i18n/'. App::detectLang() . '.js';?>"></script>
+    <script src="<?=ASSETS_URL . 'i18n/'. core\App::detectLang() . '.js';?>"></script>
 
     <script src="<?=ASSETS_URL . 'jquery-2.1.4.min.js';?>"></script>
     <script src="<?=ASSETS_URL . 'jquery.cookie.js';?>"></script>
@@ -20,7 +20,7 @@
 		<div id='header'>
 		    <? $lang = (isset($_COOKIE['lang'])) ? $_COOKIE['lang'] : 'ru'; ?>
 		    <div class='top-menu-left'>
-		        <?=App::t('Язык');?>
+		        <?=core\App::t('Язык');?>
 		        <select id='cmbLang'>
 				    <option value="ru" <?if ($lang=='ru') echo 'selected';?>>русский</option>
 				    <option value="en" <?if ($lang=='en') echo 'selected';?>>english</option>
@@ -28,12 +28,12 @@
 		    </div>
 
 		    <div class='top-menu-right'>
-	            <? if ($this->userId) : ?>
-			        <a href='/users/login/out'><?=App::t('Выйти');?></a>
-			        / <a href='/users/profile'><?=App::t('Личный кабинет');?></a>
+	            <? if ($this->userId): ?>
+			        <a href='/users/login/out'><?=core\App::t('Выйти');?></a>
+			        / <a href='/users/profile'><?=core\App::t('Личный кабинет');?></a>
 		        <? else: ?>
-                    <a href='/users/login'><?=App::t('Вход');?></a>
-                    / <a href='/users/registration'><?=App::t('Регистрация');?></a>
+                    <a href='/users/login'><?=core\App::t('Вход');?></a>
+                    / <a href='/users/registration'><?=core\App::t('Регистрация');?></a>
 		        <? endif ?>
 		    </div>
 
@@ -48,8 +48,12 @@
     </div>
 
     <div id='footer'>
-		<div class='float-left'><a href="<?=App::conf('indexPage');?>"><?=App::conf('domain');?></a> &copy; 7Lives, 2015</div>
-		<div class='float-right'><small><?=App::t('Работает на');?> <i>Kira Engine v1.0</i></small></div>
+		<div class='float-left'>
+            <a href="<?=core\utils\VarServer::indexPage();?>">
+                <?=core\utils\VarServer::domain();?>
+            </a> &copy; 7Lives, 2015
+        </div>
+		<div class='float-right'><small><?=core\App::t('Работает на');?> <i>Kira Engine v1.0</i></small></div>
 	</div>
 
 </body>

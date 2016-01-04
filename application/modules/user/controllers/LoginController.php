@@ -2,7 +2,10 @@
 /**
  * Контроллер входа. Восстановление пароля тоже через него
  */
-class LoginController extends FrontController
+
+namespace app\modules\user\controllers;
+
+class LoginController extends \app\controllers\FrontController
 {
     protected $title = 'Вход на сайт';
 

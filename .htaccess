@@ -18,5 +18,5 @@ RewriteEngine On
 RewriteBase /
 # Если запрос не совпадает с перечисленным - отправлять его в index.php
 # Это быстрее, чем классическая проверка "не файл|не каталог". К тому же запретит прямое обращение к скриптам.
-RewriteCond %{REQUEST_URI} !^/(index\.php|images|files|view/assets|robots\.txt|sitemap\.xml)
+RewriteCond %{REQUEST_URI} !^/(index\.php|images|files|views/assets|robots\.txt|sitemap\.xml|sandbox)
 RewriteRule .* index.php [L,QSA]

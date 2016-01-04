@@ -2,7 +2,10 @@
 /**
  * Контроллер регистрации/подтверждения регистрации юзера
  */
-class RegistrationController extends FrontController
+
+namespace app\modules\user\controllers;
+
+class RegistrationController extends \app\controllers\FrontController
 {
     protected $title = 'Регистрация нового пользователя';
 

@@ -4,11 +4,16 @@
  */
 return array_merge(
     [
-        'domain'    => DEBUG ? 'waredom.loc' : 'waredom.ru',
-        //@DEPRECATED ?
-        'indexPage' => 'http://' . (DEBUG ? 'waredom.loc' : 'waredom.ru') . '/',
+        //FQN контроллера + метод для главной страницы сайта
+        'indexHandler' =>APP_NS_PREFIX . 'controllers\MainController->welcome',
 
-        'defaultController' => 'app\controllers\MainController',
+        //FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
+        //ошибками 401-404, 500
+        'errorHandler' => APP_NS_PREFIX . 'controllers\ErrorController',
+
+        //'router' => APP_NS_PREFIX . 'ExampleRouter',
+        'routes' => require __DIR__ . '/routes.php',
+
 
         'minPass'      => 5, //минимальная длина пароля
         'minComb'      => 3, //минимальная комбинация наборов символов в пароле
@@ -40,16 +45,18 @@ return array_merge(
             'excite.co.jp',
         ],
 
-        //Заготовка. Реальный конфиг подключения сливается из других скриптов.
+         //Заготовка. Реальный конфиг подключения сливается из env.php
         'db' => [
             'dsn'      => 'mysql:dbname=base0; host=127.0.0.1; charset=UTF8',
             'user'     => 'guest',
             'password' => '',
-            'options'  => [], //PDO options
+            'options' => [
+                PDO::ATTR_TIMEOUT => 10,                         //таймаут соединения, в секудах
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,     //позволит ловить исключения PDO
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC //по умолчанию - в ассоциативный массив
+            ],
         ],
-
-        'routes' => require __DIR__ . '/routes.php',
     ],
 
-    require __DIR__ . '/secret.php'
+    require __DIR__ . '/env.php'
 );

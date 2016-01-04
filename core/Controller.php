@@ -5,6 +5,9 @@
 
 namespace core;
 
+use Exception,
+    core\utils\EnvServer;
+
 class Controller
 {
     /** @var string Действие контроллера по умолчанию */
@@ -13,33 +16,54 @@ class Controller
     /** @var string заголовок страницы */
     protected $title = '';
 
-    /** @var string макет по умолчанию */
-    protected $layout='layout';
+    /** @var string расширение файлов представлений */
+    protected $viewExt = '.htm';
+
+    /** @var string макет. Относительный путь в каталоге VIEWS_PATH + имя файла без расширения. */
+    protected $layout = 'layout';
 
     /**
-     * Очень простой пример шаблонизации проекта. Заполняем шаблон, отдаем результат в ответ браузеру.
+     * Очень простой шаблонизатор.
+     * Заполняем шаблон, отдаем результат в ответ браузеру или возвращаем, как результат функции.
      *
-     * @param string $_view шаблон для отрисовки
-     * @param array $data параметры в шаблон
-     * @return void
+     * @param string $view   шаблон для отрисовки
+     * @param array  $data   параметры в шаблон
+     * @param bool   $output флаг "выводить в браузер"
+     * @return string
+     * @throws Exception
      */
-    protected function render($view, $data = array())
+    protected function render($view, $data = array(), $output = true)
     {
         $content = $this->_renderFile($view, $data);
-        //выводим на единственном макете, который у нас есть :)
-        require VIEWS_PATH . $this->layout . '.htm';
+
+        ob_start();
+        require VIEWS_PATH . $this->layout . $this->viewExt;
+        $result = ob_get_clean();
+
+        if ($output) {
+            echo $result;
+        } else {
+            return $result;
+        }
     }
 
     /**
-     * Отрисовка части шаблона, без макета
+     * Отрисовка части шаблона, без макета.
      *
-     * @param string $_view шаблон для отрисовки
-     * @param array $data параметры в шаблон
+     * @param string $view   шаблон для отрисовки
+     * @param array  $data   параметры в шаблон
+     * @param bool   $output флаг "выводить в браузер"
      * @return string
+     * @throws Exception
      */
-    protected function renderPartial($view, $data = array())
+    protected function renderPartial($view, $data = array(), $output = true)
     {
-        echo $this->_renderFile($view, $data);
+        $result = $this->_renderFile($view, $data);
+        if ($output) {
+            echo $result;
+        } else {
+            return $result;
+        }
     }
 
     /**
@@ -61,7 +85,7 @@ class Controller
 
         //Отрисованный шаблон буферизируем, в него уйдут распакованные параметры
         ob_start();
-        require VIEWS_PATH . $_view123 . '.htm';
+        require VIEWS_PATH . $_view123 . $this->viewExt;
         return ob_get_clean();
     }
 
@@ -71,37 +95,16 @@ class Controller
      * Прим.: указание абсолютного URI - это требование спецификации HTTP/1.1, {@see http://php.net/manual/ru/function.header.php}
      * Быстрая справка по кодам с редиктом {@see http://php.net/manual/ru/function.header.php#78470}
      *
-     * @param string $uri новый относительный адрес. Возможно со слешем слева
-     * @param int $code код ответа HTTP
+     * Ситуация со схемой на самом деле может быть куда сложнее. Пока не усложняю, нет необходимости.
+     *
+     * @param string $url  новый относительный адрес. Возможно со слешем слева
+     * @param int    $code код ответа HTTP
      * @return void
      */
-    public function redirect($uri, $code = 302)
+    public function redirect($url, $code = 302)
     {
-        //ситуация со схемой на самом деле может быть куда сложнее. Пока не усложняю, нет необходимости.
-        $scheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
-
-        $uri =  ltrim($uri, '/'); //устраняем неясность
-
-        header("location:{$scheme}://" . ROOT_URL . $uri, true, $code); //для теста.
-        //header("location:{$scheme}://{$host}/{$uri}", true, $code); //по-хорошему
+        $url = EnvServer::domainWithScheme() . ltrim($url, '/');
+        header("location:{$url}", true, $code);
         App::end();
-    }
-
-    /**
-     * Заглушка 404-й, для тестовой задачи
-     * @TODO выделить отдельный контороллер с поддержкой 403, 404, 500. Настроить Apache на эти страницы.
-     */
-    public static function error404()
-    {
-        //@see http://php.net/manual/ru/function.header.php#92305
-        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-        $obj = new self;
-        $obj->title = 'Тест. Страница не найдена (404)';
-        $obj->render('404', [
-            'domain' => App::conf('domain'),
-            'index' => App::conf('indexPage'),
-            'request' => 'http://' . App::conf('domain') . $_SERVER['REQUEST_URI'],
-        ]);
     }
 }

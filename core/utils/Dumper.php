@@ -16,21 +16,6 @@ class Dumper
     private static $_depth;
 
     /**
-     * Выводим дамп переменной.
-     *
-     * @param mixed   $var       variable to be dumped
-     * @param integer $depth     maximum depth that the dumper should go into the variable. Defaults to 10.
-     * @param boolean $highlight whether the result should be syntax-highlighted
-     */
-    public static function dump($var, $depth = 10, $highlight = false)
-    {
-        if (!headers_sent()) {
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-        echo self::dumpAsString($var, $depth, $highlight);
-    }
-
-    /**
      * Дамп переменной и выход.
      *
      * @param mixed $var
@@ -41,6 +26,21 @@ class Dumper
     {
         self::dump($var, $depth, $highlight);
         exit;
+    }
+
+    /**
+     * Выводим дамп переменной.
+     *
+     * @param mixed   $var       variable to be dumped
+     * @param integer $depth     maximum depth that the dumper should go into the variable. Defaults to 10.
+     * @param boolean $highlight whether the result should be syntax-highlighted
+     */
+    public static function dump($var, $depth = 10, $highlight = true)
+    {
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+        }
+        echo self::dumpAsString($var, $depth, $highlight);
     }
 
     /**

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<HTML lang='ru'>
+<head>
+    <meta charset="utf-8">
+    <title><?=$this->title;?></title>
+    <link href="<?=ASSETS_URL . 'style.css';?>" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+    <div id='base'>
+        <div id='content'>
+            <?=$content;?>
+        </div>
+        <div id="fempty"></div>
+    </div>
+
+    <div id='footer'>
+        <div class='float-left'>
+            <a href="<?=core\utils\VarServer::indexPage();?>">
+                <?=core\utils\VarServer::domain();?>
+            </a> &copy; 7Lives, 2015
+        </div>
+        <div class='float-right'><small><?=core\App::t('Работает на');?> <i>Kira Engine v1.0</i></small></div>
+    </div>
+
+</body>
+</html>

@@ -2,7 +2,10 @@
 /**
  * Контроллер профиля юзера
  */
-class ProfileController extends FrontController
+
+namespace app\modules\user\controllers;
+
+class ProfileController extends \app\controllers\FrontController
 {
     protected $title = 'Личный кабинет';
 

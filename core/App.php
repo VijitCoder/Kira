@@ -19,18 +19,23 @@ class App
     /**
      * Чтение конкретной настройки конфига
      *
-     * @param string $key
+     * @param string $key ключ в конфиге
+     * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
      * @return mixed
      * @throws Exception
      */
-    public static function conf($key)
+    public static function conf($key, $strict = true)
     {
         if (!self::$config) {
-            self::$config = require APP_PATH . 'conf/main.php';
+            self::$config = require MAIN_CONFIG;
         }
 
         if (!isset(self::$config[$key])) {
-            throw new Exception("В конфигурации не найден ключ '{$key}'");
+            if ($strict) {
+                throw new Exception("В конфигурации не найден ключ '{$key}'");
+            } else {
+                return null;
+            }
         }
         return self::$config[$key];
     }
