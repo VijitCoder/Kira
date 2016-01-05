@@ -1,8 +1,11 @@
 <?php
 /**
- * Супер-класс. Контроллер админки приложения
+ * Супер-класс контроллеров админки приложения
  */
-class AdminController extends Controller
+
+namespace app\modules\admin\controllers;
+
+class Admin extends \core\Controller
 {
     /** @var int|false id юзера, если он на сайте */
     protected $userId;

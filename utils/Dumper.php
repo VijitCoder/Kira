@@ -7,7 +7,7 @@
  * @license   http://www.yiiframework.com/license/
  */
 
-namespace core\utils;
+namespace utils;
 
 class Dumper
 {
@@ -60,7 +60,7 @@ class Dumper
         self::$_depth = $depth;
         self::_dumpInternal($var, 0);
         if ($highlight) {
-            $result = highlight_string("<?php\n" . self::$_output, true);
+            $result = highlight_string("<?php\n" . self::$_output . "\n", true);
             self::$_output = preg_replace('/&lt;\\?php<br \\/>/', '', $result, 1);
         }
         return self::$_output;

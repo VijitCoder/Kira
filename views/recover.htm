@@ -1,17 +1,17 @@
-<h4><?=App::t('Восстановление пароля');?></h4>
+<h4><?=core\App::t('Восстановление пароля');?></h4>
 
 <form id='fmLogin' method="POST">
 	<p>
-	   <a href='/users/login'><?=App::t('Вход');?></a>  |
-	   <a href='/users/registration'><?=App::t('зарегистрироваться');?></a>
+	   <a href="<?=$this->urls['login'];?>">><?=core\App::t('Вход');?></a>  |
+	   <a href="<?=$this->urls['reg'];?>">><?=core\App::t('зарегистрироваться');?></a>
 	</p>
 
 	<p><input type='text' name='mail' maxlength=50 required placeholder='email'></p>
 
-	<p class='hint'><?=App::t('На указанный email будут высланы инструкции по восстановлению пароля.');?></p>
+	<p class='hint'><?=core\App::t('На указанный email будут высланы инструкции по восстановлению пароля.');?></p>
 
 	<p>
-	    <input type='submit' value='<?=App::t('Восстановить');?>'>
+	    <input type='submit' value='<?=core\App::t('Восстановить');?>'>
 	</p>
 
 	<p class='error clear'><?=$error;?></p>

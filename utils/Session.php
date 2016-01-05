@@ -3,7 +3,7 @@
  * Работа с сессией
  */
 
-namespace core\utils;
+namespace utils;
 
 class Session
 {
@@ -141,7 +141,7 @@ class Session
     /**
      * Очистка flash-сообщений. Полезно в процессе разработки
      */
-    public static function dropFlash()
+    public static function dropFlashes()
     {
         self::init();
         unset($_SESSION['flash']);

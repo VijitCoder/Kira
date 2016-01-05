@@ -5,7 +5,7 @@
 
 namespace app\modules\user\controllers;
 
-class ProfileController extends \app\controllers\FrontController
+class Profile extends \app\controllers\Front
 {
     protected $title = 'Личный кабинет';
 
@@ -16,7 +16,7 @@ class ProfileController extends \app\controllers\FrontController
     {
         parent::__construct();
         if (!$this->userId) {
-            $this->redirect('/login');
+            $this->redirect($this->urls['login']);
         }
     }
 

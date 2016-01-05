@@ -29,11 +29,11 @@
 
 		    <div class='top-menu-right'>
 	            <? if ($this->userId): ?>
-			        <a href='/users/login/out'><?=core\App::t('Выйти');?></a>
-			        / <a href='/users/profile'><?=core\App::t('Личный кабинет');?></a>
+			        <a href="<?=$this->urls['logout'];?>"><?=core\App::t('Выйти');?></a>
+			        / <a href="<?=$this->urls['profile'];?>"><?=core\App::t('Личный кабинет');?></a>
 		        <? else: ?>
-                    <a href='/users/login'><?=core\App::t('Вход');?></a>
-                    / <a href='/users/registration'><?=core\App::t('Регистрация');?></a>
+                    <a href="<?=$this->urls['login'];?>"><?=core\App::t('Вход');?></a>
+                    / <a href="<?=$this->urls['reg'];?>"><?=core\App::t('Регистрация');?></a>
 		        <? endif ?>
 		    </div>
 
@@ -49,8 +49,8 @@
 
     <div id='footer'>
 		<div class='float-left'>
-            <a href="<?=core\utils\VarServer::indexPage();?>">
-                <?=core\utils\VarServer::domain();?>
+            <a href="<?=utils\VarServer::indexPage();?>">
+                <?=utils\VarServer::domain();?>
             </a> &copy; 7Lives, 2015
         </div>
 		<div class='float-right'><small><?=core\App::t('Работает на');?> <i>Kira Engine v1.0</i></small></div>

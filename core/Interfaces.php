@@ -9,8 +9,17 @@ namespace core;
 interface IRouter
 {
     /**
-     * Парсинг маршрута и вызов action-метода в соответствующем контроллере.
+     * Парсинг URL и вызов action-метода в соответствующем контроллере.
      * @return void
      */
-    public static function parseRoute();
+    public static function callAction();
+
+    /**
+     * Построение URL по параметрам.
+     *
+     * @param mixed $route какое-то определение роута. Например controller/action
+     * @param array $params параметры для левой части роута
+     * @return string готовый <b>относительный</b> URL
+     */
+    public static function url($route, array $params = []);
 }

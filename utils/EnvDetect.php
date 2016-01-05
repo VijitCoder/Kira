@@ -5,7 +5,7 @@
  * окружения.
  */
 
-namespace core\utils;
+namespace utils;
 
 abstract class EnvDetect
 {

@@ -5,7 +5,13 @@
 
 namespace app\modules\user\controllers;
 
-class RegistrationController extends \app\controllers\FrontController
+use core\App,
+    app\modules\user\forms\RegistrationForm,
+    app\modules\user\services\RegistrationService,
+    utils\Session
+;
+
+class Registration extends \app\controllers\Front
 {
     protected $title = 'Регистрация нового пользователя';
 
@@ -15,7 +21,7 @@ class RegistrationController extends \app\controllers\FrontController
     public function index()
     {
         if ($this->userId) {
-            $this->redirect('/profile');
+            $this->redirect($this->urls['profile']);
         }
 
         $params = [
@@ -28,7 +34,7 @@ class RegistrationController extends \app\controllers\FrontController
         $form = new RegistrationForm();
 
         if (!empty($_POST) && (new RegistrationService)->newUser($form)) {
-            $this->redirect('/profile');
+            $this->redirect($this->urls['profile']);
         }
 
         $params['form'] = $form; //результат работы сервиса с моделью формы ИЛИ пустая модель
@@ -45,7 +51,7 @@ class RegistrationController extends \app\controllers\FrontController
             Session::addFlash('errConfirm', 'Неверные параметры запроса');
         }
         RegistrationService::sendConfirm($_GET['m'], $_GET['c']);
-        $this->redirect('/profile');
+        $this->redirect($this->urls['profile']);
     }
 
     /**
@@ -54,7 +60,7 @@ class RegistrationController extends \app\controllers\FrontController
     public function confirm()
     {
         if ((new RegistrationService)->confirm()) {
-            $this->redirect('/profile');
+            $this->redirect($this->urls['profile']);
         }
 
         $lang = App::detectLang();

@@ -5,14 +5,12 @@
 
 namespace app\controllers;
 
-class MainController extends \app\controllers\FrontController
+class Welcome extends \app\controllers\Front
 {
-    public $defaultAction = 'welcome';
-
     /**
      * Главная страница
      */
-    public function welcome()
+    public function index()
     {
         echo 'main page will be here';
     }

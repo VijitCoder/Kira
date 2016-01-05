@@ -2,7 +2,9 @@
 /**
  * Форма регистрации
  */
-class RegistrationForm extends Form
+namespace app\modules\user\forms;
+
+class RegistrationForm extends \core\Form
 {
     /** @var array фильтры полей html-формы. Каждая запись - описание валидатора */
     protected $filters = [

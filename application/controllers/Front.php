@@ -5,15 +5,20 @@
 
 namespace app\controllers;
 
-use core\App;
+use app\modules\user\services\AuthService,
+    core\App,
+    core\Router;
 
-class FrontController extends \core\Controller
+class Front extends \core\Controller
 {
     /** @var string макет. Относительный путь в каталоге VIEWS_PATH + имя файла без расширения. */
     protected $layout = 'layouts/main';
 
     /** @var int|false id юзера, если он на сайте. По этому значению контроллеры и шаблоны меняют свое поведение */
     protected $userId;
+
+    /** @var array массив частоиспользуемых URLs. Для сокращения кода в шаблонах. */
+    protected $urls;
 
     /**
      * Конструктор контроллера
@@ -24,6 +29,17 @@ class FrontController extends \core\Controller
         if ($this->title) {
             $this->title = App::t($this->title);
         }
-        $this->userId = \app\services\Auth::checkAccess();
+        $this->userId = AuthService::checkAccess();
+
+        $urls = [
+            'login'   => 'login',
+            'logout'  => 'login/out',
+            'profile' => 'profile',
+            'reg'     => 'registration',
+        ];
+        foreach ($urls as &$v) {
+            $v = Router::url([APP_NS_PREFIX . 'modules\user\controllers\\', $v]);
+        }
+        $this->urls = $urls;
     }
 }

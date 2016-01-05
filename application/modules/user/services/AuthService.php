@@ -4,11 +4,11 @@
  * в одном классе.
  */
 
-namespace app\services;
+namespace app\modules\user\services;
 
-use core\utils\Session;
+use utils\Session;
 
-class Auth {
+class AuthService {
     /**
      * Шифруем пароль. Если соль не указана, значит шифрование для нового юзера.
      * @param string $pass открытый пароль

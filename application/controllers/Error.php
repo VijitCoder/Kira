@@ -5,9 +5,9 @@
 
 namespace app\controllers;
 
-use core\utils\VarServer;
+use utils\VarServer;
 
-class ErrorController extends \app\controllers\FrontController
+class Error extends \app\controllers\Front
 {
     //protected $layout = 'layouts/error';
 
@@ -20,13 +20,14 @@ class ErrorController extends \app\controllers\FrontController
      *
      * @param $err
      */
-    public function index($err)
+    public function index()
     {
+        $code = http_response_code();
         $data = [
             'domain' => VarServer::domain(),
             'index'  => VarServer::indexPage(),
         ];
-        switch ($err) {
+        switch ($code) {
             case 401:
                 $this->title = '401 Для доступа к запрашиваемому ресурсу требуется аутентификация';
                 break;
@@ -50,6 +51,6 @@ class ErrorController extends \app\controllers\FrontController
                 return;
         }
 
-        $this->render('errors/' . $err, $data);
+        $this->render('errors/' . $code, $data);
     }
 }

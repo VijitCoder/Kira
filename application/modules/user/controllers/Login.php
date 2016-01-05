@@ -5,9 +5,20 @@
 
 namespace app\modules\user\controllers;
 
-class LoginController extends \app\controllers\FrontController
+use core\App,
+    core\Router,
+    app\modules\user\services\AuthService,
+    utils\Session;
+
+class Login extends \app\controllers\Front
 {
     protected $title = 'Вход на сайт';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->urls['recover'] = Router::url([APP_NS_PREFIX . 'modules\user\controllers\\', 'login/recover']);
+    }
 
     /**
      * Страница входа на сайт
@@ -15,12 +26,12 @@ class LoginController extends \app\controllers\FrontController
     public function index()
     {
         if ($this->userId) {
-            $this->redirect('/profile');
+            $this->redirect($this->urls['profile']);
         }
 
         $error = '';
         if (!empty($_POST) && !$error = AuthService::checkLoginAction()) {
-            $this->redirect('/profile');
+            $this->redirect($this->urls['profile']);
         }
 
         $this->render('login', ['error' => $error]);
@@ -32,7 +43,7 @@ class LoginController extends \app\controllers\FrontController
     public function out()
     {
         Session::delete('auth');
-        $this->redirect('/login');
+        $this->redirect($this->urls['login']);
     }
 
     /**
@@ -44,7 +55,7 @@ class LoginController extends \app\controllers\FrontController
         $error = 'Внимание. Функционал не работает. Это заглушка для тестовой задачи.';
         if ($_POST) {
             AuthService::recover();
-            $this->redirect('/login');
+            $this->redirect($this->urls['login']);
         }
         $this->title = App::t('напомнить пароль');
         $this->render('recover', ['error' => $error]);

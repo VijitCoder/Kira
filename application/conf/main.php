@@ -5,11 +5,11 @@
 return array_merge(
     [
         //FQN контроллера + метод для главной страницы сайта
-        'indexHandler' =>APP_NS_PREFIX . 'controllers\MainController->welcome',
+        'indexHandler' =>APP_NS_PREFIX . 'modules\user\controllers\Login',
 
         //FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
         //ошибками 401-404, 500
-        'errorHandler' => APP_NS_PREFIX . 'controllers\ErrorController',
+        'errorHandler' => APP_NS_PREFIX . 'controllers\Error',
 
         //'router' => APP_NS_PREFIX . 'ExampleRouter',
         'routes' => require __DIR__ . '/routes.php',

@@ -19,7 +19,7 @@ class ExampleRouter implements \core\IRouter
     /**
      * Парсинг маршрута и вызов соответствующего контроллера.
      */
-    public static function parseRoute()
+    public static function callAction()
     {
         if (!isset($_SERVER['REQUEST_URI'])) {
             return self::_notFound();
@@ -108,4 +108,14 @@ class ExampleRouter implements \core\IRouter
             $controller->$action(404);
         }
     }
+
+    /**
+     * Построение URL по параметрам.
+     *
+     * @param mixed $route какое-то определение роута. Например controller/action
+     * @param array $params параметры для левой части роута
+     * @return string готовый <b>относительный</b> URL
+     */
+    public static function url($route, array $params = [])
+    {}
 }

@@ -2,17 +2,24 @@
 /**
  * Роуты приложения
  * Идея описания маршрутов взята в Yii 1.x. Реализация своя.
+ *
+ * Левая часть, маска параметров: <[a-z0-9_]+:.+>, не зависит от регистра. Так же можно указывать спец.символы без
+ * параметризации. Тогда они будут просто восприняты, как часть регулярки.
+ *
+ * Простые ошибки:
+ * - 404 = обратный слеш вместо прямого. Нужно использовать '/'
+ * - 404 = справа несоблюдение регистра, например контроллер с маленькой буквы, а на деле - с большой.
  */
 return [
     //модуль юзера
     APP_NS_PREFIX . 'modules\user\controllers\\' => [
-        'registration' => 'RegistrationController',
+        'registration' => 'Registration',
         //@TODO остальные actions контроллера прописать
 
-        'login'        => 'loginController',
-        'logout'       => 'loginController/out',
-        'recover'      => 'loginController/recover',
-        'user/profile' => 'profileController',
+        'login'   => 'Login',
+        'logout'  => 'Login/out',
+        'recover' => 'Login/recover',
+        'profile' => 'Profile',
     ],
 
     //модуль админки
@@ -21,13 +28,6 @@ return [
 
     //Основная зона контроллеров
     APP_NS_PREFIX . 'controllers\\'       => [
-        'test' => 'Test',
-        '<v:\d+>' => 'Test/some',
-        'some/<v:\d+>' => 'Test/some',
-        'another/<v:\d+>/<s:\w+>' => 'Test/some',
-        'test/<action:\w+>' => 'Test/<action>',
-        'test/<action:\w+>/<id:\d+>' => 'Test/<action>',
-
         //Общие правила. Должны быть самыми последними вообще
         '<controller:[a-z]+>' => '<controller>',
         '<controller:[a-z]+>/<action:[a-z]+>' => '<controller>/<action>',

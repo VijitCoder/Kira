@@ -8,7 +8,7 @@ namespace app;
 use Exception,
     core\App;
 
-class Env extends \core\utils\EnvDetect
+class Env extends \utils\EnvDetect
 {
     /**
      * Определяем среду через явное указание в конфиге приложения. Мобильное окружение определяем по имени домена.

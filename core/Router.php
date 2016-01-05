@@ -5,12 +5,14 @@
 
 namespace core;
 
+use utils\Dumper;
+
 class Router implements IRouter
 {
     /**
-     * Парсинг маршрута и вызов соответствующего контроллера.
+     * Парсинг URL и вызов action-метода в соответствующем контроллере.
      */
-    public static function parseRoute()
+    public static function callAction()
     {
         if (!isset($_SERVER['REQUEST_URI'])) {
             return self::_notFound();
@@ -39,7 +41,7 @@ class Router implements IRouter
 //echo  '<pre>' .var_export($set, true) . '</pre>';//DBG
 
         if (!$controller = self::_createController($ctrl)) {
-           return self::_notFound();
+            return self::_notFound();
         }
 
         if (!$action) {
@@ -91,9 +93,9 @@ class Router implements IRouter
     private static function _findRouteFor($url)
     {
         foreach (App::conf('routes') as $namespace => $routes) {
-            foreach ($routes as $from => $to) {
-                $from = ltrim($from, '/');
-                $pattern = preg_replace('~(<([a-z0-9]+):(.*)>)~U', '(?P<$2>$3)', $from);
+            foreach ($routes as $left => $right) {
+                $left = ltrim($left, '/');
+                $pattern = preg_replace('~(<([a-z0-9_]+):(.*)>)~Ui', '(?P<$2>$3)', $left);
                 $pattern = "~^$pattern$~Uiu";
 
                 if (preg_match($pattern, $url, $matches)) {
@@ -107,25 +109,25 @@ class Router implements IRouter
         }
 
         $params = [];
-        $to = ltrim($to, '/');
+        $right = ltrim($right, '/');
         foreach ($matches as $k => $m) {
             if (is_string($k)) {
-                if (strpos($to, "<$k>") !== false) {
-                    $to = str_replace("<$k>", $m, $to);
+                if (strpos($right, "<$k>") !== false) {
+                    $right = str_replace("<$k>", $m, $right);
                 } else {
                     $params[$k] = $m;
                 }
             }
         }
 
-//echo "{$namespace}{$to}";
+//echo "{$namespace}{$right}";
         $_GET = array_merge($params, $_GET);
 
-        $to = explode('/', $to);
+        $right = explode('/', $right);
         return [
-            $namespace . $to[0],          //FQN controller
-            isset($to[1]) ? $to[1] : '',  //action
-            $params                       //params
+            $namespace . $right[0],            //FQN controller
+            isset($right[1]) ? $right[1] : '', //action
+            $params                            //params
         ];
     }
 
@@ -155,11 +157,10 @@ class Router implements IRouter
      */
     private static function _notFound()
     {
-        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-
+        http_response_code(404);
         if ($handler = App::conf('errorHandler', false)) {
             list($controller, $action) = self::_parseHandler($handler);
-            $controller->$action(404);
+            $controller->$action();
         }
     }
 
@@ -202,5 +203,89 @@ class Router implements IRouter
 
         header("location:{$scheme}://{$host}/{$uri}", true, 301);
         exit;
+    }
+
+    /**
+     * Построение URL по параметрам, используя карту роутов.
+     *
+     * Перебираем роуты в заданном пространстве имен. Сравниваем указанные контроллер/действие с правой частью роута.
+     * Если нашли совпадение справа (будет массив), анализируем правило слева, выбирая необходимые подстановки -
+     * "required params". Если сможем их обеспечить из массива совпадения и/или переданных параметров - роут найден.
+     * Иначе продолжаем поиск.
+     *
+     * Все параметры, которые не пойдут в подстановки, допишутся в URL в качестве строки запроса. Если у элемента
+     * не задано значение, а есть только ключ, типа ['p' => null], он попадет в URL без значения.
+     *
+     * Прим: поиск роута не зависит от регистра. Это немного упрощает требования к описанию параметров функции.
+     *
+     * Если ничего не найдем, проброс ошибки. Вообще ситуация некритичная, но иначе можно прозевать исчезновение роута
+     * и получить битую ссылку.
+     *
+     * @param mixed $route  массив 2-х элементов ["пространство имен", "правая часть из описания роута"]
+     * @param array $params параметры для левой части роута
+     * @return string готовый <b>относительный</b> URL
+     * @throw RangeException
+     */
+    public static function url($route, array $params = [])
+    {
+        list($ns, $ctrl) = $route;
+        $ctrl = trim($ctrl, '/');
+
+        $routes = App::conf('routes');
+        if (!isset($routes[$ns])) {
+            throw new \RangeException("Нет карты роутов для пространства имен '$ns'");
+        }
+
+        foreach ($routes[$ns] as $left => $right) {
+            $left = ltrim($left, '/');
+            $right = ltrim($right, '/');
+            $pattern = preg_replace('~(<(.+)>)~U', '(?P<$2>[^/]+)', $right);
+            $pattern = "~^$pattern$~Ui";
+
+            if (preg_match($pattern, $ctrl, $match)) {
+                if (preg_match_all('~<([a-z0-9_]+):.+>~U', $left, $requiredParams)) {
+
+                    $requiredParams = array_flip($requiredParams[1]);
+
+                    foreach ($requiredParams as $k => &$v) {
+                        if (isset($match[$k])) {
+                            $v = $match[$k];
+                        } else if (isset($params[$k])) {
+                            $v = $params[$k];
+                            unset($params[$k]); //удаляем из параметров то, что будет использовано в подстановке
+                        } else {
+                            continue 2;
+                        }
+                    }
+                } else {
+                    $requiredParams = [];
+                }
+
+                break;
+            }
+        }
+
+        if ($match) {
+            if ($requiredParams) {
+                $placeholders = [];
+                foreach ($requiredParams as $key => $v) {
+                    $placeholders[] = "~(<$key:.+>)~U";
+                }
+                $left = preg_replace($placeholders, $requiredParams, $left);
+            }
+
+            $url = '/' . $left;
+            if ($params) {
+                foreach ($params as $k => &$v) {
+                    $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');
+                }
+                $url .= '?' . implode('&', $params);
+            }
+
+            return $url;
+        } else {
+            $strParams = count($params) ? 'параметры ' . Dumper::dumpAsString($params, 1, false) : 'без параметров';
+            throw new \RangeException("не могу построить URL по заданным значениям: array('$ns', '$ctrl'), $strParams");
+        }
     }
 }

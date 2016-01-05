@@ -4,7 +4,7 @@
  * Некоторые геттеры для удобства.
  */
 
-namespace core\utils;
+namespace utils;
 
 class VarServer
 {
