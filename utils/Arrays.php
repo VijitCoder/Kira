@@ -9,7 +9,7 @@ class Arrays
 {
     /**
      * Оборачиваем массив любой вложенности в класс ArrayObject для доступа к элементам, как свойствам
-     * класса. Это позволит использовать методы трансов почти без модификации кода.
+     * класса.
      *
      * Рекурсия
      *
@@ -51,5 +51,45 @@ class Arrays
             }
         }
         return $arr;
+    }
+
+    /**
+     * Рекурсивное объединение <b>двух</b> массивов.
+     *
+     * По мотивам {@link http://php.net/manual/ru/function.array-merge-recursive.php#92195}
+     *
+     * Это объединение массивов, как описано в справке, а не как на самом деле работает array-merge-recursive().
+     *
+     * Прим: в комментарии другое объединение, там числовые ключи заменяются так же, как и строковые.
+     *
+     * Логика объединения:
+     * - значения с числовыми ключами всегда добавляются в конец, независимо от самих значений.
+     * - строковые ключи перезаписываются. Если у обоих массивов значения окажутся подмассивами, тогда они объединяются
+     * в рекурсивном вызове этой функции.
+     *
+     * Схематично (для строковых ключей):
+     *  value1 + array2 = array2
+     *  array1 + value2 = value2
+     *  array1 + array2 > recurse call
+     *
+     * @param array $array1
+     * @param array $array2
+     * @return array
+     */
+    public static function merge_recursive(array &$array1, array &$array2)
+    {
+        $merged = $array1;
+
+        foreach ($array2 as $key => &$value) {
+            if (is_int($key)) {
+               $merged[] = $value;
+            } else if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
+                $merged[$key] = self::merge_recursive($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return $merged;
     }
 }

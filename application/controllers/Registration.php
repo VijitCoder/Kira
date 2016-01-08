@@ -3,13 +3,12 @@
  * Контроллер регистрации/подтверждения регистрации юзера
  */
 
-namespace app\modules\user\controllers;
+namespace app\controllers;
 
 use core\App,
-    app\modules\user\forms\RegistrationForm,
-    app\modules\user\services\RegistrationService,
-    utils\Session
-;
+    app\forms\RegistrationForm,
+    app\services\RegistrationService,
+    utils\Session;
 
 class Registration extends \app\controllers\Front
 {

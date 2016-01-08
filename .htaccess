@@ -1,4 +1,4 @@
-#DirectoryIndex source/index.php
+DirectoryIndex index.php
 
 # Конфиг МОЕГО сервера запрещает доступ к файлам, начинающимся с ".ht" (типа .htaccess, .htpasswd)
 # Но на всякий случай можно явно указать здесь.
@@ -8,11 +8,10 @@
 
 DefaultLanguage ru
 
-#ErrorDocument 401 /errors/handler.php?er=401
-#ErrorDocument 403 /errors/handler.php?er=403
-#ErrorDocument 404 /errors/handler.php?er=404
-#ErrorDocument 500 /errors/handler.php?er=500
-
+ErrorDocument 401 /Error
+ErrorDocument 403 /Error
+ErrorDocument 404 /Error
+ErrorDocument 500 /Error
 
 RewriteEngine On
 RewriteBase /

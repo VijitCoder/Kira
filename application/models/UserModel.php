@@ -3,16 +3,19 @@
  * Модель учетки юзера
  */
 
-require_once __DIR__ . '/AddUserTrait.php';
+namespace app\models;
 
-class UserModel extends Db
+class UserModel extends \core\Db
 {
+    use AddUserTrait;
+
     //статусы учетки юзера
     const S_NEW = 'new';
     const S_ACTIVE = 'active';
     const S_BANNED = 'banned';
 
-    use AddUserTrait;
+    /** @var string имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса */
+    protected $table = '`user`';
 
     /**
      * Пишем нового юзера

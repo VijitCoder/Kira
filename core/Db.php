@@ -6,12 +6,17 @@
 
 namespace core;
 
+use PDO;
+
 class Db
 {
     /** @var PDO объект подключения к БД. Если равен false, значит подключение не удалось. */
     private static $_dbh = null;
 
-    /** @var string имя таблицы, сразу в обратных кавычках. По умолчанию совпадает с именем модели */
+    /**
+     * @var string имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса.
+     * Суффикс "Model" будет отброшен, регистр букв сохраняется.
+     */
     protected $table;
 
     /**
@@ -25,8 +30,11 @@ class Db
      */
     public function __construct()
     {
-        if (!$this->table)
-            $this->table = '`' . strtolower(substr(get_class($this), 0, -5)) . '`'; //отрезаем "Model"
+        if (!$this->table) {
+            $reflect = new \ReflectionClass($this);
+            $name = $reflect->getShortName();
+            $this->table = '`' . preg_replace('~Model$~i', '', $name) . '`';
+        }
     }
 
     /**
@@ -37,9 +45,12 @@ class Db
      */
     public static function connect()
     {
-        if (!is_null(self::$_dbh)) return self::$_dbh;
+        if (!is_null(self::$_dbh)) {
+            return self::$_dbh;
+        }
 
         $conf = App::conf('db');
+
         //Тут можно ловить исключение. Сейчас исключения ловит перехватчик в App.php
         self::$_dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
 
@@ -60,26 +71,30 @@ class Db
      *  p = params - массив параметров для PDOStatement
      *  fs = fetch style - в каком стиле выдать результат при SELECT
      *  one = fetch one row - (bool) ожидаем только один ряд. В результате будет меньшая вложенность массива.
-     *  gues - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
+     *  guess - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
      *  указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
      *  количество рядов.
      *
+     * @param $ops
      * @return mixed
+     * @throws Exception
      */
     public function query($ops)
     {
         // параметры по умолчанию
         $default = array(
-            'q' => null,
-            'p' => array(),
-            'fs' => PDO::FETCH_ASSOC,
-            'one' => false,
-            'gues' => true,
+            'q'     => null,
+            'p'     => array(),
+            'fs'    => PDO::FETCH_ASSOC,
+            'one'   => false,
+            'guess' => true,
         );
         $ops = array_merge($default, $ops);
         extract($ops); //теперь у нас есть все переменные, включая не переданные в параметрах функции
 
-        if (!$q) throw new Exception('Не указан текст запроса');
+        if (!$q) {
+            throw new Exception('Не указан текст запроса');
+        }
 
         $sth = $this->connect()->prepare($q);
         //$sth->debugDumpParams(); exit;//DBG
@@ -91,15 +106,15 @@ class Db
         */
         $sth->execute($p);
 
-        if ($gues === true) {
+        if ($guess === true) {
             if (preg_match('~select|update|insert|delete~i', $q, $m)) {
-                $gues = $m[0];
+                $guess = $m[0];
             }
         }
 
-        return ($gues && strtolower($gues) == 'select')
-             ? ($one ? $sth->fetch($fs) : $sth->fetchAll($fs))
-             : $sth->rowCount();
+        return ($guess && strtolower($guess) == 'select')
+            ? ($one ? $sth->fetch($fs) : $sth->fetchAll($fs))
+            : $sth->rowCount();
     }
 
     /**
@@ -112,7 +127,7 @@ class Db
     {
         $values = array();
         foreach ($кеуs as $k) {
-            $values[':'.$k] = isset($data[$k]) ? $data[$k] : null;
+            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
         }
         return $values;
     }
@@ -120,22 +135,22 @@ class Db
     /**
      * Поиск записи по заданному полю. Например найти юзера по id или логину.. или мылу :)
      * Или всех забанненых юзеров, всех женщин, всех в Томске, ну и т.д., применений - масса.
-     * @param string $f по какому полю искать
-     * @param string $p параметры для подстановки в запрос
-     * @param array $ops доп.параметры,  см. $dummy[] в коде
+     * @param string $f   по какому полю искать
+     * @param string $p   параметры для подстановки в запрос
+     * @param array  $ops доп.параметры,  см. $dummy[] в коде
      * @return array
      */
     public function findByField($f, $p, $ops = array())
     {
         $dummy = [
             'select' => '*', //поля для выбора. Без экранирования, просто через запятую.
-            'one' => true,   //ожидаем одну запись?
-            'cond' => '',    //доп.условия. Прям так и писать, 'AND|OR ...'.
+            'one'    => true,   //ожидаем одну запись?
+            'cond'   => '',    //доп.условия. Прям так и писать, 'AND|OR ...'.
         ];
         $ops = array_merge($dummy, $ops);
         extract($ops);
         if ($select !== '*') {
-            $select =  '`' . preg_replace('~,\s?~', '`, `', $select) . '`';
+            $select = '`' . preg_replace('~,\s?~', '`, `', $select) . '`';
         }
         $p = [$p]; //параметры подстановки должны быть в массиве
 

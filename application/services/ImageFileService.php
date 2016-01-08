@@ -2,6 +2,10 @@
 /**
  * Сервис по работе с файлами картинок
  */
+namespace app\services;
+
+use core\App;
+
 class ImageFileService
 {
     //Относительный путь. ХАРДКОД. Пока нет смысла делать сложнее.

@@ -5,6 +5,8 @@
 
 namespace utils;
 
+use core\App;
+
 class Session
 {
     /**
@@ -19,8 +21,9 @@ class Session
 
     /**
      * Пишем значение в сессию. Перезапись существующего значения.
-     * @param string $key ключ в сессии
-     * @param mixed $data данные для записи
+     *
+     * @param string $key  ключ в сессии
+     * @param mixed  $data данные для записи
      * @return void
      */
     public static function write($key, $data)
@@ -32,9 +35,11 @@ class Session
     /**
      * Читаем значение из сессии. Не задан ключ - вернуть все содержимое при режиме отладки; на боевом ничего
      * без ключа не получим.
-     * @param string $key ключ в сессии
-     * @param bool $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
+     *
+     * @param string $key    ключ в сессии
+     * @param bool   $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
      * @return string
+     * @throws Exception
      */
     public static function read($key = null, $strict = false)
     {
@@ -54,6 +59,7 @@ class Session
 
     /**
      * Удаление значения в сессию.
+     *
      * @param string $key ключ в сессии
      * @return void
      */
@@ -68,10 +74,10 @@ class Session
      * переписываем, false - массивы объединяем, строки дописываем, ЦЕЛЫЕ числа суммируем, с другими
      * данными не работаем. При этом тип новых данных приводим к имеющемуся в сессии.
      *
-     * @param string $key ключ в сессии
-     * @param mixed $data данные для записи
-     * @param bool $force флаг перезаписи. True - любое значение переписываем, false - массивы объединяем,
-     * строки дописываем, числа суммируем. При этом тип новых данных приводим к имеющемуся в сессии.
+     * @param string $key   ключ в сессии
+     * @param mixed  $data  данные для записи
+     * @param bool   $force флаг перезаписи. True - любое значение переписываем, false - массивы объединяем,
+     *                      строки дописываем, числа суммируем. При этом тип новых данных приводим к имеющемуся в сессии.
      * @return void
      */
     public static function addFlash($key, $data, $force = false)
@@ -94,7 +100,7 @@ class Session
     }
 
     /**
-     * Алиас функции addFlash() с поднятым флагом перезаписи. Для удобства использования
+     * Алиас функции addFlash() с поднятым флагом перезаписи. Для удобства использования.
      */
     public static function newFlash($key, $data)
     {
@@ -102,9 +108,10 @@ class Session
     }
 
     /**
-     * Чтение конкретного сообщения из сессии
+     * Чтение конкретного сообщения из сессии.
+     *
      * @param string $key ключ в сессии
-     * @param bool $del удалить запись из сессии
+     * @param bool   $del удалить запись из сессии
      * @return mixed | null
      */
     public static function readFlash($key, $del = true)
@@ -124,7 +131,8 @@ class Session
     }
 
     /**
-     * Чтение всех сообщений из сессии
+     * Чтение всех сообщений из сессии.
+     *
      * @param bool $del удалить запись из сессии
      * @return mixed | null
      */
@@ -139,7 +147,7 @@ class Session
     }
 
     /**
-     * Очистка flash-сообщений. Полезно в процессе разработки
+     * Очистка flash-сообщений. Полезно в процессе разработки.
      */
     public static function dropFlashes()
     {

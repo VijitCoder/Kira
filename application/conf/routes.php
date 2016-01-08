@@ -11,25 +11,19 @@
  * - 404 = справа несоблюдение регистра, например контроллер с маленькой буквы, а на деле - с большой.
  */
 return [
-    //модуль юзера
-    APP_NS_PREFIX . 'modules\user\controllers\\' => [
+    APP_NS_PREFIX . 'controllers\\' => [
         'registration' => 'Registration',
-        //@TODO остальные actions контроллера прописать
-
+        'sendconfirm'  => 'Registration/sendconfirm',
+        'confirm'      => 'Registration/confirm',
         'login'   => 'Login',
         'logout'  => 'Login/out',
         'recover' => 'Login/recover',
         'profile' => 'Profile',
-    ],
 
-    //модуль админки
-    APP_NS_PREFIX . 'modules\admin\\' => [
-    ],
+        'ajax/check' => 'Registration/check',
 
-    //Основная зона контроллеров
-    APP_NS_PREFIX . 'controllers\\'       => [
         //Общие правила. Должны быть самыми последними вообще
-        '<controller:[a-z]+>' => '<controller>',
+        '<controller:[a-z]+>'                 => '<controller>',
         '<controller:[a-z]+>/<action:[a-z]+>' => '<controller>/<action>',
-    ]
+    ],
 ];

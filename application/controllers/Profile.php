@@ -3,7 +3,9 @@
  * Контроллер профиля юзера
  */
 
-namespace app\modules\user\controllers;
+namespace app\controllers;
+
+use app\services\ProfileService;
 
 class Profile extends \app\controllers\Front
 {

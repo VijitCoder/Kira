@@ -2,9 +2,19 @@
 /**
  * Сервис личного кабинета юзера
  */
+
+namespace app\services;
+
+use core\App,
+    app\models\ProfileModel,
+    utils\Session;
+
 class ProfileService {
     /**
-     * Получаем данные по юзеру для вывода в профиль
+     * Получаем данные по юзеру для вывода в профиль.
+     *
+     * Если юзер еще не подтвердил мыло (статус 'new'), достаем его флешками, пока он этого не сделает.
+     *
      * @param int $uid id юзера
      * @return array
      */
@@ -22,9 +32,11 @@ class ProfileService {
         $d['sex'] = str_replace(['none', 'female', 'male'], ['не задан', 'женский', 'мужской'], $d['sex']);
 
         if ($d['status'] == 'new') {
-            $d['confirmUrl'] = ROOT_URL . "registration/sendconfirm?m={$d['mail']}&c={$d['salt']}";
+            $d['confirmUrl'] = App::router()->url(
+                [APP_NS_PREFIX . 'controllers\\', 'registration/sendconfirm'],
+                ['m' => $d['mail'], 'c' => $d['salt']]
+            );
 
-            //Достаем юзера флешками, пока не подтвердит учетку
             if (!Session::readFlash('infoConfirm', false)) {
                 Session::addFlash('warnConfirm', 'Пожалуйста, подтвердите вашу учетную записть через email.');
                 Session::addFlash('warnConfirmMail',

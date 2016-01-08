@@ -5,9 +5,9 @@ $(function () {
     $('#cmbLang').change(function() {
         var lang = this.value;
         if (lang == 'ru') {
-            $.removeCookie('lang', { path: '/users' });
+            $.removeCookie('lang');
         } else {
-            $.cookie('lang', this.value, {expires: 365, path: '/users'});
+            $.cookie('lang', this.value, {expires: 365});
         }
         location.reload();
     });
@@ -33,7 +33,7 @@ $(function () {
         if (!this.value) return;
         var err = $(this).siblings('span.error');
         var gif = $(this).siblings('img').css('visibility', 'visible');
-        $.get('/users/registration/check', {p:this.value},
+        $.get('/ajax/check', {p:this.value},
             function(data, status) {
                 if (status == 'success' && data) {
                     $(err).html(data);

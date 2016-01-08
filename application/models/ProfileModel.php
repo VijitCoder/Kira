@@ -3,13 +3,13 @@
  * Модель профиля юзера
  */
 
-require_once __DIR__ . '/AddUserTrait.php';
+namespace app\models;
 
-class ProfileModel extends Db
+class ProfileModel extends \core\Db
 {
     use AddUserTrait;
 
-    /** @var string имя таблицы, сразу в обратных кавычках. По умолчанию совпадает с именем модели */
+    /** @var string имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса */
     protected $table = '`user_profile`';
 
     /**

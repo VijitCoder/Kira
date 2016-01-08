@@ -4,9 +4,11 @@
  * в одном классе.
  */
 
-namespace app\modules\user\services;
+namespace app\services;
 
-use utils\Session;
+use core\App,
+    utils\Session,
+    app\models\UserModel;
 
 class AuthService {
     /**

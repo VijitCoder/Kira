@@ -3,10 +3,10 @@
  * Контроллер входа. Восстановление пароля тоже через него
  */
 
-namespace app\modules\user\controllers;
+namespace app\controllers;
 
 use core\App,
-    app\modules\user\services\AuthService,
+    app\services\AuthService,
     utils\Session;
 
 class Login extends \app\controllers\Front
@@ -16,7 +16,7 @@ class Login extends \app\controllers\Front
     public function __construct()
     {
         parent::__construct();
-        $this->urls['recover'] = App::router()->url([APP_NS_PREFIX . 'modules\user\controllers\\', 'login/recover']);
+        $this->urls['recover'] = App::router()->url([APP_NS_PREFIX . 'controllers\\', 'login/recover']);
     }
 
     /**

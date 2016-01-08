@@ -2,7 +2,7 @@
 /**
  * Форма регистрации
  */
-namespace app\modules\user\forms;
+namespace app\forms;
 
 class RegistrationForm extends \core\Form
 {

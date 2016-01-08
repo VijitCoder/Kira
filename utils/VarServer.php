@@ -39,7 +39,7 @@ class VarServer
     }
 
     /**
-     * Абсолютный URL запроса клиента
+     * Абсолютный URL запроса клиента.
      * @return string
      */
     public static function requestURL()

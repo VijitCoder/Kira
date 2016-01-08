@@ -9,6 +9,9 @@ use Exception;
 
 class App
 {
+    /** Название и версия движка */
+    const VERSION = 'Kira Engine v1.1';
+
     /** @var array конфигурация приложения */
     private static $config;
 
@@ -53,7 +56,7 @@ class App
     public static function detectLang()
     {
         if (!self::$_lang) {
-            $langPath = ROOT_PATH . 'i18n/';
+            $langPath = APP_PATH . 'i18n/';
             $lang = 'ru';
             if (isset($_COOKIE['lang'])) {
                 $try = $_COOKIE['lang'];
@@ -83,7 +86,7 @@ class App
     {
         //загружаем словарь, если этого еще не делали
         if (!self::$_lexicon) {
-            $langPath = ROOT_PATH . 'i18n/';
+            $langPath = APP_PATH . 'i18n/';
             $lang = self::detectLang();
             self::$_lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
         }
@@ -100,8 +103,8 @@ class App
     /**
      * Перехватчик исключений.
      *
-     * Ловит исключения, которые не были пойманы ранее. Последний шанс обработать ошибку. Например,
-     * записать в лог или намылить админу. Можно так же вежливо откланяться юзеру.
+     * Ловит исключения, которые не были пойманы ранее. Последний шанс обработать ошибку. Например, записать в лог или
+     * намылить админу. Можно так же вежливо откланяться юзеру.
      *
      * После выполнения этого обработчика программа остановится, обеспечено PHP.
      *
@@ -127,7 +130,7 @@ class App
     }
 
     /**
-     * Завершение приложения. Послeдние процедуры после отправки ответа браузеру
+     * Завершение приложения. Последние процедуры после отправки ответа браузеру.
      * @param string $msg сообщение на выходе
      */
     public static function end($msg = '')

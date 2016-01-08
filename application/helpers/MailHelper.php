@@ -2,6 +2,9 @@
 /**
  * Почтовый класс
  */
+
+namespace app\helpers;
+
 class MailHelper
 {
     /**
@@ -13,7 +16,7 @@ class MailHelper
      */
     public static function sendHtml($to, $subject, $html)
     {
-        $from = App::conf('adminMail');
+        $from = \core\App::conf('adminMail');
         $rn = "\r\n";
         // Не указываем "To:" и "Subject:", это допишет функция mail()
         $headers = 'From: ' . $from . $rn;

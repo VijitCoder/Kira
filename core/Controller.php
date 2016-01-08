@@ -6,7 +6,7 @@
 namespace core;
 
 use Exception,
-    core\utils\EnvServer;
+    utils\VarServer;
 
 class Controller
 {
@@ -103,7 +103,7 @@ class Controller
      */
     public function redirect($url, $code = 302)
     {
-        $url = EnvServer::domainWithScheme() . ltrim($url, '/');
+        $url = VarServer::domainWithScheme() . ltrim($url, '/');
         header("location:{$url}", true, $code);
         App::end();
     }

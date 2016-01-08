@@ -38,7 +38,7 @@ class Router implements IRouter
         }
 
         list($ctrlName, $action, $params) = $set;
-//echo  '<pre>' .var_export($set, true) . '</pre>';//DBG
+//dd($set);//DBG
 
         if (!$controller = $this->_createController($ctrlName)) {
             return $this->_notFound();
@@ -103,7 +103,7 @@ class Router implements IRouter
                 }
             }
         }
-//echo  '<pre>' .var_export($matches, true) . '</pre>';//DBG
+//dd($matches);//DBG
         if (!$matches) {
             return;
         }
@@ -257,6 +257,7 @@ class Router implements IRouter
                             continue 2;
                         }
                     }
+                    unset($v);
                 } else {
                     $requiredParams = [];
                 }
@@ -264,7 +265,7 @@ class Router implements IRouter
                 break;
             }
         }
-
+//dd($left, $match);//DBG
         if ($match) {
             if ($requiredParams) {
                 $placeholders = [];
