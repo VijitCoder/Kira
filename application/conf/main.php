@@ -11,7 +11,7 @@ return array_merge(
         //ошибками 401-404, 500
         'errorHandler' => APP_NS_PREFIX . 'controllers\Error',
 
-        //'router' => APP_NS_PREFIX . 'ExampleRouter',
+        //'router' => APP_NS_PREFIX . 'SimpleRouter',
         'routes' => require __DIR__ . '/routes.php',
 
 

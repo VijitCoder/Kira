@@ -31,5 +31,4 @@ require 'core/autoloader.php';
 //Скрипт инициализации моего приложения-примера. Не имеет отношения к движку, это костыли :)
 include APP_PATH . 'init.php';
 
-$router = core\App::conf('router', false) ? : 'core\Router';
-$router::callAction();
+core\App::router()->callAction();

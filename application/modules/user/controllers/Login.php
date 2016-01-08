@@ -6,7 +6,6 @@
 namespace app\modules\user\controllers;
 
 use core\App,
-    core\Router,
     app\modules\user\services\AuthService,
     utils\Session;
 
@@ -17,7 +16,7 @@ class Login extends \app\controllers\Front
     public function __construct()
     {
         parent::__construct();
-        $this->urls['recover'] = Router::url([APP_NS_PREFIX . 'modules\user\controllers\\', 'login/recover']);
+        $this->urls['recover'] = App::router()->url([APP_NS_PREFIX . 'modules\user\controllers\\', 'login/recover']);
     }
 
     /**

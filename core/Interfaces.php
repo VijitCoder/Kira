@@ -12,14 +12,14 @@ interface IRouter
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      * @return void
      */
-    public static function callAction();
+    public function callAction();
 
     /**
-     * Построение URL по параметрам.
+     * Построение URL по описанию.
      *
      * @param mixed $route какое-то определение роута. Например controller/action
-     * @param array $params параметры для левой части роута
+     * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      */
-    public static function url($route, array $params = []);
+    public function url($route, array $params = []);
 }

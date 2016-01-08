@@ -12,36 +12,36 @@ class Router implements IRouter
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      */
-    public static function callAction()
+    public function callAction()
     {
         if (!isset($_SERVER['REQUEST_URI'])) {
-            return self::_notFound();
+            return $this->_notFound();
         }
 
         $url = explode('?', $_SERVER['REQUEST_URI'])[0]; //берем часть запроса до "?"
-        $url = ltrim($url, '/');
+        $url = urldecode(ltrim($url, '/'));
 
         if (!$url) {
             $handler = App::conf('indexHandler');
-            list($controller, $action) = self::_parseHandler($handler);
+            list($controller, $action) = $this->_parseHandler($handler);
             $controller->$action();
             return;
         }
 
         $tmp = rtrim($url, '/');
         if ($tmp !== $url) {
-            self::_redirect($tmp);
+            $this->_redirect($tmp);
         }
 
-        if (!$set = self::_findRouteFor($url)) {
-            return self::_notFound();
+        if (!$set = $this->_findRouteFor($url)) {
+            return $this->_notFound();
         }
 
-        list($ctrl, $action, $params) = $set;
+        list($ctrlName, $action, $params) = $set;
 //echo  '<pre>' .var_export($set, true) . '</pre>';//DBG
 
-        if (!$controller = self::_createController($ctrl)) {
-            return self::_notFound();
+        if (!$controller = $this->_createController($ctrlName)) {
+            return $this->_notFound();
         }
 
         if (!$action) {
@@ -50,7 +50,7 @@ class Router implements IRouter
 
         if (method_exists($controller, $action)) {
             if ($params) {
-                $ref_method = new \ReflectionMethod("$ctrl::$action");
+                $ref_method = new \ReflectionMethod("$ctrlName::$action");
                 $funcParams = [];
                 foreach ($ref_method->getParameters() as $v) {
                     $k = $v->name;
@@ -63,7 +63,7 @@ class Router implements IRouter
                 $controller->$action();
             }
         } else {
-            return self::_notFound();
+            return $this->_notFound();
         }
     }
 
@@ -90,7 +90,7 @@ class Router implements IRouter
      * @param string $url запрос к серверу, без ведущего слеша и без GET-параметров.
      * @return array
      */
-    private static function _findRouteFor($url)
+    private function _findRouteFor($url)
     {
         foreach (App::conf('routes') as $namespace => $routes) {
             foreach ($routes as $left => $right) {
@@ -137,7 +137,7 @@ class Router implements IRouter
      * @param $ctrl
      * @return Controller|null
      */
-    private static function _createController($ctrl)
+    private function _createController($ctrl)
     {
         $pattern = '~^' . str_replace('\\', '/', APP_NS_PREFIX) . '~';
         $str = str_replace('\\', '/', $ctrl);
@@ -155,11 +155,11 @@ class Router implements IRouter
      *
      * @return void
      */
-    private static function _notFound()
+    private function _notFound()
     {
         http_response_code(404);
         if ($handler = App::conf('errorHandler', false)) {
-            list($controller, $action) = self::_parseHandler($handler);
+            list($controller, $action) = $this->_parseHandler($handler);
             $controller->$action();
         }
     }
@@ -172,7 +172,7 @@ class Router implements IRouter
      * @param $handler
      * @return array
      */
-    private static function _parseHandler($handler)
+    private function _parseHandler($handler)
     {
         $handler = explode('->', $handler);
         $controller = (new $handler[0]);
@@ -192,7 +192,7 @@ class Router implements IRouter
      *
      * @param string $uri новый относительный адрес. Всегда без слеша слева, таков тут мой код.
      */
-    private static function _redirect($uri)
+    private function _redirect($uri)
     {
         $scheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
@@ -206,7 +206,7 @@ class Router implements IRouter
     }
 
     /**
-     * Построение URL по параметрам, используя карту роутов.
+     * Построение URL по описанию, используя карту роутов.
      *
      * Перебираем роуты в заданном пространстве имен. Сравниваем указанные контроллер/действие с правой частью роута.
      * Если нашли совпадение справа (будет массив), анализируем правило слева, выбирая необходимые подстановки -
@@ -222,11 +222,11 @@ class Router implements IRouter
      * и получить битую ссылку.
      *
      * @param mixed $route  массив 2-х элементов ["пространство имен", "правая часть из описания роута"]
-     * @param array $params параметры для левой части роута
+     * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      * @throw RangeException
      */
-    public static function url($route, array $params = [])
+    public function url($route, array $params = [])
     {
         list($ns, $ctrl) = $route;
         $ctrl = trim($ctrl, '/');
@@ -274,7 +274,14 @@ class Router implements IRouter
                 $left = preg_replace($placeholders, $requiredParams, $left);
             }
 
+            if (preg_match('~[^/a-z0-9_-]~i', $left)) {
+                $arr = explode('/', $left);
+                $arr = array_map('urlencode', $arr);
+                $left = implode('/', $arr);
+            }
+
             $url = '/' . $left;
+
             if ($params) {
                 foreach ($params as $k => &$v) {
                     $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');

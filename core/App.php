@@ -5,6 +5,8 @@
 
 namespace core;
 
+use Exception;
+
 class App
 {
     /** @var array конфигурация приложения */
@@ -15,6 +17,9 @@ class App
 
     /** @var string заданный файл локализации. Инфа для проброса исключения */
     private static $_lang;
+
+    /** @var object реализация интерфейса IRouter, объект класса текущего роутера */
+    private static $_router;
 
     /**
      * Чтение конкретной настройки конфига
@@ -131,5 +136,22 @@ class App
             session_write_close();
         }
         exit($msg);
+    }
+
+    /**
+     * Возвращает объект класса текущего роутера.
+     *
+     * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
+     * метода url(). Чтобы в клиентском коде не выяснять, кто - текущий роутер, введена эта функция.
+     *
+     * @return object реализация интерфейса IRouter, объект класса роутера
+     */
+    public static function router()
+    {
+        if (!self::$_router) {
+            $router = self::conf('router', false) ? : 'core\Router';
+            self::$_router = new $router;
+        }
+        return self::$_router;
     }
 }

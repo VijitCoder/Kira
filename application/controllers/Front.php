@@ -6,8 +6,7 @@
 namespace app\controllers;
 
 use app\modules\user\services\AuthService,
-    core\App,
-    core\Router;
+    core\App;
 
 class Front extends \core\Controller
 {
@@ -38,7 +37,7 @@ class Front extends \core\Controller
             'reg'     => 'registration',
         ];
         foreach ($urls as &$v) {
-            $v = Router::url([APP_NS_PREFIX . 'modules\user\controllers\\', $v]);
+            $v = App::router()->url([APP_NS_PREFIX . 'modules\user\controllers\\', $v]);
         }
         $this->urls = $urls;
     }
