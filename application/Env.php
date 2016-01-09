@@ -1,6 +1,6 @@
 <?php
 /**
- * Определение среды окружения (local, dev, stage, production, mobile).
+ * Среда окружения сайта.
  */
 
 namespace app;
@@ -8,16 +8,18 @@ namespace app;
 use Exception,
     core\App;
 
-class Env extends \utils\EnvDetect
+class Env extends \utils\Env
 {
     /**
-     * Определяем среду через явное указание в конфиге приложения. Мобильное окружение определяем по имени домена.
-     * Начинается с 'm.'
+     * Определение среды окружения (local, dev, stage, production, mobile).
+     *
+     * Перекрытие родительского метода. Определяем среду через явное указание в конфиге приложения. Мобильное окружение
+     * определяем по имени домена, начинается с 'm.'.
      *
      * @return int
      * @throws Exception
      */
-    protected static function detectEnvironment()
+    public static function detectEnvironment()
     {
         if (isset($_SERVER['HOST']) && substr($_SERVER['HOST'], 0, 2) === 'm.') {
             return self::D_MOBILE;

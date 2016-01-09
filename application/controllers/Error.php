@@ -5,7 +5,8 @@
 
 namespace app\controllers;
 
-use utils\VarServer;
+use utils\Env,
+    utils\Request;
 
 class Error extends \app\controllers\Front
 {
@@ -20,8 +21,8 @@ class Error extends \app\controllers\Front
     {
         $code = http_response_code();
         $data = [
-            'domain' => VarServer::domain(),
-            'index'  => VarServer::indexPage(),
+            'domain' => Env::domain(),
+            'index'  => Env::indexPage(),
         ];
         switch ($code) {
             case 401:
@@ -30,18 +31,18 @@ class Error extends \app\controllers\Front
             case 403:
                 $this->title = '403 В доступе отказано';
                 //...
-                //Запись в лог, уведомление админу
+                //@TODO Запись в лог, уведомление админу
                 break;
             case 404:
                 $this->title = '404 Страница не найдена';
-                $data['request'] = VarServer::requestURL();
+                $data['request'] = Request::absoluteURL();
                 //...
-                //запись в лог
+                //@TODO запись в лог
                 break;
             case 500:
                 $this->title = '500 Внутренняя ошибка сервера';
                 //...
-                //уведомление админу
+                //@TODO уведомление админу
                 break;
             default:
                 return;

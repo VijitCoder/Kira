@@ -9,8 +9,9 @@ use Exception;
 
 class App
 {
-    /** Название и версия движка */
-    const VERSION = 'Kira Engine v1.1';
+    /** Название и версия движка. Ссылка на оф.сайт движка */
+    const VERSION = 'Kira 1.1';
+    const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /** @var array конфигурация приложения */
     private static $config;
@@ -29,7 +30,7 @@ class App
      *
      * @param string $key ключ в конфиге
      * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
-     * @return mixed
+     * @return mixed|null
      * @throws Exception
      */
     public static function conf($key, $strict = true)

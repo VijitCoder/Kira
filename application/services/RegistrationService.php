@@ -8,7 +8,7 @@ namespace app\services;
 
 use \core\App,
     \utils\Session,
-    \utils\VarServer,
+    \utils\Env,
     \app\models\UserModel,
     \app\helpers\MailHelper;
 
@@ -142,7 +142,7 @@ class RegistrationService
      */
     public static function sendConfirm($mail, $salt)
     {
-        $url = rtrim(VarServer::indexPage(), '/');
+        $url = rtrim(Env::indexPage(), '/');
         $url .= App::router()->url(
             [APP_NS_PREFIX . 'controllers\\', 'registration/confirm'],
             ['m' => $mail, 'c' => md5($salt)]
@@ -152,7 +152,7 @@ class RegistrationService
         $mailto = sprintf('<a href="mailto:%s?subject=это_письмо_получено_ошибочно">%s</a>', $from, $from);
 
         $html = '<p>Вы получили это письмо, потому что ваш email был указан при регистрации на сайте '
-            . sprintf('<a href="%s">%s</a>', VarServer::indexPage(), VarServer::domain()) . '</p>'
+            . sprintf('<a href="%s">%s</a>', Env::indexPage(), Env::domain()) . '</p>'
             . '<p>Для подтверждения регистрации пожалуйста перейдите по ссылке '
             . sprintf('<a href="%s">%s</a>', $url, $url) . '</p>'
             . '<p>Если вы считаете, что получили это письмо ошибочно, приносим свои извинения. Не отвечайте '

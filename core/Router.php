@@ -11,9 +11,21 @@ class Router implements IRouter
 {
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
+     *
+     * @TODO это хреновое решение, нужно придумать лучше.
+     * Если "HTTP status code" в списке тех кодов ошибок, на которые веб-сервер может навешать хендлер, то сразу передаем
+     * управление в него. Например, для Apache это "ErrorDocument". Для других веб-серверов тоже есть подобная возможность.
+     * При этом, чтобы там ни было прописано у сервера, запрос получит тот контроллер, который указан в конфиге
+     * 'errorHandler'. И это - тоже слабая часть решения, т.к. эта настройка - необязательна.
      */
     public function callAction()
     {
+        $code = http_response_code();
+//        if (in_array($code, [401, 403, 404, 500])) {
+        if ($code >= 400) {
+            return $this->_notFound($code);
+        }
+
         if (!isset($_SERVER['REQUEST_URI'])) {
             return $this->_notFound();
         }
@@ -92,6 +104,7 @@ class Router implements IRouter
      */
     private function _findRouteFor($url)
     {
+//echo $url;
         foreach (App::conf('routes') as $namespace => $routes) {
             foreach ($routes as $left => $right) {
                 $left = ltrim($left, '/');
@@ -153,11 +166,12 @@ class Router implements IRouter
      * В конфиге должен быть прописан контроллер, который будет обрабатывать 404 ошибку. Если он не задан (пустая строка),
      * просто возвращаем заголовок.
      *
-     * @return void
+     * @param int $code код HTTP-статуса
+     * @throws \Exception
      */
-    private function _notFound()
+    private function _notFound($code = 404)
     {
-        http_response_code(404);
+        http_response_code($code);
         if ($handler = App::conf('errorHandler', false)) {
             list($controller, $action) = $this->_parseHandler($handler);
             $controller->$action();

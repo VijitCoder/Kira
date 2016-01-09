@@ -49,11 +49,15 @@
 
     <div id='footer'>
 		<div class='float-left'>
-            <a href="<?=utils\VarServer::indexPage();?>">
-                <?=utils\VarServer::domain();?>
+            <a href="<?=utils\Env::indexPage();?>">
+                <?=utils\Env::domain();?>
             </a> &copy; 7Lives, 2015
         </div>
-		<div class='float-right'><small><?=core\App::t('Работает на');?> <i><?=core\App::VERSION?></i></small></div>
+		<div class='float-right'>
+            <small><i>
+               <?=core\App::t('Работает на');?> <a href="<?=core\App::ENGINE_URL?>"><?=core\App::VERSION?></a>
+            </i></small>
+        </div>
 	</div>
 
 </body>
