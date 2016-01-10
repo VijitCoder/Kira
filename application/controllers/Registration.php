@@ -5,10 +5,10 @@
 
 namespace app\controllers;
 
-use core\App,
+use engine\App,
     app\forms\RegistrationForm,
     app\services\RegistrationService,
-    utils\Session;
+    engine\net\Session;
 
 class Registration extends \app\controllers\Front
 {

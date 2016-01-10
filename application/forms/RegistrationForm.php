@@ -4,7 +4,7 @@
  */
 namespace app\forms;
 
-class RegistrationForm extends \core\Form
+class RegistrationForm extends \engine\web\Form
 {
     /** @var array фильтры полей html-формы. Каждая запись - описание валидатора */
     protected $filters = [
@@ -18,14 +18,14 @@ class RegistrationForm extends \core\Form
 
         'password' => [
             'filter'  => FILTER_CALLBACK,
-            'options' => ['Validator', 'password'],
+            'options' => ['\engine\utils\Validators', 'password'],
             'required' => true,
             'max' => 30,
         ],
 
         'mail' => [
             'filter'  => FILTER_CALLBACK,
-            'options' => ['Validator', 'mail'],
+            'options' => ['\engine\utils\Validators', 'mail'],
             'required' => true,
             'max' => 50,
         ],
@@ -52,12 +52,12 @@ class RegistrationForm extends \core\Form
 
         'birth_date' => [
             'filter'  => FILTER_CALLBACK,
-            'options' => ['Validator', 'date'],
+            'options' => ['\engine\utils\Validators', 'date'],
         ],
 
         'town' => [
             'filter'  => FILTER_CALLBACK,
-            'options' => ['Validator', 'normalizeString'],
+            'options' => ['\engine\utils\Validators', 'normalizeString'],
             'max' => 100,
         ],
 

@@ -60,4 +60,4 @@ $main = [
 
 $env = require __DIR__ . '/env.php';
 
-return utils\Arrays::merge_recursive($main, $env);
+return engine\utils\Arrays::merge_recursive($main, $env);

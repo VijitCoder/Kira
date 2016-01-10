@@ -3,10 +3,10 @@
  * Базовый класс контроллеров
  */
 
-namespace core;
+namespace engine\web;
 
 use Exception,
-    utils\Env;
+    engine\net\Response;
 
 class Controller
 {
@@ -90,21 +90,18 @@ class Controller
     }
 
     /**
-     * Редирект
+     * Редирект из контроллера.
      *
-     * Прим.: указание абсолютного URI - это требование спецификации HTTP/1.1, {@see http://php.net/manual/ru/function.header.php}
-     * Быстрая справка по кодам с редиктом {@see http://php.net/manual/ru/function.header.php#78470}
+     * Функция введена для удобства чтения кода.
      *
-     * Ситуация со схемой на самом деле может быть куда сложнее. Пока не усложняю, нет необходимости.
+     * @TODO сомнительная польза. Убрать?
      *
-     * @param string $url  новый относительный адрес. Возможно со слешем слева
+     * @param string $url  новый относительный адрес, с ведущим слешем
      * @param int    $code код ответа HTTP
      * @return void
      */
-    public function redirect($url, $code = 302)
+    public function redirect($url, $code)
     {
-        $url = Env::domainWithScheme() . ltrim($url, '/');
-        header("location:{$url}", true, $code);
-        App::end();
+        Response::redirect($url, $code);
     }
 }

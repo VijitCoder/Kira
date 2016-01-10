@@ -3,11 +3,11 @@
  * Маршрутизатор запросов
  */
 
-namespace core;
+namespace engine\net;
 
-use utils\Dumper;
+use engine\App;
 
-class Router implements IRouter
+class Router implements \engine\IRouter
 {
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
@@ -197,26 +197,17 @@ class Router implements IRouter
     /**
      * Редирект. Только для нужд роутера.
      *
-     * Прим.: указание абсолютного URL - это требование спецификации HTTP/1.1,
-     * {@see http://php.net/manual/ru/function.header.php}
-     *
-     * Прим.: Controller имеет аналогичный метод. Но там он используется в публичных целях и по очевидной логике.
-     *
      * @TODO Можно добавить логирование таких редиректов для анализа ошибок, неправильных URL-в на страницах сайта и т.п.
      *
-     * @param string $uri новый относительный адрес. Всегда без слеша слева, таков тут мой код.
+     * @param string $url новый относительный адрес. Всегда без слеша слева, таков тут мой код.
      */
-    private function _redirect($uri)
+    private function _redirect($url)
     {
-        $scheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
-
         if ($_SERVER['QUERY_STRING']) {
-            $uri .= '?' . $_SERVER['QUERY_STRING'];
+            $url .= '?' . $_SERVER['QUERY_STRING'];
         }
 
-        header("location:{$scheme}://{$host}/{$uri}", true, 301);
-        exit;
+        Response::redirect('/' . $url, 301);
     }
 
     /**
@@ -306,8 +297,13 @@ class Router implements IRouter
 
             return $url;
         } else {
-            $strParams = count($params) ? 'параметры ' . Dumper::dumpAsString($params, 1, false) : 'без параметров';
-            throw new \RangeException("не могу построить URL по заданным значениям: array('$ns', '$ctrl'), $strParams");
+            $strParams = [];
+            foreach($params as $k => $v) {
+                $strParams[] = "$k => $v";
+            }
+
+            $strParams = count($strParams) ? 'параметры [' . implode(', ', $strParams) . ']' : 'без параметров';
+            throw new \RangeException("не могу построить URL по заданным значениям: ['$ns', '$ctrl'], $strParams");
         }
     }
 }

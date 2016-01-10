@@ -2,53 +2,79 @@
 /**
  * Запрос клиента.
  *
- * Обертка для $_GET; пара методов для cookie; получение полного адреса запроса, ip юзера и т.п.
+ * Обертка для $_GET; получение полного адреса запроса, ip юзера и т.п.
  *
  * Прим.: в PECL есть расширение с похожим назначением {@see http://php.net/manual/en/class.httprequest.php}. Но допустим,
  * нам так много не нужно :)
- *
- * @TODO описания к методам
  */
 
-namespace utils;
+namespace engine\net;
+
+use engine\Env;
 
 class Request
 {
+    /**
+     * С каким методом (http-глаголом) пришел запрос.
+     *
+     * RESTful методы: GET, POST, DELETE, PUT.
+     * Есть еще OPTIONS, HEAD. Может еще какая-то экзотика.
+     *
+     * @see http://www.restapitutorial.ru/lessons/httpmethods.html
+     *
+     * @return string|null
+     */
+    public static function method()
+    {
+        return isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null;
+    }
+
+    /**
+     * Получение одного значения из $_GET.
+     * Если параметр не существует, вернем NULL.
+     *
+     * @param $name
+     * @return string|null
+     */
     public static function GET($name)
     {
         return (isset($_GET[$name])) ? $_GET[$name] : null;
     }
 
+    /**
+     * Значение из $_GET, приведенное к числу.
+     * Если параметр не существует, вернем NULL.
+     *
+     * @param $name
+     * @return int|null
+     */
     public static function GET_int($name)
     {
         return intval(self::get($name));
     }
 
+    /**
+     * Значение из $_GET, приведенное к булевому типу.
+     * Если параметр не существует, вернем NULL.
+     *
+     * @param $name
+     * @return bool|null
+     */
     public static function GET_bool($name)
     {
-        $var = self::get($name);
-        return preg_match('~^true|1|on|checked|истина|да$~u', $var) ? true : false;
-    }
-
-    public static function GET_regexp($name, $pattern)
-    {
-        $var = self::get($name);
-        return preg_match($pattern, $var) ? $var : null;
+        return  ($var = self::get($name)) && preg_match('~^true|1|on|checked|истина|да$~u', $var) ? true : false;
     }
 
     /**
-     * Установка печеньки с параметрами, принятыми по умолчанию. Теоретически сократит количество копипасты.
-     * ttl - год, 60*60*24*365.
-     * Доступ - весь сайт, включая поддомены.
-     * Безопасную передачу отключить
-     * Отдавать только по http-протоколу
+     * Значение из $_GET, с валидацией через регулярное выражение.
+     * Если параметр не существует или не подходит по регулярке, вернем NULL.
      *
-     * @param string $name  имя печеньки
-     * @param string $value значение в печеньку
+     * @param $name
+     * @return string|null
      */
-    public function setDefaultCookie($name, $value)
+    public static function GET_regexp($name, $pattern)
     {
-        setcookie($name, $value, time() + 31536000, '/', '.' . Env::domain(), false, true);
+        return ($var = self::get($name)) && preg_match($pattern, $var) ? $var : null;
     }
 
     /**
@@ -57,7 +83,7 @@ class Request
      * @param $name имя печеньки
      * @return string|null
      */
-    public function getCookie($name)
+    public static function getCookie($name)
     {
         return (isset($_COOKIE[$name])) ? $_COOKIE[$name] : null;
     }
@@ -65,7 +91,7 @@ class Request
     /**
      * Абсолютный URL текущей страницы.
      *
-     * Если был не http-запрос, вернем NULL.
+     * Если нет заголовка 'HTTP_HOST', вернем NULL.
      *
      * @copyright  2007-2010 SARITASA LLC <info@saritasa.com>
      * @link       http://www.saritasa.com
@@ -78,21 +104,11 @@ class Request
             return false;
         }
 
-        if (!isset($_SERVER['HTTPS']) && isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-            $url = $_SERVER['HTTP_X_FORWARDED_PROTO'] . '://';
-        } else {
-            $url = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == 'off' ? 'http://' : 'https://';
-        }
+        $user = isset($_SERVER['PHP_AUTH_USER'])
+            ? $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@'
+            : '';
 
-        if (isset($_SERVER['PHP_AUTH_USER'])) {
-            $url .= $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@';
-        }
-
-        $url .= $_SERVER['HTTP_HOST'];
-
-        if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != 80) {
-            $url .= ':' . $_SERVER['SERVER_PORT'];
-        }
+        $url = Env::scheme() . $user . $_SERVER['HTTP_HOST'] . Env::port();
 
         $relatedUrl = '';
 

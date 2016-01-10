@@ -1,11 +1,13 @@
 <?php
 /**
- * Супер-класс. Общие валидаторы
+ * Общие валидаторы
  */
 
-namespace core;
+namespace engine\utils;
 
-class Validator
+use engine\App;
+
+class Validators
 {
     /**
      * Валидатор пароля
@@ -15,7 +17,7 @@ class Validator
     public static function password($pass)
     {
         $errors = array();
-        if(!preg_match('~^[\w!@#$%^&`\~]+$~u', $pass)) {
+        if (!preg_match('~^[\w!@#$%^&`\~]+$~u', $pass)) {
             $errors[] = App::t('Недопустимые символы');
         }
 
@@ -32,20 +34,23 @@ class Validator
         $cnt += $tmp2 != $tmp1 ? 1 : 0;                         //опять изменилась? Значит цифровой набор был
         $cnt += $tmp1 != mb_strtoupper($tmp1) && $tmp1 != mb_strtolower($tmp1)
             ? 1 : 0;                                            //теперь в строке только буквы. Проверяем camelCase.
-        if ($tmp1) $cnt++;                                      //факт того, что к этому моменту строка не опустела
+        if ($tmp1) {
+            $cnt++;
+        }                                      //факт того, что к этому моменту строка не опустела
 
         $minComb = App::conf('minComb');
         if ($cnt < $minComb) {
             $errors[] = App::t('Пароль слишком простой') . ", {$cnt}/{$minComb}";
         }
 
-        return  $errors ? : $pass;
+        return $errors ?: $pass;
     }
 
     /**
-     * Валидатор email
-     * Проверка на корректность и черный список серверов
-     * @param string $pass
+     * Валидатор email.
+     * Проверка на корректность и черный список серверов.
+     *
+     * @param string $mail
      * @return array | string
      */
     public static function mail($mail)
@@ -56,12 +61,12 @@ class Validator
         }
 
         $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
-        $black = App::conf('blackServers');
+        $black = App::conf('blackServers', false) ? : [];
         if (in_array($server, $black)) {
             return [App::t('Почтовый сервер вашего email в черном списке. Пожалуйста укажите другой адрес')];
         }
 
-        return  $mail;
+        return $mail;
     }
 
     /**

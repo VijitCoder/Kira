@@ -3,7 +3,7 @@
  * Супер-класс моделей форм (валидации форм)
  */
 
-namespace core;
+namespace engine\web;
 
 class Form
 {

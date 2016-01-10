@@ -3,7 +3,7 @@
  * Свои манипуляции с массивами. В PHP их много, но иногда чего-то не хватает :)
  */
 
-namespace utils;
+namespace engine\utils;
 
 class Arrays
 {

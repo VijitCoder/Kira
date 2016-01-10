@@ -3,7 +3,7 @@
  * Базовый класс. Будет что-то общее у многих - можно разместить тут.
  */
 
-namespace core;
+namespace engine;
 
 use Exception;
 
@@ -28,7 +28,7 @@ class App
     /**
      * Чтение конкретной настройки конфига
      *
-     * @param string $key ключ в конфиге
+     * @param string $key    ключ в конфиге
      * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
      * @return mixed|null
      * @throws Exception
@@ -79,8 +79,8 @@ class App
      * массива - те же фразы, но на заданном языке. Все просто :)
      *
      * @param string $key фраза на русском языке
-     * @param array $ins массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб
-     * с простым текстом фразы не совпало.
+     * @param array  $ins массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб
+     *                    с простым текстом фразы не совпало.
      * @return string фраза в заданном языке
      */
     public static function t($key, $ins = array())
@@ -93,7 +93,7 @@ class App
         }
 
         //поиск перевода. Русского словаря нет, он без перевода работает
-        $str = (self::$_lang=='ru' || !isset(self::$_lexicon[$key])) ? $key : self::$_lexicon[$key];
+        $str = (self::$_lang == 'ru' || !isset(self::$_lexicon[$key])) ? $key : self::$_lexicon[$key];
         if ($ins) {
             $str = str_replace(array_keys($ins), $ins, $str);
         }
@@ -115,15 +115,15 @@ class App
     {
         $wrapper = "<html>\n<head>\n<meta charset='utf-8'>\n</head>\n\n<body>\n%s\n</body>\n\n</html>";
         if (DEBUG) {
-            $err = '<h3>'.get_class($ex)."</h3>\n"
-                 . sprintf("<p><i>%s</i></p>\n", $ex->getMessage())
-                 . sprintf("<p>%s:%d</p>\n", str_replace(ROOT_PATH, '/', $ex->getFile()), $ex->getLine())
-                 . '<pre>' . $ex->getTraceAsString() . '</pre>';
+            $err = '<h3>' . get_class($ex) . "</h3>\n"
+                . sprintf("<p><i>%s</i></p>\n", $ex->getMessage())
+                . sprintf("<p>%s:%d</p>\n", str_replace(ROOT_PATH, '/', $ex->getFile()), $ex->getLine())
+                . '<pre>' . $ex->getTraceAsString() . '</pre>';
             printf($wrapper, $err);
-        } else  {
+        } else {
             $err = "<h3>Упс! Произошла ошибка</h3>\n"
-                 //. '<p><i>' . $ex->getMessage() . "</i></p>\n"
-                 . '<p>Зайдите позже, пожалуйста.</p>';
+                //. '<p><i>' . $ex->getMessage() . "</i></p>\n"
+                . '<p>Зайдите позже, пожалуйста.</p>';
 
             printf($wrapper, $err);
             //@TODO логирование, письмо/смс админу.
@@ -132,12 +132,14 @@ class App
 
     /**
      * Завершение приложения. Последние процедуры после отправки ответа браузеру.
-     * @param string $msg сообщение на выходе
+     *
+     * @param callable $callback функция, которую следует выполнить перед выходом.
+     * @param string   $msg сообщение на выходе
      */
-    public static function end($msg = '')
+    public static function end($callback = null, $msg = '')
     {
-        if (session_status() == PHP_SESSION_ACTIVE) {
-            session_write_close();
+        if ($callback) {
+            call_user_func($callback);
         }
         exit($msg);
     }
@@ -153,7 +155,7 @@ class App
     public static function router()
     {
         if (!self::$_router) {
-            $router = self::conf('router', false) ? : 'core\Router';
+            $router = self::conf('router', false) ?: 'engine\net\Router';
             self::$_router = new $router;
         }
         return self::$_router;

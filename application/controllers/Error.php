@@ -5,8 +5,9 @@
 
 namespace app\controllers;
 
-use utils\Env,
-    utils\Request;
+use engine\Env,
+    engine\net\Request,
+    engine\net\Response;
 
 class Error extends \app\controllers\Front
 {
@@ -21,7 +22,7 @@ class Error extends \app\controllers\Front
     {
         $code = http_response_code();
         $data = [
-            'domain' => Env::domain(),
+            'domain' => Env::domainName(),
             'index'  => Env::indexPage(),
         ];
         switch ($code) {
@@ -45,6 +46,7 @@ class Error extends \app\controllers\Front
                 //@TODO уведомление админу
                 break;
             default:
+                echo "Ошибка. $code " . Response::textOf($code);
                 return;
         }
 

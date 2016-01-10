@@ -5,7 +5,7 @@
 
 namespace app\models;
 
-class UserModel extends \core\Db
+class UserModel extends \engine\db\Model
 {
     use AddUserTrait;
 

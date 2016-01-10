@@ -4,7 +4,7 @@
  * не подключит.
  */
 
-namespace utils;
+namespace engine\utils;
 
 class Strings
 {

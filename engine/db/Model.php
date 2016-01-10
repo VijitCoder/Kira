@@ -4,14 +4,12 @@
  * По вопросам PDO {@see http://phpfaq.ru/pdo} Очень полезная статья.
  */
 
-namespace core;
+namespace engine\db;
 
-use PDO;
-
-class Db
+class Model
 {
-    /** @var PDO объект подключения к БД. Если равен false, значит подключение не удалось. */
-    private static $_dbh = null;
+    /** @var PDO дескриптор соединения с БД */
+    private $_dbh;
 
     /**
      * @var string имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса.
@@ -26,43 +24,40 @@ class Db
     protected $pk = 'id';
 
     /**
-     * Конструктор
+     * Конструктор.
+     *
+     * Манипуляции с конфигами позволяют подключать модели к разным базам и/или с разными учетками.
+     *
+     * @param string $confKey ключ конфига, описывающий подключение к БД
      */
-    public function __construct()
+    public function __construct($confKey = 'db')
     {
         if (!$this->table) {
             $reflect = new \ReflectionClass($this);
             $name = $reflect->getShortName();
             $this->table = '`' . preg_replace('~Model$~i', '', $name) . '`';
         }
+
+        $this->_dbh = DbConnection::connect($confKey);
     }
 
     /**
-     * Соединяемся с базой или получаем дескриптор подключения
-     * прим: дескриптор соединения может понадобиться в сервисах при запуске транзакции. Поэтому публичный
-     * статичный метод.
-     * @return PDO объект подключения к БД
-     */
-    public static function connect()
-    {
-        if (!is_null(self::$_dbh)) {
-            return self::$_dbh;
-        }
-
-        $conf = App::conf('db');
-
-        //Тут можно ловить исключение. Сейчас исключения ловит перехватчик в App.php
-        self::$_dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
-
-        return self::$_dbh;
-    }
-
-    /**
-     * Выполняем запрос. Пока ни каких наворотов с биндингом и т.д. Соединились, поготовили запрос, выполнили.
-     * Результат вернули клиенту. Все.
+     * Возвращает дескриптор соединения с БД. Он нужен, например, для запуска транзакции.
      *
-     * Это вспомогательная функция моделей, для простых запросов. Хочешь что-то особенное? Нивапрос! Пиши метод
-     * в своей модели, вызывай connect() и дальше в ней все сам.
+     * @return PDO
+     */
+    public function getConnection()
+    {
+        return $this->_dbh;
+    }
+
+    /**
+     * Выполняем запрос.
+     *
+     * Соединились, подготовили запрос, выполнили. Результат вернули.
+     *
+     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Хочешь что-то особенное? Нивапрос!
+     * Пиши метод в своей модели, вызывай connect() и дальше в ней все сам.
      *
      * Обязательные параметры:
      *  q = query - текст запроса, прямым текстом с плейсхолдерами, если нужно.
@@ -85,7 +80,7 @@ class Db
         $default = array(
             'q'     => null,
             'p'     => array(),
-            'fs'    => PDO::FETCH_ASSOC,
+            'fs'    => \PDO::FETCH_ASSOC,
             'one'   => false,
             'guess' => true,
         );
@@ -96,7 +91,7 @@ class Db
             throw new Exception('Не указан текст запроса');
         }
 
-        $sth = $this->connect()->prepare($q);
+        $sth = $this->_dbh->prepare($q);
         //$sth->debugDumpParams(); exit;//DBG
 
         /*

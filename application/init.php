@@ -9,7 +9,7 @@
 //Теперь вызов простой: dd($var1, $var2, ...);
 function dd() {
     foreach (func_get_args() as $var) {
-        echo utils\Dumper::dump($var);
+        echo engine\utils\Dumper::dump($var);
     }
 }
 

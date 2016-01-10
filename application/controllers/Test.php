@@ -5,7 +5,7 @@
 
 namespace app\controllers;
 
-class Test extends \core\Controller
+class Test extends \engine\web\Controller
 {
     public function index()
     {

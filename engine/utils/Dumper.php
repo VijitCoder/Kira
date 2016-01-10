@@ -7,7 +7,7 @@
  * @license   http://www.yiiframework.com/license/
  */
 
-namespace utils;
+namespace engine\utils;
 
 class Dumper
 {

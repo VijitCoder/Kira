@@ -6,8 +6,8 @@
 
 namespace app\services;
 
-use core\App,
-    utils\Session,
+use engine\App,
+    engine\net\Session,
     app\models\UserModel;
 
 class AuthService {

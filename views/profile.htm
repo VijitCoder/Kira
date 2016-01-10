@@ -5,7 +5,7 @@
  */
 ?>
 
-<h4><?=core\App::t('Профиль');?></h4>
+<h4><?=engine\App::t('Профиль');?></h4>
 
 <? $this->renderPartial('_flash'); ?>
 
@@ -17,37 +17,37 @@
     <col width='170'>
     <col width='450'>
     <tr>
-        <td class='user-prop'><?=core\App::t('Логин');?></td>
+        <td class='user-prop'><?=engine\App::t('Логин');?></td>
         <td class='user-value'><?=$d['login'];?></td>
     </tr>
     <tr>
-        <td><?=core\App::t('Email');?></td>
+        <td><?=engine\App::t('Email');?></td>
         <td class='user-value'>
             <?=$d['mail'];?>
             <?if ($d['status'] == 'new') {;?>
-                <span class='error'><?=core\App::t('не подтвержден');?></span>
-                &nbsp;&nbsp;&nbsp;<a href="<?=$d['confirmUrl'];?>"><?=core\App::t('исправить');?>
+                <span class='error'><?=engine\App::t('не подтвержден');?></span>
+                &nbsp;&nbsp;&nbsp;<a href="<?=$d['confirmUrl'];?>"><?=engine\App::t('исправить');?>
             <? } ?>
         </td>
     </tr>
     <tr>
-        <td><?=core\App::t('Имя');?></td>
+        <td><?=engine\App::t('Имя');?></td>
         <td class='user-value'><?=$d['firstname'];?></td>
     </tr>
     <tr>
-        <td><?=core\App::t('Фамилия');?></td>
+        <td><?=engine\App::t('Фамилия');?></td>
         <td class='user-value'><?=$d['secondname'];?></td>
     </tr>
     <tr>
-        <td><?=core\App::t('Пол');?></td>
-        <td class='user-value'><?=core\App::t($d['sex']);?></td>
+        <td><?=engine\App::t('Пол');?></td>
+        <td class='user-value'><?=engine\App::t($d['sex']);?></td>
     </tr>
     <tr>
-        <td><?=core\App::t('Дата рождения');?></td>
+        <td><?=engine\App::t('Дата рождения');?></td>
         <td class='user-value'><?=$d['birth_date'];?></td>
     </tr>
     <tr>
-        <td><?=core\App::t('Город проживания');?></td>
+        <td><?=engine\App::t('Город проживания');?></td>
         <td class='user-value'><?=$d['town'];?></td>
     </tr>
 </table>

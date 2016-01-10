@@ -26,9 +26,9 @@ ini_set('display_errors', (int)DEBUG);
 ini_set('display_startup_errors', (int)DEBUG);
 error_reporting(DEBUG ? E_ALL : 0);
 
-require 'core/autoloader.php';
+require 'engine/autoloader.php';
 
 //Скрипт инициализации моего приложения-примера. Не имеет отношения к движку, это костыли :)
 include APP_PATH . 'init.php';
 
-core\App::router()->callAction();
+engine\App::router()->callAction();

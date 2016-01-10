@@ -46,10 +46,10 @@ function PSR4_loader($class)
  */
 function customLoader($class)
 {
-    $core = ['App', 'Controller', 'Db', 'Form', 'Router', 'Session', 'Validator'];
+    $engine = ['App', 'Controller', 'Db', 'Form', 'Router', 'Session', 'Validator'];
 
-    if (in_array($class, $core)) {
-        require_once ROOT_PATH . "core/{$class}.php";
+    if (in_array($class, $engine)) {
+        require_once ROOT_PATH . "engine/{$class}.php";
     } else if (preg_match('~.*([A-Z][a-z]*)$~', $class, $m)) {
         $path = APP_PATH . ($m[0] == $m[1] ? '' : lcfirst($m[1]));
         require_once "{$path}/{$class}.php";
@@ -60,4 +60,4 @@ require_once 'Interfaces.php';
 spl_autoload_register('PSR4_loader');
 
 //Глобальный перехватчик для исключений, которые не будут пойманы в контексте
-set_exception_handler(['core\App', 'exceptionHandler']);
+set_exception_handler(['engine\App', 'exceptionHandler']);

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title><?=$this->title;?></title>
     <link href="<?=ASSETS_URL . 'style.css';?>" rel="stylesheet" type="text/css" />
-    <script src="<?=ASSETS_URL . 'i18n/'. core\App::detectLang() . '.js';?>"></script>
+    <script src="<?=ASSETS_URL . 'i18n/'. engine\App::detectLang() . '.js';?>"></script>
 
     <script src="<?=ASSETS_URL . 'jquery-2.1.4.min.js';?>"></script>
     <script src="<?=ASSETS_URL . 'jquery.cookie.js';?>"></script>
@@ -20,7 +20,7 @@
 		<div id='header'>
 		    <? $lang = (isset($_COOKIE['lang'])) ? $_COOKIE['lang'] : 'ru'; ?>
 		    <div class='top-menu-left'>
-		        <?=core\App::t('Язык');?>
+		        <?=engine\App::t('Язык');?>
 		        <select id='cmbLang'>
 				    <option value="ru" <?if ($lang=='ru') echo 'selected';?>>русский</option>
 				    <option value="en" <?if ($lang=='en') echo 'selected';?>>english</option>
@@ -29,11 +29,11 @@
 
 		    <div class='top-menu-right'>
 	            <? if ($this->userId): ?>
-			        <a href="<?=$this->urls['logout'];?>"><?=core\App::t('Выйти');?></a>
-			        / <a href="<?=$this->urls['profile'];?>"><?=core\App::t('Личный кабинет');?></a>
+			        <a href="<?=$this->urls['logout'];?>"><?=engine\App::t('Выйти');?></a>
+			        / <a href="<?=$this->urls['profile'];?>"><?=engine\App::t('Личный кабинет');?></a>
 		        <? else: ?>
-                    <a href="<?=$this->urls['login'];?>"><?=core\App::t('Вход');?></a>
-                    / <a href="<?=$this->urls['reg'];?>"><?=core\App::t('Регистрация');?></a>
+                    <a href="<?=$this->urls['login'];?>"><?=engine\App::t('Вход');?></a>
+                    / <a href="<?=$this->urls['reg'];?>"><?=engine\App::t('Регистрация');?></a>
 		        <? endif ?>
 		    </div>
 
@@ -49,13 +49,11 @@
 
     <div id='footer'>
 		<div class='float-left'>
-            <a href="<?=utils\Env::indexPage();?>">
-                <?=utils\Env::domain();?>
-            </a> &copy; 7Lives, 2015
+            <a href="<?=engine\Env::indexPage();?>"><?=engine\Env::domainName();?></a> &copy; 7Lives, 2015
         </div>
 		<div class='float-right'>
             <small><i>
-               <?=core\App::t('Работает на');?> <a href="<?=core\App::ENGINE_URL?>"><?=core\App::VERSION?></a>
+               <?=engine\App::t('Работает на');?> <a href="<?=engine\App::ENGINE_URL?>"><?=engine\App::VERSION?></a>
             </i></small>
         </div>
 	</div>

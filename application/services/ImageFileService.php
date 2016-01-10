@@ -4,7 +4,7 @@
  */
 namespace app\services;
 
-use core\App;
+use engine\App;
 
 class ImageFileService
 {

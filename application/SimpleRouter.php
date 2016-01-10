@@ -17,9 +17,9 @@
 
 namespace app;
 
-use core\App;
+use engine\App;
 
-class SimpleRouter implements \core\IRouter
+class SimpleRouter implements \engine\IRouter
 {
     //Пространство имен контроллеров. Без учета префикса приложения APP_NS_PREFIX.
     const CTRL_NS = 'controllers\\';

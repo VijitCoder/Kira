@@ -1,4 +1,5 @@
-DirectoryIndex index.php
+# не нужно. Mod_rewrite все сделает
+#DirectoryIndex index.php
 
 # Конфиг МОЕГО сервера запрещает доступ к файлам, начинающимся с ".ht" (типа .htaccess, .htpasswd)
 # Но на всякий случай можно явно указать здесь.

@@ -6,9 +6,9 @@
 namespace app;
 
 use Exception,
-    core\App;
+    engine\App;
 
-class Env extends \utils\Env
+class Env extends \engine\Env
 {
     /**
      * Определение среды окружения (local, dev, stage, production, mobile).

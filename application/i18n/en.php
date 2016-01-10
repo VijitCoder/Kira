@@ -19,7 +19,7 @@ return [
         'For registration please fill at least fields, marked by star.',
     'запомнить меня' => 'remember me',
     'Язык' => 'Language',
-    'Допускаются цифры, латинские буквы, тире и знак подчеркивания' => 'Allowed only digits, latin letters, dash and underscore',
+    'Допускаются цифры, латинские буквы, тире и знак подчеркивания' => 'Allowed only digits, latin letters, dash and undersengine',
     'Минимальная длина пароля - N символов.' => 'Minimum password length - N symbols',
     'Обязательная комбинация как минимум N-х из следующих наборов символов' =>
         'Mandatory combination of at least N of the following sets of symbols',

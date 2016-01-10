@@ -6,9 +6,9 @@
 namespace app\controllers;
 
 use app\services\AuthService,
-    core\App;
+    engine\App;
 
-class Front extends \core\Controller
+class Front extends \engine\web\Controller
 {
     /** @var string макет. Относительный путь в каталоге VIEWS_PATH + имя файла без расширения. */
     protected $layout = 'layouts/main';

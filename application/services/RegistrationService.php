@@ -6,9 +6,9 @@
 
 namespace app\services;
 
-use \core\App,
-    \utils\Session,
-    \utils\Env,
+use \engine\App,
+    \engine\net\Session,
+    \engine\Env,
     \app\models\UserModel,
     \app\helpers\MailHelper;
 
@@ -79,7 +79,7 @@ class RegistrationService
 
         //Нужна транзакция, пишем в две таблицы.
         $model = $this->_userModel;
-        $con = $model->connect();
+        $con = $model->getConnection();
         $con->beginTransaction();
 
         if ($result = $model->addUser($fields)) {
@@ -152,7 +152,7 @@ class RegistrationService
         $mailto = sprintf('<a href="mailto:%s?subject=это_письмо_получено_ошибочно">%s</a>', $from, $from);
 
         $html = '<p>Вы получили это письмо, потому что ваш email был указан при регистрации на сайте '
-            . sprintf('<a href="%s">%s</a>', Env::indexPage(), Env::domain()) . '</p>'
+            . sprintf('<a href="%s">%s</a>', Env::indexPage(), Env::domainName()) . '</p>'
             . '<p>Для подтверждения регистрации пожалуйста перейдите по ссылке '
             . sprintf('<a href="%s">%s</a>', $url, $url) . '</p>'
             . '<p>Если вы считаете, что получили это письмо ошибочно, приносим свои извинения. Не отвечайте '

@@ -11,37 +11,37 @@ $data = $form->getRawdata();
 $err = $form->getErrors();
 ?>
 
-<h4><?=core\App::t('Регистрация нового пользователя');?></h4>
-<p><?=core\App::t('Добро пожаловать!');?></p>
-<p><?=core\App::t('Для регистрации заполните, пожалуйста, как минимум поля, отмеченные звездочкой.');?></p>
+<h4><?=engine\App::t('Регистрация нового пользователя');?></h4>
+<p><?=engine\App::t('Добро пожаловать!');?></p>
+<p><?=engine\App::t('Для регистрации заполните, пожалуйста, как минимум поля, отмеченные звездочкой.');?></p>
 
 <? $this->renderPartial('_flash'); ?>
 
 <? if($form->hasErrors()) { ?>
-    <br><span class='error'><?=core\App::t('При регистрации допущены ошибки');?></span>
+    <br><span class='error'><?=engine\App::t('При регистрации допущены ошибки');?></span>
 <? } ?>
 
 <form id='fmReg' method="POST" enctype="multipart/form-data">
 	<div class='form-row'>
-	    <label class='required'><?=core\App::t('Логин');?></label><br>
+	    <label class='required'><?=engine\App::t('Логин');?></label><br>
 	    <input type='text' name='login' required maxlength=30 value='<?=$data['login'];?>'>
 	    <img class='gif-process' src="<?='/images/process.gif';?>">
 	    <span class='error'><?=$err['login'];?></span><br>
-	    <span class='hint'><?=core\App::t('Допускаются цифры, латинские буквы, тире и знак подчеркивания');?></span>
+	    <span class='hint'><?=engine\App::t('Допускаются цифры, латинские буквы, тире и знак подчеркивания');?></span>
 	</div>
 
 	<div class='form-row'>
-	    <label class='required'><?=core\App::t('Пароль');?></label><br>
+	    <label class='required'><?=engine\App::t('Пароль');?></label><br>
 	    <input type='password' name='password' required maxlength=30 value='<?=$data['password'];?>'>
         <span class='error'><?=$err['password'];?></span><br>
         <span id='js-pwd' data-pass='<?=$minPass;?>' data-comb='<?=$minComb;?>'class='hint'>
-            <?=core\App::t('Минимальная длина пароля - N символов.', ['N' => $minPass]);?><br>
-	        <?=core\App::t('Обязательная комбинация как минимум N-х из следующих наборов символов', ['N' => $minComb]);?>:
+            <?=engine\App::t('Минимальная длина пароля - N символов.', ['N' => $minPass]);?><br>
+	        <?=engine\App::t('Обязательная комбинация как минимум N-х из следующих наборов символов', ['N' => $minComb]);?>:
 	        <ul>
-	            <li><?=core\App::t('цифры');?></li>
-	            <li><?=core\App::t('буквы в нижнем регистре');?></li>
-	            <li><?=core\App::t('буквы в верхнем регистре');?></li>
-	            <li><?=core\App::t('спецсимволы:');?> _ - ! @ # $ % ^ & ` ~</li>
+	            <li><?=engine\App::t('цифры');?></li>
+	            <li><?=engine\App::t('буквы в нижнем регистре');?></li>
+	            <li><?=engine\App::t('буквы в верхнем регистре');?></li>
+	            <li><?=engine\App::t('спецсимволы:');?> _ - ! @ # $ % ^ & ` ~</li>
 	        </ul>
         </span>
 	</div>
@@ -54,44 +54,44 @@ $err = $form->getErrors();
     </div>
 
     <div class='form-row'>
-        <label><?=core\App::t('Имя');?></label><br>
+        <label><?=engine\App::t('Имя');?></label><br>
         <input type='text' name='firstname' maxlength=50 value='<?=$data['firstname'];?>'>
         <span class='error'><?=$err['firstname'];?></span>
     </div>
 
     <div class='form-row'>
-        <label><?=core\App::t('Фамилия');?></label><br>
+        <label><?=engine\App::t('Фамилия');?></label><br>
         <input type='text' name='secondname' maxlength=50 value='<?=$data['secondname'];?>'>
         <span class='error'><?=$err['secondname'];?></span>
     </div>
 
     <div class='form-row'>
-        <label><?=core\App::t('Пол');?></label>
+        <label><?=engine\App::t('Пол');?></label>
         <? $sex= $data['sex'] ? : 'none'; ?>
         <select name='sex'>
-            <option value="none"   <?if ($sex=='none')   echo 'selected';?>><?=core\App::t('не задан');?></option>
-            <option value="female" <?if ($sex=='female') echo 'selected';?>><?=core\App::t('женский');?></option>
-            <option value="male"   <?if ($sex=='male')   echo 'selected';?>><?=core\App::t('мужской');?></option>
+            <option value="none"   <?if ($sex=='none')   echo 'selected';?>><?=engine\App::t('не задан');?></option>
+            <option value="female" <?if ($sex=='female') echo 'selected';?>><?=engine\App::t('женский');?></option>
+            <option value="male"   <?if ($sex=='male')   echo 'selected';?>><?=engine\App::t('мужской');?></option>
         </select>
         <span class='error'><?=$err['sex'];?></span>
     </div>
 
     <div class='form-row'>
-        <label><?=core\App::t('Дата рождения');?></label><br>
+        <label><?=engine\App::t('Дата рождения');?></label><br>
         <input type='text' name='birth_date' value='<?=$data['birth_date'];?>' placeholder='__.__.____'>
         <span class='error'><?=$err['birth_date'];?></span>
     </div>
 
     <div class='form-row'>
-        <label><?=core\App::t('Город проживания');?></label><br>
+        <label><?=engine\App::t('Город проживания');?></label><br>
         <input type='text' name='town' maxlength=100 value='<?=$data['town'];?>'>
         <span class='error'><?=$err['town'];?></span><br>
-        <span class='hint'><?=core\App::t('В произвольной форме. Например:')?>Томск, Первопрестольная,
+        <span class='hint'><?=engine\App::t('В произвольной форме. Например:')?>Томск, Первопрестольная,
         c.Кукуево Брянской губернии, London, Марс :)</span>
     </div>
 
     <div class='form-row'>
-    <?=core\App::t('Ваше фото');?>
+    <?=engine\App::t('Ваше фото');?>
     <? if ($uri = $form->getValues('avatar')) { ?>
         <br>
         <img class='avatar' src='<?=$uri;?>' width='150px'>
@@ -100,14 +100,14 @@ $err = $form->getErrors();
 	    <input type='file' name='avatar' accept="image/jpeg,image/png,image/gif">
 	    <span class='error'><?=$err['avatar'];?></span><br>
 	    <span class='hint'>
-	        <?=core\App::t('Формат файла - FORMAT.', ['FORMAT' => $imgCnst['format']]);?>
-	        <?=core\App::t('Размер изображения не меньше SIZE px по узкой стороне, вес файла в пределах MIN Кбайт - MAX Мб.',
+	        <?=engine\App::t('Формат файла - FORMAT.', ['FORMAT' => $imgCnst['format']]);?>
+	        <?=engine\App::t('Размер изображения не меньше SIZE px по узкой стороне, вес файла в пределах MIN Кбайт - MAX Мб.',
             ['SIZE' => $imgCnst['minSize'], 'MIN' => $imgCnst['minWeight'], 'MAX' => $imgCnst['maxWeight'],]);?>
 	    </span>
     <? } ?>
     </div>
 
     <br>
-	<div class='form-row'><input type='submit' value='<?=core\App::t('зарегистрироваться');?>'></div>
+	<div class='form-row'><input type='submit' value='<?=engine\App::t('зарегистрироваться');?>'></div>
 	<br>
 </form>

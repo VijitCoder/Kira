@@ -1,11 +1,12 @@
 <?php
 /**
- * Работа с сессией
+ * Работа с сессией.
+ * Класс не включает в себя всю возможную работу по сессиям, только наиболее востребованные действия.
  */
 
-namespace utils;
+namespace engine\net;
 
-use core\App;
+use engine\App;
 
 class Session
 {
@@ -16,6 +17,19 @@ class Session
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
+        }
+    }
+
+    /**
+     * Принудительно закрываем сессию после работы с ней.
+     *
+     * Обычно это не требуется, но могут возникнуть проблемы при параллельной работе скриптов с одним файлом сессии.
+     * Подробнее тут {@see http://php.net/manual/ru/function.session-write-close.php}, комменты тоже полезны.
+     */
+    public static function close()
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
         }
     }
 
@@ -58,7 +72,7 @@ class Session
     }
 
     /**
-     * Удаление значения в сессию.
+     * Удаление значения из сессии.
      *
      * @param string $key ключ в сессии
      * @return void

@@ -5,9 +5,9 @@
 
 namespace app\services;
 
-use core\App,
+use engine\App,
     app\models\ProfileModel,
-    utils\Session;
+    engine\net\Session;
 
 class ProfileService {
     /**
