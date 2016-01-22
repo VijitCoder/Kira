@@ -26,7 +26,10 @@ class App
     private static $_router;
 
     /**
-     * Чтение конкретной настройки конфига
+     * Чтение конкретной настройки конфига.
+     *
+     * Можно указать цепочку вложенных ключей, через точку. Типа: "validators.password.minComb". Возвращено будет
+     * значение последнего ключа. Очевидно, что использовать точку в именах ключей конфига теперь нельзя.
      *
      * @param string $key    ключ в конфиге
      * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
@@ -39,14 +42,20 @@ class App
             self::$config = require MAIN_CONFIG;
         }
 
-        if (!isset(self::$config[$key])) {
-            if ($strict) {
-                throw new Exception("В конфигурации не найден ключ '{$key}'");
-            } else {
-                return null;
+        $level = self::$config;
+        foreach(explode('.', $key) as $k => $part) {
+            if (!isset($level[$part])) {
+                if ($strict) {
+                    throw new Exception("В конфигурации не найден ключ '{$part}'");
+                } else {
+                    return null;
+                }
             }
+
+            $level = $level[$part];
         }
-        return self::$config[$key];
+
+        return $level;
     }
 
     /**

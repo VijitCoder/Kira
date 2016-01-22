@@ -23,10 +23,11 @@ class Registration extends \app\controllers\Front
             $this->redirect($this->urls['profile']);
         }
 
+        $vPass = App::conf('validators.password');
         $params = [
-            'minPass' => App::conf('minPass'),
-            'minComb' => App::conf('minComb'),
-            'imgCnst' => App::conf('avatar'),
+            'minPass' => $vPass['minLen'],
+            'minComb' => $vPass['minComb'],
+            'imgConstrains' => App::conf('avatar'),
         ];
 
         //форму создаем всегда, чтоб не нагружать шаблон кучей проверок isset($_POST[...])

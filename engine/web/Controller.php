@@ -100,7 +100,7 @@ class Controller
      * @param int    $code код ответа HTTP
      * @return void
      */
-    public function redirect($url, $code)
+    public function redirect($url, $code = 302)
     {
         Response::redirect($url, $code);
     }

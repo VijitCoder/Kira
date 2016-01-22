@@ -10,6 +10,7 @@ use \engine\App,
     \engine\net\Session,
     \engine\Env,
     \app\models\UserModel,
+    \app\forms\RegistrationForm,
     \app\helpers\MailHelper;
 
 class RegistrationService

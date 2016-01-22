@@ -52,6 +52,18 @@ class Model
     }
 
     /**
+     * Подключить модель к другой базе
+     *
+     * @param string $confKey ключ конфига, описывающий подключение к БД
+     * @return object указатель на себя же
+     */
+    public function switchConnection($confKey)
+    {
+        $this->_dbh = DbConnection::connect($confKey);
+        return $this;
+    }
+
+    /**
      * Выполняем запрос.
      *
      * Соединились, подготовили запрос, выполнили. Результат вернули.
