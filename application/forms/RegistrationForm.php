@@ -61,6 +61,6 @@ class RegistrationForm extends \engine\web\Form
             'max' => 100,
         ],
 
-        'avatar' => [],
+        'avatar' => null,
     ];
 }

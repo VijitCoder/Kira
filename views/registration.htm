@@ -8,7 +8,7 @@
  * array            $imgConstrains ограничения на картинку
  */
 $data = $form->getRawdata();
-$err = $form->getErrors();
+$err = $form->getErrorsAsString();
 ?>
 
 <h4><?= engine\App::t('Регистрация нового пользователя'); ?></h4>

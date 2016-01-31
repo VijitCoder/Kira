@@ -43,11 +43,11 @@ class Validators
     {
         $errors = array();
         if (!preg_match('~^[\w!@#$%^&`\~]+$~u', $pass)) {
-            $errors[] = App::t('Недопустимые символы');
+            $errors[] = App::t('Недопустимые символы.');
         }
 
         if (mb_strlen($pass) < App::conf('validators.password.minLen')) {
-            $errors[] = App::t('Пароль слишком короткий');
+            $errors[] = App::t('Пароль слишком короткий.');
         }
 
         if ($minComb = App::conf('validators.password.minComb')) {
@@ -65,7 +65,7 @@ class Validators
             }
 
             if ($cnt < $minComb) {
-                $errors[] = App::t('Пароль слишком простой') . ", {$cnt}/{$minComb}";
+                $errors[] = App::t('Пароль слишком простой.') . ", {$cnt}/{$minComb}";
             }
         }
 
@@ -97,13 +97,13 @@ class Validators
         $regexp = App::conf('validators.mail.regexp', false) ? : '~.+@.+\..+~';
 
         if (!preg_match($regexp, $mail)) {
-            return [App::t('неверный формат почтового адреса')];
+            return [App::t('неверный формат почтового адреса.')];
         }
 
         $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
         $black = App::conf('validators.mail.blackServers', false) ? : [];
         if (in_array($server, $black)) {
-            return [App::t('Почтовый сервер вашего email в черном списке. Пожалуйста укажите другой адрес')];
+            return [App::t('Почтовый сервер вашего email в черном списке. Пожалуйста укажите другой адрес.')];
         }
 
         return $mail;
@@ -123,7 +123,7 @@ class Validators
     public static function date($date)
     {
         if (!preg_match('~\d{2}\.\d{2}\.\d{4}~', $date)) {
-            $msg = App::t('Неверный формат даты. Ожидается "FORMAT"', ['FORMAT' => 'dd.mm.yyyy']);
+            $msg = App::t('Неверный формат даты. Ожидается "FORMAT".', ['FORMAT' => 'dd.mm.yyyy']);
             return [$msg];
         }
 
