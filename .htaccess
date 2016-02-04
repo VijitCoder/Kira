@@ -1,4 +1,22 @@
+# не нужно. Mod_rewrite все сделает
+#DirectoryIndex index.php
+
+# Конфиг МОЕГО сервера запрещает доступ к файлам, начинающимся с ".ht" (типа .htaccess, .htpasswd)
+# Но на всякий случай можно явно указать здесь.
+#<FilesMatch "^\.ht">
+#    deny from all
+#</FilesMatch>
+
+DefaultLanguage ru
+
+ErrorDocument 401 /Error
+ErrorDocument 403 /Error
+ErrorDocument 404 /Error
+ErrorDocument 500 /Error
+
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ index.php [L,QSA]
+RewriteBase /
+# Если запрос не совпадает с перечисленным - отправлять его в index.php
+# Это быстрее, чем классическая проверка "не файл|не каталог". К тому же запретит прямое обращение к скриптам.
+RewriteCond %{REQUEST_URI} !^/(index\.php|images|files|views/assets|robots\.txt|sitemap\.xml|sandbox)
+RewriteRule .* index.php [L,QSA]

@@ -1,31 +1,34 @@
 <?php
 /**
- * Главный скрипт теста
+ * Главный скрипт
  */
 mb_internal_encoding('UTF-8');
 
-require 'autoloader.php';
+//физический путь от корня тома. Гарантированный завершающий слеш. Кроссплатформа. Приводим пути к unix-стилю.
+define('ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
 
-//физический путь от корня тома
-//прим.: без кроссплатформы. Только unix-пути
-define('PATH_ROOT', __DIR__ . '/');
+//Префикс пространства имен приложения. Все классы приложения, должны быть в его подпространстве.
+define('APP_NS_PREFIX', 'app\\');
+//Физический каталог со скриптами приложения.
+define('APP_PATH', ROOT_PATH . 'application/');
+//Физический путь к шаблонам приложения. Они могут быть где угодно, для этого и введена константа.
+define('VIEWS_PATH', ROOT_PATH . 'views/');
+//URL к css/js приложения. Путь к статике светится в браузере, поэтому ее нужно разместить, не компроментируя иерархию
+//приложения. @TODO че бы эдакое придумать, чтоб не использовать константу и не связывать движок?
+define('ASSETS_URL', '/views/assets/');
+//путь к файлу основноЙ конфигурации приложения
+define('MAIN_CONFIG', APP_PATH . 'conf/main.php');
 
-//путь от корня сайта (URI)
-define('WEB_ROOT', substr(__DIR__, strrpos(__DIR__, '/')) . '/');
-
-//физический путь к шаблонам
-define('PARTH_VIEWS', PATH_ROOT . 'view/');
-
-//URI к css/js
-define('URI_ASSETS', WEB_ROOT . 'view/assets/');
 
 define('DEBUG', true);
 
-ini_set('display_errors', DEBUG ? 1 : 0);
-ini_set('display_startup_errors', DEBUG ? 1 : 0);
+ini_set('display_errors', (int)DEBUG);
+ini_set('display_startup_errors', (int)DEBUG);
 error_reporting(DEBUG ? E_ALL : 0);
 
-//Глобальный перехватчик для исключений, которые не будут пойманы в контексте
-set_exception_handler(['App', 'exceptionHandler']);
+require 'engine/autoloader.php';
 
-Router::parseRoute();
+//Скрипт инициализации моего приложения-примера. Не имеет отношения к движку, это костыли :)
+include APP_PATH . 'init.php';
+
+engine\App::router()->callAction();

@@ -1,1 +1,5 @@
-/.project
+.project
+.buildpath
+.settings/
+.idea/
+sandbox/

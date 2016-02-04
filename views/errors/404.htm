@@ -1,0 +1,5 @@
+<h3 class='head-error'><span id="err-num">404</span> | Страница не найдена</h3>
+<p class='error'><?=$request;?></p>
+<p>Запрошенная страница не найдена. Вероятно, ссылка устарела, либо  местоположение страницы изменилось.</p>
+
+<? $this->renderPartial('errors/_footer', ['index' => $index]); ?>

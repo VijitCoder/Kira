@@ -1,0 +1,27 @@
+<?php
+//Форма простая, модели для нее нет. Поэтому по-старинке.
+if (isset($_POST)) $p = $_POST;
+?>
+
+<h4><?=engine\App::t('Вход на сайт');?></h4>
+
+<? $this->renderPartial('_flash'); ?>
+
+<form id='fmLogin' method="POST">
+	<p>
+	   <a href="<?=$this->urls['recover'];?>"><?=engine\App::t('напомнить пароль');?></a>  |
+	   <a href="<?=$this->urls['reg'];?>"><?=engine\App::t('зарегистрироваться');?></a>
+	</p>
+
+	<p><input type='text' name='login' placeholder='<?=engine\App::t('email или логин');?>' maxlength=50 required
+	        <? if (isset($p['login'])) echo 'value=' . $p['login']; ?>></p>
+
+	<p><input type='password' name='password' placeholder='<?=engine\App::t('пароль');?>'maxlength=30 required
+	    <? if (isset($p['password'])) echo 'value=' . $p['password']; ?>></p>
+
+	<p>
+	    <input type='submit' value='<?=engine\App::t('Вход');?>'>
+	</p>
+
+	<p class='error clear'><?=$error;?></p>
+</form>
