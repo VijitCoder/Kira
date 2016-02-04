@@ -28,7 +28,7 @@ class UserModel extends \engine\db\Model
         if ($this->_add($fields, $data) !== 1) {
             return false;
         } else {
-            return $this->connect()->lastInsertId();
+            return $this->getConnection()->lastInsertId();
         }
     }
 
