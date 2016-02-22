@@ -111,35 +111,6 @@ class App
     }
 
     /**
-     * Перехватчик исключений.
-     *
-     * Ловит исключения, которые не были пойманы ранее. Последний шанс обработать ошибку. Например, записать в лог или
-     * намылить админу. Можно так же вежливо откланяться юзеру.
-     *
-     * После выполнения этого обработчика программа остановится, обеспечено PHP.
-     *
-     * @param Exception $ex
-     */
-    public static function exceptionHandler($ex)
-    {
-        $wrapper = "<html>\n<head>\n<meta charset='utf-8'>\n</head>\n\n<body>\n%s\n</body>\n\n</html>";
-        if (DEBUG) {
-            $err = '<h3>' . get_class($ex) . "</h3>\n"
-                . sprintf("<p><i>%s</i></p>\n", $ex->getMessage())
-                . sprintf("<p>%s:%d</p>\n", str_replace(ROOT_PATH, '/', $ex->getFile()), $ex->getLine())
-                . '<pre>' . $ex->getTraceAsString() . '</pre>';
-            printf($wrapper, $err);
-        } else {
-            $err = "<h3>Упс! Произошла ошибка</h3>\n"
-                //. '<p><i>' . $ex->getMessage() . "</i></p>\n"
-                . '<p>Зайдите позже, пожалуйста.</p>';
-
-            printf($wrapper, $err);
-            //@TODO логирование, письмо/смс админу.
-        }
-    }
-
-    /**
      * Завершение приложения. Последние процедуры после отправки ответа браузеру.
      *
      * @param callable $callback функция, которую следует выполнить перед выходом.

@@ -59,5 +59,13 @@ function customLoader($class)
 require_once 'Interfaces.php';
 spl_autoload_register('PSR4_loader');
 
-//Глобальный перехватчик для исключений, которые не будут пойманы в контексте
-set_exception_handler(['engine\App', 'exceptionHandler']);
+// Глобальный перехватчик для исключений, которые не будут пойманы в контексте
+set_exception_handler(['engine\Handlers', 'exceptionHandler']);
+
+// Перехват ошибок PHP
+set_error_handler(['engine\Handlers', 'errorHandler']);
+
+// Включаем буферизацию вывода. На завершении программы выполняется моя функция, в ней задана выдача буфера.
+// Подробнее см. в доке "Перехват ошибок".
+ob_start();
+register_shutdown_function(['engine\Handlers', 'shutdown']);
