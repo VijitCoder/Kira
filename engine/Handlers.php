@@ -92,7 +92,7 @@ DOC;
 
         $trace = array_reverse(debug_backtrace());
         array_pop($trace);
-        if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR )) == 0) {
+        if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR | E_NOTICE | E_USER_NOTICE)) == 0) {
             foreach ($trace as $step) {
                 $where = isset($step['file']) ? str_replace(ROOT_PATH, '', $step['file']) . ':' . $step['line'] : '';
 
@@ -153,6 +153,7 @@ DOC;
             if (!headers_sent()) {
                 header('Content-Type: text/html; charset=UTF-8');
             }
+            $msg = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
             $doc = <<<DOC
 <style>
     div.php-err-info, table.php-err-info, table.php-err-stack {font: 14px/1.5em Arial, Helvetica, sans-serif;}
