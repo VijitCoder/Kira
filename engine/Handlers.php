@@ -38,6 +38,7 @@ class Handlers
                 <p>Зайдите позже, пожалуйста.</p>';
 
             //@TODO логирование, письмо/смс админу.
+            //Log::add(Log::EXCEPTION, $msg);   //TODO
         }
 
         $doc = <<<DOC
@@ -84,7 +85,31 @@ DOC;
      */
     public static function errorHandler($code, $msg, $script, $line)
     {
+        $codes = [
+            1     => 'FATAL ERROR',
+            2     => 'WARNING',
+            4     => 'PARSE ERROR',
+            8     => 'NOTICE',
+            16    => 'CORE ERROR',
+            32    => 'CORE WARNING',
+            64    => 'COMPILE ERROR',
+            128   => 'COMPILE WARNING',
+            256   => 'USER ERROR',
+            512   => 'USER WARNING',
+            1024  => 'USER NOTICE',
+            2048  => 'STRICT',
+            4096  => 'RECOVERABLE ERROR',
+            8192  => 'DEPRECATED',
+            16384 => 'USER DEPRECATED',
+        ];
+        $codeTxt = $codes[$code];
+
+        $script = str_replace(ROOT_PATH, '', $script);
+
         if (error_reporting() == 0) {
+            // TODO это может повлечь бесконечную рекурсию. Нужно корректно разрулить ситуацию
+            //$msg = "$codeTxt in [$script:$line]: $msg\n";
+            //Log::add(Log::PHP, $msg);   //TODO
             return false;
         }
 
@@ -125,27 +150,6 @@ DOC;
                 </table>
             ";
         }
-
-        $script = str_replace(ROOT_PATH, '', $script);
-
-        $codes = [
-            1     => 'FATAL ERROR',
-            2     => 'WARNING',
-            4     => 'PARSE ERROR',
-            8     => 'NOTICE',
-            16    => 'CORE ERROR',
-            32    => 'CORE WARNING',
-            64    => 'COMPILE ERROR',
-            128   => 'COMPILE WARNING',
-            256   => 'USER ERROR',
-            512   => 'USER WARNING',
-            1024  => 'USER NOTICE',
-            2048  => 'STRICT',
-            4096  => 'RECOVERABLE ERROR',
-            8192  => 'DEPRECATED',
-            16384 => 'USER DEPRECATED',
-        ];
-        $codeTxt = $codes[$code];
 
         if (!isset($_SERVER['REQUEST_URI'])) { // работаем в консоли
             echo $log_data;

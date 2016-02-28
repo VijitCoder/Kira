@@ -22,8 +22,8 @@ class App
     /** @var string заданный файл локализации. Инфа для проброса исключения */
     private static $_lang;
 
-    /** @var object реализация интерфейса IRouter, объект класса текущего роутера */
-    private static $_router;
+    /** @var array объекты классов, инстанциированных через App: роутер, логер */
+    private static $_instances = [];
 
     /**
      * Чтение конкретной настройки конфига.
@@ -134,10 +134,25 @@ class App
      */
     public static function router()
     {
-        if (!self::$_router) {
+        if (!self::$_instances['router']) {
             $router = self::conf('router', false) ?: 'engine\net\Router';
-            self::$_router = new $router;
+            self::$_instances['router'] = new $router;
         }
-        return self::$_router;
+        return self::$_instances['router'];
+    }
+
+    /**
+     * Возвращает объект логера.
+     *
+     * В зависимости от настроек и доступности базы, логирование может вестись в БД или файлы. Если таблица окажется
+     * недоступна, будем сбрасывать логи в файлы. Чтоб в течение работы приложения не выяснять на каждом логе факт
+     * доступности базы, используем этот геттер.
+     */
+    public static function log()
+    {
+        if (!self::$_instances['log']) {
+            self::$_instances['log'] = new \engine\Log;
+        }
+        return self::$_instances['log'];
     }
 }

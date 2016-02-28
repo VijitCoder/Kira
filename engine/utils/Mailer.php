@@ -297,12 +297,13 @@ class Mailer
     /**
      * Кодирование произвольной строки и ее разбивка согласно стандарта RFC 2047 Part Thr
      *
+     * Прим.: php::chunk_split() лишний перенос в конце строки добавляет.
+     *
      * @param string $str
      * @return string
      */
     private static function _encodeAndChunk($str)
     {
-        // не используй php::chunk_split(), она лишний перенос в конце строки добавляет.
-        return Strings::word_chunk(base64_encode($str), 70, "\r\n");
+        return chunk_split(base64_encode($str), 70);
     }
 }

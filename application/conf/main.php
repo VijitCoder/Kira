@@ -2,13 +2,12 @@
 /**
  * Подключение скрипта конфига можно сделать более корректно, но будет сложнее. Сейчас подключается напрямую в App.php.
  */
-
 $main = [
     // FQN контроллера + метод для главной страницы сайта
     'indexHandler' => APP_NS_PREFIX . 'controllers\Login',
 
     // FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
-    //ошибками 401-404, 500
+    // ошибками 401-404, 500
     'errorHandler' => APP_NS_PREFIX . 'controllers\Error',
 
     // 'router' => APP_NS_PREFIX . 'SimpleRouter',
@@ -16,7 +15,7 @@ $main = [
 
     'validators' => [
         'password' => [
-            'minLen'  => 5,  // минимальная длина пароля
+            'minLen'  => 5, // минимальная длина пароля
             'minComb' => 3, // минимальная комбинация наборов символов в пароле
         ],
 
@@ -39,26 +38,26 @@ $main = [
         ],
     ],
 
-    //ограничения на аватар
+    // ограничения на аватар
     'avatar'     => [
         'minSize'   => 200, // размер картинки по узкой стороне
         'minWeight' => 200, // минимальный вес файла, кБ
         'maxWeight' => 2.5, // максимальный вес, Мб
         'format'    => 'gif, jpg, png',
-        'w'         => 300,  // размеры создаваемой миниатюры
+        'w'         => 300, // размеры создаваемой миниатюры
         'h'         => 300,
 
     ],
 
-    //Заготовка. Реальный конфиг подключения сливается из env.php  (см. dummy_env.php)
+    // Заготовка. Реальный конфиг подключения сливается из env.php  (см. dummy_env.php)
     'db'         => [
         'dsn'      => 'mysql:dbname=base0; host=127.0.0.1; charset=UTF8',
         'user'     => 'guest',
         'password' => '',
         'options'  => [
-            PDO::ATTR_TIMEOUT            => 10,                         //таймаут соединения, в секудах
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,     //позволит ловить исключения PDO
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC //по умолчанию - в ассоциативный массив
+            PDO::ATTR_TIMEOUT            => 10,                     // таймаут соединения, в секудах
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // позволит ловить исключения PDO
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC        // по умолчанию - в ассоциативный массив
         ],
     ],
 ];
