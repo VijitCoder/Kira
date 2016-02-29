@@ -6,18 +6,24 @@
  * в файлы ведется по маске "yyyymmdd_kira_log.csv", разделитель данных ";"
  *
  * Описывается группой настроек в конфиге приложения:
+ * <pre>
  * log => [
  *      'store'       => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
- *      'db_conf_key' => 'db',     // ключ конфига БД, если храним логи в базе
- *      'file_path'   => APP_TEMP, // путь к каталогу, куда складывать файлы логов, если храним в файлах
- *      'timezone'    => null,     // временная зона для записи лога
+ *      'db_conf_key' => 'db',      // ключ конфига БД, если храним логи в базе
+ *      'log_path'    => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах
+ *      'timezone'    => '',        // временная зона для записи лога
  * ]
+ * </pre>
  *
  * Логер может работать без настроек вообще. Если нет ключей к базе, пишет в файлы, иначе в БД. Любое сообщение можно
  * отправить на ящик админу, см. конфиг приложения - 'adminMail' и метод {@see Log::add()}
  *
  * Временная зона: сайт может работать в своей временной зоне, а логи нужно вести в зоне хостера хотя бы для того, чтобы
- * в случае сбоев вести диалог с тех.поддержкой про одно и тоже время.
+ * в случае сбоев вести диалог с тех.поддержкой про одно и тоже время. Список зон тут
+ * {@link http://php.net/manual/en/timezones.php}
+ *
+ * Каталог к файлам должен завершаться слешем. У веб-сервера должен быть доступ на запись в этот каталог. Если указать
+ * пустое значение для 'log_path', тогда логирование в файлы будет отключено.
  *
  * Даже при хранении логов в базе рекомендуется организовать <b>каталог</b> для файлов. В случае сбоя подключения к БД
  * логер попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу, один раз на каждый
@@ -67,23 +73,31 @@ class Log
             [
                 'store'       => self::STORE_IN_DB,
                 'db_conf_key' => 'db',
-                'file_path'   => APP_TEMP,
-                'timezone'    => null,
+                'log_path'    => TEMP_PATH,
+                'timezone'    => '',
             ],
             $userConf
         );
 
-        if ($conf['store'] == self::STORE_IN_DB) {
-            if (!App::conf($conf['db_conf_key'], false)) {
-                $conf['store'] = self::STORE_IN_FILES;
-                if (isset($userConf['db_conf_key'])) {
-                    $this->addTyped('Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
-                        . 'Лог в БД невозможен', self::ENGINE);
-                }
+        $conf['_mail'] = App::conf('adminMail');
+
+        $errors = [];
+        if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
+            $conf['store'] = self::STORE_IN_FILES;
+            if (isset($userConf['db_conf_key'])) {
+                $errors[] = 'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
+                    . 'Лог в БД невозможен';
             }
         }
 
-        $conf['_mail'] = App::conf('adminMail');
+        if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
+            $conf['store'] = self::STORE_ERROR;
+            $errors[] = 'Ошибка конфигурации логера: не задан каталог для лога в файлы. Логирование невозможно.';
+        }
+
+        if ($errors) {
+            $this->addTyped(implode("\n", $errors), self::ENGINE);
+        }
 
         $this->_conf = $conf;
     }
@@ -152,16 +166,17 @@ class Log
             $timezone = date_default_timezone_get();
             date_default_timezone_set($conf['timezone']);
         }
-        $ts = time();
+        $ts = new DateTime();
         $logIt = [
-            'type'    => $data['type'],
-            'date'    => date('d.m.Y', $ts),
-            'time'    => date('H:i:s', $ts),
-            'GMT'     => date('\G\M\T O', $ts),
-            'IP'      => Request::userIP(),
-            'request' => Request::absoluteURL(),
-            'source'  => $data['src'],
-            'msg'     => $data['msg'],
+            'type'     => $data['type'],
+            'date'     => $ts->format('Ymd'),
+            'time'     => $ts->format('H:i:s.u'),
+            'timezone' => $ts->format('\G\M\T P'),
+            'userIP'   => Request::userIP(),
+            'request'  => Request::absoluteURL(),
+            'source'   => $data['src'],
+            // Убираем tab-отступы
+            'msg'      => str_replace(chr(9), '', $data['msg']),
         ];
         if ($conf['timezone']) {
             date_default_timezone_set($timezone);
@@ -171,14 +186,14 @@ class Log
         $result = false;
 
         if (!$data['fileForce'] && $conf['store'] == self::STORE_IN_DB) {
-            if (!$result = $this->_write_in_db($logIt)) {
+            if (!$result = $this->_writeToDb($logIt)) {
                 $conf['store'] = self::STORE_IN_FILES;
                 $this->addTyped('Ошибка записи лога в базу', self::ENGINE);
             }
         }
 
         if (!$result) {
-            if (!$this->_write_in_file($logIt)) {
+            if (!$this->_writeInFile($logIt)) {
                 $conf['store'] = self::STORE_ERROR;
                 $logIt['msg'] = '<p><b>Сбой: не могу записать это сообщение в лог.</b></p>' . $logIt['msg'];
                 $data['notify'] = true;
@@ -202,46 +217,90 @@ class Log
      */
     public function addTyped($msg, $type)
     {
-        // TODO реализация
+        $this->add(compact('msg', 'type'));
     }
 
     /**
-     * Запись сообщения в базу
+     * Запись сообщения в базу.
      *
-     * @param array $data
+     * Время пишем с микросекундами. На этом значении построен первичный ключ таблицы. Поэтому в случае успешной записи
+     * ждем 1мс, чтобы гарантировать новую метку времени для следующего сообщения (уникальный ключ).
+     *
+     * @param array $logIt
      * @return bool
      */
-    private function _write_in_db($data)
+    private function _writeToDb(&$logIt)
     {
-        return true;
+        try {
+            $sql = '
+                INSERT INTO `kira_log` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
+                VALUES (?,?,?,?,?,?,?)';
+            $data = [
+                $logIt['date'] . ' ' . $logIt['time'],
+                $logIt['timezone'],
+                $logIt['logType'],
+                $logIt['message'],
+                $logIt['userIP'],
+                $logIt['request'],
+                $logIt['source'],
+            ];
+
+            $result = (bool)(new Model($this->_conf['db_conf_key']))->query(['q' => $sql, 'p' => $data]);
+        } catch (\Exception $e) {
+            $logIt['msg'] .= "\n\nДополнительно: не удалось записать это сообщение в лог БД. Ошибка:\n"
+                . $e->getMessage();
+            $result = false;
+        }
+
+        if ($result) {
+            usleep(1);
+        }
+
+        return $result;
     }
 
     /**
-     * Запись сообщения в лог-файл
+     * Запись сообщения в лог-файл.
      *
-     * @param array $data
+     * @TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого логер падает. Нужно
+     * придумать, как БЫСТРО и красиво управлять правами доступа.
+     *
+     * @param array &$logIt
      * @return bool
      */
-    private function _write_in_file($data)
+    private function _writeInFile(&$logIt)
     {
-        // доступ к файлу 664, чтоб обычный юзер не мог править логи. Только читать и удалять.
+        $fn = $this->_conf[file_path] . $logIt['date'] . '_kira_log.csv';
 
-        //@TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого
-        //логер падает. Нужно придумать, как БЫСТРО и красиво управлять правами доступа.
-        //Не удалось создать файл - пишем админу, не зависимо от предыдущего состояния флага.
-        //if (!$file = @fopen("{$way['log']}$log.csv", 'a')) {
-        //    $needMailing = true;
-        //}
-        return true;
+        $result = false;
+        try {
+            $file = fopen($fn, 'a');
+            fputcsv($file, $logIt, ';');
+            $result = true;
+        } finally {
+            if ($file) {
+                fclose($file);
+            }
+        }
+
+        return $result;
     }
 
-    private function _mailToAdmin($data)
+    /**
+     * Письмо админу с текущим сообщение лога.
+     *
+     * Пишем, если в параметрах сообщения установлен флаг "notify" или в случае сбоя логирования.
+     *
+     * @param array $logIt
+     * @return void
+     */
+    private function _mailToAdmin(&$logIt)
     {
         if (!$mail = $this->conf['_mail']) {
             $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', self::ENGINE);
             return;
         }
-        // TODO html-письмо со всеми данными лог-сообщения
+        // TODO txt и html версии письма со всеми данными лог-сообщения
     }
 
     /**
@@ -281,10 +340,13 @@ class Log
     /**
      * Инициализация окружения логера.
      *
-     * В зависимости от настроек, создает базу и таблицу и/или каталог для сохранения логов в файлы. Если среда уже
-     * создана, пропускает ненужные шаги. Исходим из того, что база будет в СУБД MySQL, запросы написаны для неё.
-     *
      * Предполагается одноразовый вызов метода, например через мастер создания приложения.
+     *
+     * В зависимости от настроек, создаем базу и таблицу и/или каталог для сохранения логов в файлы. Если среда уже
+     * создана, пропускаем ненужные шаги. Исходим из того, что база под управлением СУБД MySQL, запросы написаны для неё.
+     *
+     * Для работы в БД нужны ключи юзера с правами создания базы и таблицы в базе. Для создания каталога логов
+     * у веб-сервера должны быть права на это.
      */
     public static function init()
     {
@@ -295,5 +357,25 @@ class Log
         // MySQL. А если используется вообще другая СУБД, то результат еще более неопределенный. Стоит ли тут
         // заморачиваться?
         //$codepage = mb_internal_encoding();
+
+
+        // доступ к файлу 664, чтоб обычный юзер не мог править логи. Только читать и удалять.
+        //if (mkdir($dirpath, 0777, true) && chmod($dirpath, 0664)) {...}
+
+        /*
+USE database ...
+
+CREATE TABLE `kira_log` (
+    `ts` TIMESTAMP NOT NULL COMMENT 'Дата/время события, с микросекундами',
+    `timezone` CHAR(10) NOT NULL COMMENT 'Часовой пояс, которому соответствует указанное время события',
+    `logType` VARCHAR(20) NOT NULL COMMENT 'Тип сообщения',
+    `message` TEXT NOT NULL COMMENT 'Сообщение',
+    `userIP` CHAR(15) NULL DEFAULT '' COMMENT 'IPv4, адрес юзера, когда удалось его определить',
+    `request` VARCHAR(255) NULL DEFAULT '' COMMENT 'URL запроса, в ходе обработки которого пишем лог',
+    `source` VARCHAR(100) NULL DEFAULT '' COMMENT 'источник сообщения (функция, скрипт, какая-то пометка кодера)',
+    KEY `logType` (`logType`)
+)
+ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE utf8_general_ci;
+        */
     }
 }
