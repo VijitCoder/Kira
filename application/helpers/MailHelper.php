@@ -16,7 +16,7 @@ class MailHelper
      */
     public static function sendHtml($to, $subject, $html)
     {
-        $from = \engine\App::conf('adminMail');
+        $from = \engine\App::conf('admin_mail');
         $rn = "\r\n";
         // Не указываем "To:" и "Subject:", это допишет функция mail()
         $headers = 'From: ' . $from . $rn;

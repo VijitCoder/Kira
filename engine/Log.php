@@ -2,32 +2,35 @@
 /**
  * Логирование.
  *
+ * Класс предназначен для записи критической информации (ошибок) на больших отрезках времени.
+ *
  * Логи могут писаться в БД или в файлы. Для записи в базу будет создана таблица `kira_log`, {@see Log::init()}, запись
  * в файлы ведется по маске "yyyymmdd_kira_log.csv", разделитель данных ";"
  *
  * Описывается группой настроек в конфиге приложения:
  * <pre>
- * log => [
+ * 'log' => [
+ *      'switch_on'   => true,      // включить логирование
  *      'store'       => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
  *      'db_conf_key' => 'db',      // ключ конфига БД, если храним логи в базе
  *      'log_path'    => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах
- *      'timezone'    => '',        // временная зона для записи лога
+ *      'timezone'    => '',        // часовой пояс для записи лога
  * ]
  * </pre>
  *
- * Логер может работать без настроек вообще. Если нет ключей к базе, пишет в файлы, иначе в БД. Любое сообщение можно
- * отправить на ящик админу, см. конфиг приложения - 'adminMail' и метод {@see Log::add()}
+ * Логер может работать вообще без явной конфигурации. По умолчанию он включен, пишет в файлы в каталоге, заданном
+ * в TEMP_PATH.
  *
- * Временная зона: сайт может работать в своей временной зоне, а логи нужно вести в зоне хостера хотя бы для того, чтобы
- * в случае сбоев вести диалог с тех.поддержкой про одно и тоже время. Список зон тут
+ * Часовой пояс: сайт может работать в своей временной зоне, а логи нужно вести в зоне хостера хотя бы для того, чтобы
+ * в случае сбоев вести диалог с тех.поддержкой про одно и тоже время. Список поясов тут
  * {@link http://php.net/manual/en/timezones.php}
  *
  * Каталог к файлам должен завершаться слешем. У веб-сервера должен быть доступ на запись в этот каталог. Если указать
  * пустое значение для 'log_path', тогда логирование в файлы будет отключено.
  *
- * Даже при хранении логов в базе рекомендуется организовать <b>каталог</b> для файлов. В случае сбоя подключения к БД
- * логер попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу, один раз на каждый
- * реквест браузера (если в сборке ответа есть логирование). Если не задан даже админский email, тогда всё - /dev/nul.
+ * Даже при хранении логов в базе рекомендуется задать каталог для лог-файлов. В случае сбоя подключения к БД логер
+ * попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу, один раз на каждый реквест
+ * браузера (если в сборке ответа есть логирование). Если не задан даже админский email, тогда всё - /dev/nul.
  */
 
 namespace engine;
@@ -40,8 +43,6 @@ class Log
     // Типы логов
     const
         ENGINE = 'engine',
-        INFO = 'info',
-        TRACE = 'trace',
         DB = 'DB',
         EXCEPTION = 'exception',
         HTTP_ERR = 'HTTP error', // например, 404, 403 можно логировать
@@ -68,26 +69,26 @@ class Log
      */
     public function __construct()
     {
-        $userConf = App::conf('log');
         $conf = array_merge(
             [
-                'store'       => self::STORE_IN_DB,
-                'db_conf_key' => 'db',
+                'switch_on'   => true,
+                'store'       => self::STORE_IN_FILES,
+                //'db_conf_key' => 'db',
                 'log_path'    => TEMP_PATH,
                 'timezone'    => '',
             ],
-            $userConf
+            App::conf('log')
         );
 
-        $conf['_mail'] = App::conf('adminMail');
+        $conf['_mail'] = App::conf('admin_mail');
 
         $errors = [];
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
             $conf['store'] = self::STORE_IN_FILES;
-            if (isset($userConf['db_conf_key'])) {
+//            if (isset($userConf['db_conf_key'])) {
                 $errors[] = 'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
                     . 'Лог в БД невозможен';
-            }
+//            }
         }
 
         if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
@@ -108,11 +109,11 @@ class Log
      * Ожидаем либо строку с сообщением либо массив, содержащий сообщение и другие данные. Полный формат массива такой:
      * <pre>
      * [
-     *  'msg'  => string                 текст сообщения
-     *  'type' => const  | self::UNTYPED тип лога, см. константы этого класса
-     *  'src'  => string | ''            источник сообщения
-     *  'notify' => bool | FALSE         флаг "Нужно оповещение по почте"
-     *  'fileForce' => bool | FALSE      сообщение писать в файл, независимо от настройки.
+     *  'msg'        => string                 текст сообщения
+     *  'type'       => const  | self::UNTYPED тип лога, см. константы этого класса
+     *  'src'        => string | ''            источник сообщения
+     *  'notify'     => bool | FALSE           флаг "Нужно оповещение по почте"
+     *  'file_force' => bool | FALSE           сообщение писать в файл, независимо от настройки.
      * ]
      * </pre>
      *
@@ -125,9 +126,9 @@ class Log
      * Источник сообщения ('src')- любой текст, например, имя метода или вообще произвольное описание.
      * См. так же волшебные константы PHP {@see http://php.net/manual/ru/language.constants.predefined.php}
      *
-     * Уведомление на почту отсылается, если ящик указан в конфиге приложения, 'adminMail'.
+     * Уведомление на почту отсылается, если ящик указан в конфиге приложения, 'admin_mail'.
      *
-     * 'fileForce' = TRUE может пригодиться, для логирования ошибок типа 'DB'. Например, есть вероятность, что
+     * 'file_force' = TRUE может пригодиться, для логирования ошибок типа 'DB'. Например, есть вероятность, что
      * MySQL-сервер у вас сбоит. Тогда часть ошибок такого типа может попасть в таблицу, а часть - нет, из-за сбоя.
      * Чтобы потом не собирать из разных мест картину сбоя в целом, можно всегда логировать сообщения типа 'DB'
      * принудительно в файлы. Экспериментальная настройка, возможно будет удалена в будущем.
@@ -139,7 +140,7 @@ class Log
     {
         $conf = $this->_conf;
 
-        if ($conf['store'] == self::STORE_ERROR) {
+        if (!$conf['switch_on'] || $conf['store'] == self::STORE_ERROR) {
             return;
         }
 
@@ -148,7 +149,7 @@ class Log
             'type'      => self::UNTYPED,
             'src'       => '',
             'notify'    => FALSE,
-            'fileForce' => FALSE,
+            'file_force' => FALSE,
         ];
 
         if (is_array($data)) {
@@ -169,8 +170,7 @@ class Log
         $ts = new DateTime();
         $logIt = [
             'type'     => $data['type'],
-            'date'     => $ts->format('Ymd'),
-            'time'     => $ts->format('H:i:s.u'),
+            'ts'       => $ts,
             'timezone' => $ts->format('\G\M\T P'),
             'userIP'   => Request::userIP(),
             'request'  => Request::absoluteURL(),
@@ -185,19 +185,17 @@ class Log
 
         $result = false;
 
-        if (!$data['fileForce'] && $conf['store'] == self::STORE_IN_DB) {
+        if (!$data['file_force'] && $conf['store'] == self::STORE_IN_DB) {
             if (!$result = $this->_writeToDb($logIt)) {
                 $conf['store'] = self::STORE_IN_FILES;
-                $this->addTyped('Ошибка записи лога в базу', self::ENGINE);
+                //$this->addTyped('Ошибка записи лога в базу', self::ENGINE); // уже будет дописано про ошибку
             }
         }
 
-        if (!$result) {
-            if (!$this->_writeInFile($logIt)) {
-                $conf['store'] = self::STORE_ERROR;
-                $logIt['msg'] = '<p><b>Сбой: не могу записать это сообщение в лог.</b></p>' . $logIt['msg'];
-                $data['notify'] = true;
-            }
+        if (!$result && !$this->_writeInFile($logIt)) {
+            $conf['store'] = self::STORE_ERROR;
+            //$logIt['msg'] = '<p><b>Сбой: не могу записать это сообщение в лог.</b></p>' . $logIt['msg'];
+            $data['notify'] = true;
         }
 
         if ($data['notify']) {
@@ -236,7 +234,7 @@ class Log
                 INSERT INTO `kira_log` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
                 VALUES (?,?,?,?,?,?,?)';
             $data = [
-                $logIt['date'] . ' ' . $logIt['time'],
+                $logIt['ts']->format('Ymd H:i:s.u'),
                 $logIt['timezone'],
                 $logIt['logType'],
                 $logIt['message'],
@@ -262,7 +260,10 @@ class Log
     /**
      * Запись сообщения в лог-файл.
      *
-     * @TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого логер падает. Нужно
+     * Тут важно поймать ошибки PHP и сообщить о них админу, даже когда DEBUG-режим отключен. Поэтому добавлен свой
+     * обработчик ошибок. {@see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
+     *
+     * TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого логер падает. Нужно
      * придумать, как БЫСТРО и красиво управлять правами доступа.
      *
      * @param array &$logIt
@@ -270,18 +271,38 @@ class Log
      */
     private function _writeInFile(&$logIt)
     {
-        $fn = $this->_conf[file_path] . $logIt['date'] . '_kira_log.csv';
+        $fn = $this->_conf[file_path] . $logIt['ts']->format('Ymd') . '_kira_log.csv';
 
-        $result = false;
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        });
+
         try {
-            $file = fopen($fn, 'a');
-            fputcsv($file, $logIt, ';');
-            $result = true;
-        } finally {
-            if ($file) {
+            if ($file = fopen($fn, 'a')) {
+                $result = (bool)fputcsv(
+                    $file,
+                    [
+                        $logIt['logType'],
+                        $logIt['ts']->format('H:i:s'),
+                        $logIt['timezone'],
+                        $logIt['message'],
+                        $logIt['source'],
+                        $logIt['userIP'],
+                        $logIt['request'],
+                    ],
+                    ';'
+                );
                 fclose($file);
+            } else {
+                $result = false;
             }
+        } catch (\ErrorException $e) {
+            $logIt['msg'] .= "\n\nДополнительно: не удалось записать это сообщение в файл лога. Ошибка:\n"
+                . $e->getMessage();
+            $result = false;
         }
+
+        restore_error_handler();
 
         return $result;
     }
@@ -304,19 +325,23 @@ class Log
     }
 
     /**
-     * Отправить лог на указанный адрес.
+     * Отправить логи на указанный адрес.
      *
      * Выбирает из логов данные от указанной даты включительно (unix timestamp) до текущего момента. Если заданы типы
      * лога, они учитываются. Получателей может быть несколько, указывать через запятую.
      *
+     * Можно получить детальный отчет - копия логов за указанный период, или только сводку - по каждому типу количество
+     * сообщений. При этом типы с нулевым количеством пропускаются.
+     *
      * Предполагается работа в связке с cron через внешний управляющий php-скрипт. В нем описываем параметры и вызываем
      * этот метод.
      *
-     * @param string $to    email получателя(ей)
-     * @param int    $from  временная метка (unix timestamp), от которой до текущего момент выбрать логи
-     * @param array  $types типы логов, см. константы этого класса
+     * @param string $mails    email получателя(ей)
+     * @param int    $from_ts  временная метка (unix timestamp), от которой до текущего момент выбрать логи
+     * @param bool   $detailed детальный отчет или только сводка
+     * @param array  $types    типы логов, см. константы этого класса
      */
-    public static function report($to, $from, $types = [])
+    public static function report($mails, $from_ts, $detailed, $types = [])
     {
         // TODO реализация
     }
@@ -346,7 +371,7 @@ class Log
      * создана, пропускаем ненужные шаги. Исходим из того, что база под управлением СУБД MySQL, запросы написаны для неё.
      *
      * Для работы в БД нужны ключи юзера с правами создания базы и таблицы в базе. Для создания каталога логов
-     * у веб-сервера должны быть права на это.
+     * у веб-сервера должны быть права на такую операцию.
      */
     public static function init()
     {

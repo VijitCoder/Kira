@@ -125,6 +125,22 @@ class App
     }
 
     /**
+     * TODO Геттер не может быть статичным методом. Либо придумать что-то, либо отказаться от магии.
+     *
+     * Магический геттер для укороченнного обращения к некоторым методам класса.
+     * Список методов ограничен логикой: это инициализаторы объектов других классов движка.
+     *
+     * @param string $method
+     */
+    //public function __get($method)
+    //{
+    //    $allows = ['router', 'log'];
+    //    if (in_array($method, $allows)) {
+    //        return self::$allows[$method]();
+    //    }
+    //}
+
+    /**
      * Возвращает объект класса текущего роутера.
      *
      * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
@@ -134,7 +150,7 @@ class App
      */
     public static function router()
     {
-        if (!self::$_instances['router']) {
+        if (!isset(self::$_instances['router'])) {
             $router = self::conf('router', false) ?: 'engine\net\Router';
             self::$_instances['router'] = new $router;
         }
@@ -150,7 +166,7 @@ class App
      */
     public static function log()
     {
-        if (!self::$_instances['log']) {
+        if (!isset(self::$_instances['log'])) {
             self::$_instances['log'] = new \engine\Log;
         }
         return self::$_instances['log'];

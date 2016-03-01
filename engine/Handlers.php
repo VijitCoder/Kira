@@ -125,18 +125,21 @@ DOC;
                     ? $step['class'] . $step['type'] . $step['function']
                     : $step['function'];
 
-                $args = $step['args'];
-                array_walk($args, function (&$i) {
-                    if (is_array($i)) {
-                        $i = '[array]';
-                    } elseif (is_bool($i)) {
-                        $i = $i ? 'true' : 'false';
-                    } elseif (is_object($i)) {
-                        $i = get_class($i);
-                    }
-
-                });
-                $args = implode(', ', $args);
+                if (isset($step['args'])) {
+                    $args = $step['args'];
+                    array_walk($args, function (&$i) {
+                        if (is_array($i)) {
+                            $i = '[array]';
+                        } elseif (is_bool($i)) {
+                            $i = $i ? 'true' : 'false';
+                        } elseif (is_object($i)) {
+                            $i = get_class($i);
+                        }
+                    });
+                    $args = implode(', ', $args);
+                } else {
+                    $args = '';
+                }
 
                 $stack_output .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>\n";
                 $log_data .= "$where > $func($args)\n";
@@ -161,7 +164,9 @@ DOC;
             $doc = <<<DOC
 <style>
     div.php-err-info, table.php-err-info, table.php-err-stack {font: 14px/1.5em Arial, Helvetica, sans-serif;}
+    div.php-err-info, table.php-err-stack {margin: 10px;}
     div.php-err-info {border: 1px solid black; padding: 0 10px;}
+    div.php-err-info h4 {border-bottom:1px solid black;}
     .php-err-info td {padding-bottom: 7px; padding-right: 7px;}
     .php-err-stack {
         margin-top: 10px;
@@ -173,6 +178,7 @@ DOC;
     .php-err-stack td {font: 12px/1.5em "Lucida Console", Monaco, monospace;}
     .php-err-txtleft {text-align: left;}
     .php-err-txtright {text-align: right;}
+
 </style>
 <div class='php-err-info'>
     <h4>Ошибка PHP</h4>
@@ -192,10 +198,11 @@ DOC;
         $log_data .= 'at ' . date('Y.m.d. H:i:s') . "\n---\n\n";
         file_put_contents(TEMP_PATH . 'kira_php_error.log', $log_data, FILE_APPEND);
 
-        if ($code & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR))
+        if ($code & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR)) {
             exit();
-        else
+        } else {
             return true;
+        }
     }
 
     /**
@@ -206,14 +213,17 @@ DOC;
      * сбросываем буфер и вызываем свой обработчик ошибок. Если ошибок не будет, просто отдаем буфер.
      *
      * Есть еще одна ситуация: кончилась память. Так же корректно ее обрабатываем: выделяем немного памяти, чтоб
-     * сообщить об этой ошибке, вызываем обработчик и закругляемся. @TODO Потерял первосточник. Где-то на Хабре.
+     * сообщить об этой ошибке, вызываем обработчик и закругляемся.
+     *
+     * TODO Потерял первосточник. Где-то на Хабре.
      */
-    public static function shutdown() {
+    public static function shutdown()
+    {
         $error = error_get_last();
         if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_COMPILE_ERROR))) {
             ob_clean(); // сбрасываем вывод ошибки, которую нарисовал стандартный перехватчик
             if (strpos($error['message'], 'Allowed memory size') === 0) {
-                ini_set('memory_limit', (intval(ini_get('memory_limit')) + 32).'M');
+                ini_set('memory_limit', (intval(ini_get('memory_limit')) + 32) . 'M');
             }
             self::errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
         }

@@ -15,13 +15,13 @@ $main = [
 
     'validators' => [
         'password' => [
-            'minLen'  => 5, // минимальная длина пароля
-            'minComb' => 3, // минимальная комбинация наборов символов в пароле
+            'min_len'  => 5, // минимальная длина пароля
+            'min_comb' => 3, // минимальная комбинация наборов символов в пароле
         ],
 
         'mail' => [
             // Запрещенные для регистрации mail-сервера (это сервисы 5-тиминутных ящиков)
-            'blackServers' => [
+            'black_servers' => [
                 'fakeinbox.com', 'sharklasers.com', 'mailcker.com', 'yopmail.com', 'jnxjn.com', 'jnxjn.com', '0815.ru',
                 '10minutemail.com', 'agedmail.com', 'ano-mail.net', 'asdasd.ru', 'brennendesreich.de', 'buffemail.com',
                 'bund.us', 'cool.fr.nf', 'courriel.fr.nf', 'cust.in', 'dbunker.com', 'dingbone.com', 'discardmail.com',
