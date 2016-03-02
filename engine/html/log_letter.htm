@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- engine\Log::_mailToAdmin() -->
+<html>
+    <head>
+    <meta charset='utf-8'>
+    </head>
+    <body>
+        <h3>Сообщение от логера</h3>
+
+        <p><i>{{msg}}</i></p>
+
+        <hr>
+        <div style='font-size:85%'>
+            <table>
+            <tr><td>тип:</td><td>{{type}}</td></tr>
+            <tr><td>источник:</td><td>{{source}}</td></tr>
+            </table>
+            <br>
+            <table>
+            <tr><td>URL запроса:</td><td>{{request}}</td></tr>
+            <tr><td>IP юзера:</td><td>{{userIP}}</td></tr>
+            </table>
+        </div>
+        <br>
+        <i>{{date}}</i> (c) <a href='{{homeURL}}'>{{domain}}</a>
+    </body>
+</html>

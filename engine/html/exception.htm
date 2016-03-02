@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- engine\Handlers::exceptionHandler() -->
+<html>
+    <head>
+    <meta charset='utf-8'>
+        <style>
+            body {font: 14px/1.5em Arial, Helvetica, sans-serif;}
+            div {margin: 10px; padding: 0 10px; border: 1px solid black;}
+            h3 {border-bottom:1px solid black;}
+            table td {padding-bottom: 7px; padding-right: 7px;}
+        </style>
+    </head>
+    <body>
+    <div>
+        <h3>{{class}}</h3>
+
+        <table>
+            <tr><td>Сообщение:</td><td><strong>{{message}}</strong></td></tr>
+            <tr><td>Скрипт:</td><td>{{file}}</td></tr>
+            <tr><td>Строка:</td><td>{{line}}</td></tr>
+         </table>
+
+        <p>Стек вызовов</p>
+
+        <pre>{{trace}}</pre>
+    </div>
+    </body>
+</html>

@@ -36,7 +36,9 @@
 namespace engine;
 
 use engine\net\Request,
-    engine\db\Model;
+    engine\db\Model,
+    engine\utils\Mailer,
+    engine\html\Render;
 
 class Log
 {
@@ -44,6 +46,8 @@ class Log
     const
         ENGINE = 'engine',
         DB = 'DB',
+        //DB_CON = 'DB connection',
+        //DB_QUERY = 'query to DB',
         EXCEPTION = 'exception',
         HTTP_ERR = 'HTTP error', // например, 404, 403 можно логировать
         PHP = 'PHP',             // ошибки PHP. Не уверен, что это целесообразно. Возможно удалю.
@@ -71,11 +75,11 @@ class Log
     {
         $conf = array_merge(
             [
-                'switch_on'   => true,
-                'store'       => self::STORE_IN_FILES,
+                'switch_on' => true,
+                'store'     => self::STORE_IN_FILES,
                 //'db_conf_key' => 'db',
-                'log_path'    => TEMP_PATH,
-                'timezone'    => '',
+                'log_path'  => TEMP_PATH,
+                'timezone'  => '',
             ],
             App::conf('log')
         );
@@ -86,8 +90,8 @@ class Log
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
             $conf['store'] = self::STORE_IN_FILES;
 //            if (isset($userConf['db_conf_key'])) {
-                $errors[] = 'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
-                    . 'Лог в БД невозможен';
+            $errors[] = 'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
+                . 'Лог в БД невозможен';
 //            }
         }
 
@@ -145,10 +149,10 @@ class Log
         }
 
         $default = [
-            'msg'       => '',
-            'type'      => self::UNTYPED,
-            'src'       => '',
-            'notify'    => FALSE,
+            'msg'        => '',
+            'type'       => self::UNTYPED,
+            'src'        => '',
+            'notify'     => FALSE,
             'file_force' => FALSE,
         ];
 
@@ -167,7 +171,7 @@ class Log
             $timezone = date_default_timezone_get();
             date_default_timezone_set($conf['timezone']);
         }
-        $ts = new DateTime();
+        $ts = new \DateTime();
         $logIt = [
             'type'     => $data['type'],
             'ts'       => $ts,
@@ -188,13 +192,11 @@ class Log
         if (!$data['file_force'] && $conf['store'] == self::STORE_IN_DB) {
             if (!$result = $this->_writeToDb($logIt)) {
                 $conf['store'] = self::STORE_IN_FILES;
-                //$this->addTyped('Ошибка записи лога в базу', self::ENGINE); // уже будет дописано про ошибку
             }
         }
 
         if (!$result && !$this->_writeInFile($logIt)) {
             $conf['store'] = self::STORE_ERROR;
-            //$logIt['msg'] = '<p><b>Сбой: не могу записать это сообщение в лог.</b></p>' . $logIt['msg'];
             $data['notify'] = true;
         }
 
@@ -260,7 +262,7 @@ class Log
     /**
      * Запись сообщения в лог-файл.
      *
-     * Тут важно поймать ошибки PHP и сообщить о них админу, даже когда DEBUG-режим отключен. Поэтому добавлен свой
+     * Тут важно поймать ошибки PHP и сообщить о них админу, когда error_reporting = 0. В этом случае добавляем свой
      * обработчик ошибок. {@see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
      *
      * TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого логер падает. Нужно
@@ -271,11 +273,13 @@ class Log
      */
     private function _writeInFile(&$logIt)
     {
-        $fn = $this->_conf[file_path] . $logIt['ts']->format('Ymd') . '_kira_log.csv';
+        $fn = $this->_conf['log_path'] . $logIt['ts']->format('Ymd') . '_kira_log.csv';
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        if ($customHandler = (error_reporting() == 0)) {
+            set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+                throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+            });
+        }
 
         try {
             if ($file = fopen($fn, 'a')) {
@@ -302,7 +306,9 @@ class Log
             $result = false;
         }
 
-        restore_error_handler();
+        if ($customHandler) {
+            restore_error_handler();
+        }
 
         return $result;
     }
@@ -317,11 +323,34 @@ class Log
      */
     private function _mailToAdmin(&$logIt)
     {
-        if (!$mail = $this->conf['_mail']) {
+        if (!$mailTo = $this->_conf['_mail']) {
             $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', self::ENGINE);
             return;
         }
-        // TODO txt и html версии письма со всеми данными лог-сообщения
+
+        $domain = Env::domainName();
+        $date = $logIt['ts']->format('Ymd H:i:s P');
+
+        $txt = "Сообщение от логера\n\n{$logIt['msg']}\n\nТип: {$logIt['type']}\nИсточник:{$logIt['source']}"
+            . "\n\nURL запроса:{$logIt['request']}\nIP юзера: {$logIt['userIP']}\n\n$date (c) $domain";
+
+        $vars = [
+            'msg'     => nl2br($logIt['msg']),
+            'type'    => $logIt['type'],
+            'source'  => $logIt['source'],
+            'request' => $logIt['request'],
+            'userIP'  => $logIt['userIP'],
+            'date'    => $date,
+            'homeURL' => Env::indexPage(),
+            'domain'  => $domain,
+        ];
+
+        $html = Render::make('log_letter.html', $vars);
+
+        $from = App::conf('noreply_mail') ?: "noreply@$domain";
+        if (!Mailer::complex($from, $mailTo, "Сообщение от логера сайта $domain", compact('txt', 'html'))) {
+            $this->addTyped('Не удалось отправить сообщение от логера.', self::ENGINE);
+        }
     }
 
     /**
