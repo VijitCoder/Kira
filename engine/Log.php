@@ -29,8 +29,8 @@
  * пустое значение для 'log_path', тогда логирование в файлы будет отключено.
  *
  * Даже при хранении логов в базе рекомендуется задать каталог для лог-файлов. В случае сбоя подключения к БД логер
- * попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу, один раз на каждый реквест
- * браузера (если в сборке ответа есть логирование). Если не задан даже админский email, тогда всё - /dev/nul.
+ * попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу. Если не задан даже
+ * админский email, тогда всё - /dev/nul.
  */
 
 namespace engine;
@@ -45,16 +45,16 @@ class Log
     // Типы логов
     const
         ENGINE = 'engine',
-        DB = 'DB',
-        //DB_CON = 'DB connection',
-        //DB_QUERY = 'query to DB',
+        DB_CONNECT = 'DB connection',
+        DB_QUERY = 'DB query',
         EXCEPTION = 'exception',
         HTTP_ERR = 'HTTP error', // например, 404, 403 можно логировать
         PHP = 'PHP',             // ошибки PHP. Не уверен, что это целесообразно. Возможно удалю.
         UNTYPED = 'untyped';
 
+    // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
     const
-        STORE_ERROR = 0,    // когда полностью сбоит логирование
+        STORE_ERROR = 0,
         STORE_IN_DB = 1,
         STORE_IN_FILES = 2;
 
@@ -65,11 +65,11 @@ class Log
      * Конструктор.
      *
      * Определяем конфигурацию логера. Если в приложении конфига нет, принимаем все по умолчанию. Если требуется лог
-     * в БД, проверяем наличие конфигурации подключения к базе. Если такой конфиг уточнил юзер, а его нет - это сбой,
-     * переключаемся на лог в файлы и сразу же пишем в него ошибку настройки логера.
+     * в БД, проверяем наличие конфигурации подключения к базе. Если такой конфиг уточнил юзер, а его нет - проброс
+     * исключения. Если не задан каталог, но требуется логирование в файлы - опять исключение.
      *
      * Прим.: конструктор не проверяет возможность записи лога по указанным настройкам. Это отслеживается
-     * непосредственно при записи.
+     * непосредственно при записи через возникающие ошибки.
      */
     public function __construct()
     {
@@ -86,25 +86,17 @@ class Log
 
         $conf['_mail'] = App::conf('admin_mail');
 
-        $errors = [];
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
-            $conf['store'] = self::STORE_IN_FILES;
-//            if (isset($userConf['db_conf_key'])) {
-            $errors[] = 'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке. '
-                . 'Лог в БД невозможен';
-//            }
+            throw new \LogicException("Ошибка конфигурации логера: указан 'db_conf_key' к несуществующей настройке.\n"
+                . 'Лог в БД невозможен');
         }
 
         if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
-            $conf['store'] = self::STORE_ERROR;
-            $errors[] = 'Ошибка конфигурации логера: не задан каталог для лога в файлы. Логирование невозможно.';
+            throw new \LogicException("Ошибка конфигурации логера: не задан каталог ('log_path') для лог-файлов.\n"
+                . 'Логирование в файлы невозможно.');
         }
 
-        if ($errors) {
-            $this->addTyped(implode("\n", $errors), self::ENGINE);
-        }
-
-        $this->_conf = $conf;
+         $this->_conf = $conf;
     }
 
     /**
@@ -113,9 +105,9 @@ class Log
      * Ожидаем либо строку с сообщением либо массив, содержащий сообщение и другие данные. Полный формат массива такой:
      * <pre>
      * [
-     *  'msg'        => string                 текст сообщения
+     *  'message'    => string                 текст сообщения
      *  'type'       => const  | self::UNTYPED тип лога, см. константы этого класса
-     *  'src'        => string | ''            источник сообщения
+     *  'source'     => string | ''            источник сообщения
      *  'notify'     => bool | FALSE           флаг "Нужно оповещение по почте"
      *  'file_force' => bool | FALSE           сообщение писать в файл, независимо от настройки.
      * ]
@@ -149,9 +141,9 @@ class Log
         }
 
         $default = [
-            'msg'        => '',
+            'message'    => '',
             'type'       => self::UNTYPED,
-            'src'        => '',
+            'source'     => '',
             'notify'     => FALSE,
             'file_force' => FALSE,
         ];
@@ -159,12 +151,12 @@ class Log
         if (is_array($data)) {
             $data = array_merge($default, $data);
         } else {
-            $default['msg'] = $data;
+            $default['message'] = $data;
             $data = $default;
         }
 
-        if (!$data['msg']) {
-            return;
+        if (!$data['message']) {
+            throw new \LogicException('Нет сообщения для записи в лог.');
         }
 
         if ($conf['timezone']) {
@@ -178,26 +170,40 @@ class Log
             'timezone' => $ts->format('\G\M\T P'),
             'userIP'   => Request::userIP(),
             'request'  => Request::absoluteURL(),
-            'source'   => $data['src'],
+            'source'   => $data['source'],
             // Убираем tab-отступы
-            'msg'      => str_replace(chr(9), '', $data['msg']),
+            'message'  => str_replace(chr(9), '', $data['message']),
         ];
         if ($conf['timezone']) {
             date_default_timezone_set($timezone);
             unset($timezone);
         }
 
+        // Заранее готовимся к сбою. Так избежим циклических вызовов, когда классы DB попытаются логировать свои ошибки
+        // в базу, которая уже лежит.
+        $store = $this->_conf['store'];
         $result = false;
-
-        if (!$data['file_force'] && $conf['store'] == self::STORE_IN_DB) {
-            if (!$result = $this->_writeToDb($logIt)) {
-                $conf['store'] = self::STORE_IN_FILES;
+        if (!$data['file_force'] && $store == self::STORE_IN_DB) {
+            $this->_conf['store'] = self::STORE_IN_FILES;
+            if ($result = $this->_writeToDb($logIt)) {
+                $this->_conf['store'] = $store;
             }
         }
 
-        if (!$result && !$this->_writeInFile($logIt)) {
-            $conf['store'] = self::STORE_ERROR;
-            $data['notify'] = true;
+        /*
+        Если использовать закомменченное условие, тогда при двух сбоях подряд (ни в базу, ни в файлы) придет всего одно
+        сообщение на мыло. НО! В нем будет инфа только об этих сбоях. С текущим условием писем будет два: первое о сбоях
+        в логере, второе - собственно то сообщение, которое не удалось никуда записать.
+        */
+        //if (!$result && $store == self::STORE_IN_FILES) {
+
+        if (!$result) {
+            $this->_conf['store'] = self::STORE_ERROR;
+            if ($this->_writeToFile($logIt)) {
+                $this->_conf['store'] = $store;
+            } else {
+                $data['notify'] = true;
+            }
         }
 
         if ($data['notify']) {
@@ -215,16 +221,22 @@ class Log
      * @param string $type тип лога, см. константы этого класса
      * @return void
      */
-    public function addTyped($msg, $type)
+    public function addTyped($message, $type)
     {
-        $this->add(compact('msg', 'type'));
+        $this->add(compact('message', 'type'));
     }
 
     /**
      * Запись сообщения в базу.
      *
-     * Время пишем с микросекундами. На этом значении построен первичный ключ таблицы. Поэтому в случае успешной записи
-     * ждем 1мс, чтобы гарантировать новую метку времени для следующего сообщения (уникальный ключ).
+     * Ограничения на длину строк:
+     * <ul>
+     * <li>'message' можно считать неограниченным, тип поля TEXT (64 Кб)</li>
+     * <li>'type' 20 символов. Обрезается в конце</li>
+     * <li>'request' 255 символов, обрезается в конце, дописывается троеточие</li>
+     * <li>'userIP' IPv4, следовательно 15 символов</li>
+     * <li>'source' 100 символов, обрезается с начала строки, приписывается троеточие</li>
+     * </ul>
      *
      * @param array $logIt
      * @return bool
@@ -235,25 +247,32 @@ class Log
             $sql = '
                 INSERT INTO `kira_log` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
                 VALUES (?,?,?,?,?,?,?)';
+
+            $request = $logIt['request'];
+            if (mb_strlen($request) > 255) {
+                $request = mb_substr($request, 0, 252) . '...';
+            }
+
+            $source = $logIt['source'];
+            if (($len = mb_strlen($source)) > 100) {
+                $source = '...' . mb_substr($source, $len - 97);
+            }
+
             $data = [
-                $logIt['ts']->format('Ymd H:i:s.u'),
+                $logIt['ts']->format('Y-m-d H:i:s'),
                 $logIt['timezone'],
-                $logIt['logType'],
+                $logIt['type'],
                 $logIt['message'],
                 $logIt['userIP'],
-                $logIt['request'],
-                $logIt['source'],
+                $request,
+                $source,
             ];
 
             $result = (bool)(new Model($this->_conf['db_conf_key']))->query(['q' => $sql, 'p' => $data]);
         } catch (\Exception $e) {
-            $logIt['msg'] .= "\n\nДополнительно: не удалось записать это сообщение в лог БД. Ошибка:\n"
+            $logIt['message'] .= "\n\nДополнительно. Не удалось записать это сообщение в лог БД, причина: "
                 . $e->getMessage();
             $result = false;
-        }
-
-        if ($result) {
-            usleep(1);
         }
 
         return $result;
@@ -271,10 +290,8 @@ class Log
      * @param array &$logIt
      * @return bool
      */
-    private function _writeInFile(&$logIt)
+    private function _writeToFile(&$logIt)
     {
-        $fn = $this->_conf['log_path'] . $logIt['ts']->format('Ymd') . '_kira_log.csv';
-
         if ($customHandler = (error_reporting() == 0)) {
             set_error_handler(function ($errno, $errstr, $errfile, $errline) {
                 throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -282,11 +299,17 @@ class Log
         }
 
         try {
+            if (!$logPath = $this->_conf['log_path']) {
+                throw new \ErrorException('Не задан каталог (\'log_path\') для лог-файлов.');
+            }
+
+            $fn = $logPath . $logIt['ts']->format('Ymd') . '_kira_log.csv';
+
             if ($file = fopen($fn, 'a')) {
                 $result = (bool)fputcsv(
                     $file,
                     [
-                        $logIt['logType'],
+                        $logIt['type'],
                         $logIt['ts']->format('H:i:s'),
                         $logIt['timezone'],
                         $logIt['message'],
@@ -301,7 +324,7 @@ class Log
                 $result = false;
             }
         } catch (\ErrorException $e) {
-            $logIt['msg'] .= "\n\nДополнительно: не удалось записать это сообщение в файл лога. Ошибка:\n"
+            $logIt['message'] .= "\n\nДополнительно. Не удалось записать это сообщение в файл лога, причина: "
                 . $e->getMessage();
             $result = false;
         }
@@ -329,13 +352,14 @@ class Log
         }
 
         $domain = Env::domainName();
-        $date = $logIt['ts']->format('Ymd H:i:s P');
+        $date = $logIt['ts']->format('Y/m/d H:i:s P');
 
-        $txt = "Сообщение от логера\n\n{$logIt['msg']}\n\nТип: {$logIt['type']}\nИсточник:{$logIt['source']}"
+        $letters['txt'] = "Сообщение от логера\n\n{$logIt['message']}"
+            . "\n\nТип: {$logIt['type']}\nИсточник: {$logIt['source']}"
             . "\n\nURL запроса:{$logIt['request']}\nIP юзера: {$logIt['userIP']}\n\n$date (c) $domain";
 
         $vars = [
-            'msg'     => nl2br($logIt['msg']),
+            'message' => nl2br($logIt['message']),
             'type'    => $logIt['type'],
             'source'  => $logIt['source'],
             'request' => $logIt['request'],
@@ -345,10 +369,10 @@ class Log
             'domain'  => $domain,
         ];
 
-        $html = Render::make('log_letter.html', $vars);
+        $letters['html'] = Render::make('log_letter.htm', $vars);
 
         $from = App::conf('noreply_mail') ?: "noreply@$domain";
-        if (!Mailer::complex($from, $mailTo, "Сообщение от логера сайта $domain", compact('txt', 'html'))) {
+        if (!Mailer::complex($from, $mailTo, "Сообщение от логера сайта $domain", $letters)) {
             $this->addTyped('Не удалось отправить сообщение от логера.', self::ENGINE);
         }
     }
@@ -417,19 +441,27 @@ class Log
         //if (mkdir($dirpath, 0777, true) && chmod($dirpath, 0664)) {...}
 
         /*
+Нужно предлагать юзеру выбор движка таблицы MyISAM | InnoDB. <radio-button>
+По умолчанию - MyISAM. Она значительно шустрее на select-ах и insert-ах. И логам не требуется поддержка транзакций.
+Явная выгода.
+
 USE database ...
 
+DROP TABLE IF EXISTS `kira_log`;
+
 CREATE TABLE `kira_log` (
-    `ts` TIMESTAMP NOT NULL COMMENT 'Дата/время события, с микросекундами',
-    `timezone` CHAR(10) NOT NULL COMMENT 'Часовой пояс, которому соответствует указанное время события',
-    `logType` VARCHAR(20) NOT NULL COMMENT 'Тип сообщения',
-    `message` TEXT NOT NULL COMMENT 'Сообщение',
-    `userIP` CHAR(15) NULL DEFAULT '' COMMENT 'IPv4, адрес юзера, когда удалось его определить',
-    `request` VARCHAR(255) NULL DEFAULT '' COMMENT 'URL запроса, в ходе обработки которого пишем лог',
-    `source` VARCHAR(100) NULL DEFAULT '' COMMENT 'источник сообщения (функция, скрипт, какая-то пометка кодера)',
-    KEY `logType` (`logType`)
-)
-ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE utf8_general_ci;
+  `id` int(12) unsigned NOT NULL AUTO_INCREMENT,
+  `ts` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата/время события',
+  `timezone` char(10) NOT NULL COMMENT 'Часовой пояс, которому соответствует указанное время события',
+  `logType` varchar(20) NOT NULL COMMENT 'Тип сообщения',
+  `message` text NOT NULL COMMENT 'Сообщение',
+  `userIP` char(15) DEFAULT '' COMMENT 'IPv4, адрес юзера, когда удалось его определить',
+  `request` varchar(255) DEFAULT '' COMMENT 'URL запроса, в ходе обработки которого пишем лог',
+  `source` varchar(100) DEFAULT '' COMMENT 'источник сообщения (функция, скрипт, какая-то пометка кодера)',
+  PRIMARY KEY (`id`),
+  KEY `ts` (`ts`),
+  KEY `logType` (`logType`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         */
     }
 }

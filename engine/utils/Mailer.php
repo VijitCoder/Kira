@@ -95,8 +95,8 @@ class Mailer
      * @param              $from    от кого
      * @param              $to      кому
      * @param              $subject тема письма
-     * @param array|string $body    текст письма. Если массив, тогда [text|html|MIME-type => тест письма].
-     * @param array        $files   вложения. Смешанный массив.
+     * @param array|string &$body   текст письма. Если массив, тогда [text|html|MIME-type => тест письма].
+     * @param array        $files   вложения. Смешанный массив. НЕ передавай этот массив по ссылке. Так выгоднее.
      * @return bool
      */
     public static function complex($from, $to, $subject, &$body, $files = [])

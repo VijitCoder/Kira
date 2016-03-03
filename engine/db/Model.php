@@ -6,6 +6,8 @@
 
 namespace engine\db;
 
+use \engine\App;
+
 class Model
 {
     /** @var PDO дескриптор соединения с БД */
@@ -84,11 +86,10 @@ class Model
      *
      * @param $ops
      * @return mixed
-     * @throws Exception
+     * @throws \Exception
      */
     public function query($ops)
     {
-        // параметры по умолчанию
         $default = array(
             'q'     => null,
             'p'     => array(),
@@ -97,21 +98,39 @@ class Model
             'guess' => true,
         );
         $ops = array_merge($default, $ops);
-        extract($ops); //теперь у нас есть все переменные, включая не переданные в параметрах функции
+        extract($ops);
 
         if (!$q) {
-            throw new Exception('Не указан текст запроса');
+            throw new \Exception('Не указан текст запроса');
         }
 
         $sth = $this->_dbh->prepare($q);
         //$sth->debugDumpParams(); exit;//DBG
 
-        /*
-        Тут можно ловить ошибки PDOException и делать полезные штуки :) Откат транзакции, например, если она открыта
-        через запрос. PDO-транзакция откатывается автоматически, {@see http://php.net/manual/ru/pdo.transactions.php}
-        Сейчас исключения ловит перехватчик в App.php
-        */
-        $sth->execute($p);
+        try {
+            $sth->execute($p);
+        } catch (\PDOException $e) {
+
+            if (DEBUG) {
+                throw $e;
+                // дальше выполнения функции не будет. Исключение поймает финальная ловушка (если других нет)
+            }
+
+            $msg = $e->getMessage();
+            $trace = $e->getTrace();
+            if (isset($trace[1])) {
+                $msg .= "\nЗапрос отправлен из " . str_replace(ROOT_PATH, '', $trace[1]['file'])
+                    . '(' . $trace[1]['line'] .') ';
+            }
+
+            if (isset($trace[2])) {
+                $msg .= $trace[2]['function'] . '(...)';
+            }
+
+            App::log()->addTyped($msg, \engine\Log::DB_QUERY);
+
+            return null;
+        }
 
         if ($guess === true) {
             if (preg_match('~select|update|insert|delete~i', $q, $m)) {

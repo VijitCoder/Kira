@@ -27,10 +27,15 @@ class Handlers
     public static function exceptionHandler($ex)
     {
         $class = get_class($ex);
-        $message = $ex->getMessage();
+        $message = nl2br($ex->getMessage());
         $file = str_replace(ROOT_PATH, '/', $ex->getFile());
         $line = $ex->getLine();
         $trace = $ex->getTraceAsString();
+
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+        }
+
         if (DEBUG) {
             echo Render::make('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
         } else {
@@ -46,9 +51,9 @@ class Handlers
      * в temp-каталог приложения, в kira_php_error.log, поскольку на момент ошибки класс логера в движке может
      * еще не работать.
      *
-     * Согласно мануала, такая функция вызывается независимо от настройки error_reporting. Поступаем так: если
-     * error_reporting = 0, логируем ошибки. Иначе выдаем их в output. Другие комбинации error_reporting не проверяем,
-     * излишняя сложность кода.
+     * Согласно мануала, такая функция вызывается независимо от настройки error_reporting. Поэтому проверяем, требуется
+     * ли сообщать о полученной ошибке. Если да - рисуем ответ, иначе скидываем сообщение в лог. Обычно бывает так:
+     * на локалке/деве всё включено - будут валиться сообщения в браузер. На проде все отключено - логируем.
      *
      * Опять же по мануалу, если этот обработчик не прервет выполнение вызвав die(), то программа продолжится. Если
      * вернет FALSE - ошибку получит стандартный обработчик и мы увидим еще и его сообщение. Поэтому делаем так:
@@ -92,7 +97,7 @@ class Handlers
 
         $stack_output = $log_data = '';
 
-        if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR | E_NOTICE | E_USER_NOTICE)) == 0) {
+        if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR)) == 0) {
             $trace = array_reverse(debug_backtrace());
             array_pop($trace);
             foreach ($trace as $step) {
@@ -133,14 +138,14 @@ class Handlers
             ";
         }
 
-        if (error_reporting() > 0) {
+        if (error_reporting() & $code) {
             if (!isset($_SERVER['REQUEST_URI'])) { // работаем в консоли
                 echo $log_data;
             } else {
                 if (!headers_sent()) {
                     header('Content-Type: text/html; charset=UTF-8');
                 }
-                $msg = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
+                $msg = nl2br(htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'));
                 echo Render::make('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
             }
         } else {
