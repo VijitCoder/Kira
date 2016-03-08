@@ -36,6 +36,7 @@ class Handlers
         $trace = $ex->getTraceAsString();
 
         if (!headers_sent()) {
+            header('500 Internal Server Error');
             header('Content-Type: text/html; charset=UTF-8');
         }
 
@@ -148,6 +149,7 @@ class Handlers
                 echo $log_data;
             } else {
                 if (!headers_sent()) {
+                    header('500 Internal Server Error');
                     header('Content-Type: text/html; charset=UTF-8');
                 }
                 $msg = nl2br(htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'));

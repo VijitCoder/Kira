@@ -5,7 +5,8 @@
 
 namespace app\controllers;
 
-use engine\Env,
+use engine\App,
+    engine\Env,
     engine\net\Request,
     engine\net\Response;
 
@@ -21,6 +22,7 @@ class Error extends \app\controllers\Front
     public function index()
     {
         $code = http_response_code();
+        $log = App::log();
         $data = [
             'domain' => Env::domainName(),
             'index'  => Env::indexPage(),
@@ -31,22 +33,22 @@ class Error extends \app\controllers\Front
                 break;
             case 403:
                 $this->title = '403 В доступе отказано';
-                //...
-                //@TODO Запись в лог, уведомление админу
+                $log->addTyped('403 В доступе отказано', $log::HTTP_ERROR);
                 break;
             case 404:
                 $this->title = '404 Страница не найдена';
                 $data['request'] = Request::absoluteURL();
-                //...
-                //@TODO запись в лог
+                $log->addTyped('404 Страница не найдена', $log::HTTP_ERROR);
                 break;
             case 500:
+                // TODO может не надо на мыло? Ежедневного cron-отчета недостаточно будет?
                 $this->title = '500 Внутренняя ошибка сервера';
-                //...
-                //@TODO уведомление админу
+                $log->add(['message' => '500 Внутренняя ошибка сервера', 'type' => $log::HTTP_ERROR, 'notify' => true]);
                 break;
             default:
-                echo "Ошибка. $code " . Response::textOf($code);
+                $msg = "Ошибка. $code " . Response::textOf($code);
+                echo $msg;
+                $log->addTyped($msg, $log::HTTP_ERROR);
                 return;
         }
 

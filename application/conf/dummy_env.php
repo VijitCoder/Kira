@@ -26,7 +26,7 @@ return [
 
     //Логер
     'log' => [
-        'switch_on'   => true,      // включить логирование
+        'switch_on'   => !DEBUG,    // включить логирование
         'store'       => \engine\Log::STORE_IN_DB, // STORE_IN_DB | STORE_IN_FILES - тип хранителя логов
         'db_conf_key' => 'db',      // ключ конфига БД, если храним логи в базе
         'log_path'    => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах

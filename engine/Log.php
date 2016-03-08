@@ -44,12 +44,12 @@ class Log
 {
     // Типы логов
     const
-        ENGINE = 'engine',
+        ENGINE     = 'engine',
         DB_CONNECT = 'DB connection',
-        DB_QUERY = 'DB query',
-        EXCEPTION = 'exception',
-        HTTP_ERR = 'HTTP error', // например, 404, 403 можно логировать
-        UNTYPED = 'untyped';
+        DB_QUERY   = 'DB query',
+        EXCEPTION  = 'exception',
+        HTTP_ERROR = 'HTTP error', // например, 404, 403 можно логировать
+        UNTYPED    = 'untyped';
 
     // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
     const
