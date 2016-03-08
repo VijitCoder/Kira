@@ -20,11 +20,13 @@ class Validators
      * Валидатор пароля.
      *
      * Валидатору нужны следующие значения в конфиге (сразу с примерами):
+     * <pre>
      * 'validators'   => [
      *     'password' => [
-     *       'minLen' => 5,  // минимальная длина пароля. 0 = любая длина подходит.
-     *       'minComb' => 3, // минимальная комбинация наборов символов в пароле
+     *       'min_len'  => 5, // минимальная длина пароля. 0 = любая длина подходит.
+     *       'min_comb' => 3, // минимальная комбинация наборов символов в пароле
      * ]
+     * </pre>
      *
      * В пароле разрешены следующие наборы символов:
      * <ul>
@@ -46,11 +48,11 @@ class Validators
             $errors[] = App::t('Недопустимые символы.');
         }
 
-        if (mb_strlen($pass) < App::conf('validators.password.minLen')) {
+        if (mb_strlen($pass) < App::conf('validators.password.min_len')) {
             $errors[] = App::t('Пароль слишком короткий.');
         }
 
-        if ($minComb = App::conf('validators.password.minComb')) {
+        if ($minComb = App::conf('validators.password.min_comb')) {
             $cnt = 0;
             $tmp1 = preg_replace('~[^\w!@#$%^&`\~]+~u', '', $pass); //убираем левое
             $tmp2 = preg_replace('~[!@#$%^&`\~_-]+~', '', $tmp1);   //убрали спец.символы
@@ -78,11 +80,13 @@ class Validators
      * Проверка на корректность и черный список серверов.
      *
      * Валидатору нужны следующие значения в конфиге (необязательно):
+     * <pre>
      * 'validators'   => [
      *     'mail' => [
      *       'regexp' => '~.+@.+\..+~',
-     *       'blackServers' => ['example1.com', 'example2.com',]
+     *       'black_servers' => ['example1.com', 'example2.com',]
      * ]
+     * </pre>
      *
      * Проверка на корректность. Если настройка не задана, проверяем по своей регулярке (см. в примере - она самая).
      * Почему такая простая регулярка? :) {@link http://habrahabr.ru/post/175375/}
@@ -101,7 +105,7 @@ class Validators
         }
 
         $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
-        $black = App::conf('validators.mail.blackServers', false) ? : [];
+        $black = App::conf('validators.mail.black_servers', false) ? : [];
         if (in_array($server, $black)) {
             return [App::t('Почтовый сервер вашего email в черном списке. Пожалуйста укажите другой адрес.')];
         }

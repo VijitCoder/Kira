@@ -22,8 +22,8 @@ class App
     /** @var string заданный файл локализации. Инфа для проброса исключения */
     private static $_lang;
 
-    /** @var object реализация интерфейса IRouter, объект класса текущего роутера */
-    private static $_router;
+    /** @var array объекты классов, инстанциированных через App: роутер, логер */
+    private static $_instances = [];
 
     /**
      * Чтение конкретной настройки конфига.
@@ -125,6 +125,22 @@ class App
     }
 
     /**
+     * TODO Геттер не может быть статичным методом. Либо придумать что-то, либо отказаться от магии.
+     *
+     * Магический геттер для укороченнного обращения к некоторым методам класса.
+     * Список методов ограничен логикой: это инициализаторы объектов других классов движка.
+     *
+     * @param string $method
+     */
+    //public function __get($method)
+    //{
+    //    $allows = ['router', 'log'];
+    //    if (in_array($method, $allows)) {
+    //        return self::$allows[$method]();
+    //    }
+    //}
+
+    /**
      * Возвращает объект класса текущего роутера.
      *
      * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
@@ -134,10 +150,25 @@ class App
      */
     public static function router()
     {
-        if (!self::$_router) {
+        if (!isset(self::$_instances['router'])) {
             $router = self::conf('router', false) ?: 'engine\net\Router';
-            self::$_router = new $router;
+            self::$_instances['router'] = new $router;
         }
-        return self::$_router;
+        return self::$_instances['router'];
+    }
+
+    /**
+     * Возвращает объект логера.
+     *
+     * В зависимости от настроек и доступности базы, логирование может вестись в БД или файлы. Если таблица окажется
+     * недоступна, будем сбрасывать логи в файлы. Чтоб в течение работы приложения не выяснять на каждом логе факт
+     * доступности базы, используем этот геттер.
+     */
+    public static function log()
+    {
+        if (!isset(self::$_instances['log'])) {
+            self::$_instances['log'] = new \engine\Log;
+        }
+        return self::$_instances['log'];
     }
 }

@@ -1,0 +1,20 @@
+<!-- engine\Handlers::exceptionHandler() -->
+<style>
+    div.exception * {font-family: Arial, Helvetica, sans-serif; font-size:14px;}
+    div.exception {margin: 10px; padding: 0 10px; border: 1px solid black;}
+    div.exception h4 {font-size: 16px; border-bottom:1px solid black;}
+    div.exception table td {padding-bottom: 7px; padding-right: 7px;}
+</style>
+<div class="exception">
+    <h4>{{class}}</h4>
+
+    <table>
+        <tr style="vertical-align:top;"><td>Сообщение:</td><td><strong>{{message}}</strong></td></tr>
+        <tr><td>Скрипт:</td><td>{{file}}</td></tr>
+        <tr><td>Строка:</td><td>{{line}}</td></tr>
+     </table>
+
+    <p>Стек вызовов</p>
+
+    <pre>{{trace}}</pre>
+</div>

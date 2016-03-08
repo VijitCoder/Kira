@@ -149,7 +149,7 @@ class RegistrationService
             ['m' => $mail, 'c' => md5($salt)]
         );
 
-        $from = App::conf('adminMail');
+        $from = App::conf('admin_mail');
         $mailto = sprintf('<a href="mailto:%s?subject=это_письмо_получено_ошибочно">%s</a>', $from, $from);
 
         $html = '<p>Вы получили это письмо, потому что ваш email был указан при регистрации на сайте '

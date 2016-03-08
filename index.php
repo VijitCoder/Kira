@@ -4,6 +4,9 @@
  */
 mb_internal_encoding('UTF-8');
 
+// Часовой пояс по версии PHP {@link http://php.net/manual/en/timezones.php}
+date_default_timezone_set('Asia/Novosibirsk');
+
 // Физический путь от корня тома. Гарантированный завершающий слеш. Кроссплатформа. Приводим пути к unix-стилю.
 define('ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
 

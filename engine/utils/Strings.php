@@ -124,7 +124,7 @@ class Strings
      * @param string $end символы конца строки
      * @return string
      */
-    public static function word_chunk($str, $len = 76, $end = "\n")
+    public static function word_chunk($str, $len = 76, $end = "\r\n")
     {
         $pattern = '~.{1,' . $len . '}~u';
         $str = preg_replace($pattern, '$0' . $end, $str);
