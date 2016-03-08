@@ -41,7 +41,6 @@ class UserModel extends \engine\db\Model
     public function setStatus($id, $status)
     {
         //действуем внутри движка, можно доверять значениям
-        $q = "UPDATE {$this->table} SET `status` = '{$status}' WHERE `id` = {$id}";
-        return $this->query(['q' => $q]);
+        return $this->query("UPDATE {$this->table} SET `status` = '{$status}' WHERE `id` = {$id}");
     }
 }

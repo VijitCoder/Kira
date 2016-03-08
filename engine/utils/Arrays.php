@@ -40,10 +40,11 @@ class Arrays
      * Потребовалась своя реализация для PHP < 5.6
      *
      * @param callable $callback
-     * @param array $arr
+     * @param array    $arr
      * @return array
      */
-    public static function filter_keys($callback, $arr) {
+    public static function filter_keys($callback, $arr)
+    {
         foreach ($arr as $key => $whatever) {
             if (!$callback($key)) {
                 unset($arr[$key]);
@@ -62,7 +63,8 @@ class Arrays
      * Прим: в комментарии другое объединение, там числовые ключи заменяются так же, как и строковые.
      *
      * Логика объединения:
-     * - значения с числовыми ключами всегда добавляются в конец, независимо от самих значений.
+     * - значения с числовыми ключами всегда добавляются в конец, независимо от самих значений. Важно понимать, что
+     * при этом числовые ключи не сохраняются, т.е. происходит переиндексация массива.
      * - строковые ключи перезаписываются. Если у обоих массивов значения окажутся подмассивами, тогда они объединяются
      * в рекурсивном вызове этой функции.
      *
@@ -73,19 +75,24 @@ class Arrays
      *  array1 + array2 > recurse call
      * </pre>
      *
+     * [UPD] Добавлен опциональный флаг, который позволит обработать числовые ключи, как строковые. Т.е. заменять
+     * значения числовых ключей, а не дописывать в конец результирующего массива.
+     *
      * @param array $array1
      * @param array $array2
+     * @param bool  $numKeyAsString TRUE = обрабатывать числовые ключи аналогично строковым, FALSE = дописывать значения
+     *                              в конец, с новыми числовыми ключами.
      * @return array
      */
-    public static function merge_recursive(array &$array1, array &$array2)
+    public static function merge_recursive(array &$array1, array &$array2, $numKeyAsString = false)
     {
         $merged = $array1;
 
         foreach ($array2 as $key => &$value) {
-            if (is_int($key)) {
-               $merged[] = $value;
+            if (is_int($key) && !$numKeyAsString) {
+                $merged[] = $value;
             } else if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
-                $merged[$key] = self::merge_recursive($merged[$key], $value);
+                $merged[$key] = self::merge_recursive($merged[$key], $value, $numKeyAsString);
             } else {
                 $merged[$key] = $value;
             }

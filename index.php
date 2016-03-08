@@ -5,6 +5,7 @@
 mb_internal_encoding('UTF-8');
 
 // Часовой пояс по версии PHP {@link http://php.net/manual/en/timezones.php}
+// Можно задать через php.ini, так или иначе часовой пояс должен быть определен.
 date_default_timezone_set('Asia/Novosibirsk');
 
 // Физический путь от корня тома. Гарантированный завершающий слеш. Кроссплатформа. Приводим пути к unix-стилю.

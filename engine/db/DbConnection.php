@@ -10,14 +10,20 @@
  *    'dsn' => string,
  *    'user' => string,
  *    'password' => string,
- *    'options' => array  //может отсутствовать.
+ *    'options' => array | []
+ *    'set_timezone' => bool | TRUE
  * ]
  * </pre>
  *
- * Ключ 'db' - ожидаемый по умолчанию. Все параметры соответствуют параметрам конструктора класса PDO,
- * {@see http://php.net/manual/en/pdo.construct.php}.
+ * Ключ 'db' - ожидаемый по умолчанию. Почти все параметры соответствуют параметрам конструктора класса PDO,
+ * {@link http://php.net/manual/en/pdo.construct.php}.
  *
  * Про 'options' можно почитать в PDO::setAttribute() {@link http://php.net/manual/ru/pdo.setattribute.php}
+ *
+ * Если поднят флаг 'set_timezone', то после установки соединения отправляется запрос на установку часового пояса сессии
+ * в соответствии с поясом, заданном для PHP-скриптов. Это гарантирует работу БД и PHP в одном времени. По теме часовых
+ * поясов в MySQL хорошо расписано тут
+ * {@link http://stackoverflow.com/questions/19023978/should-mysql-have-its-timezone-set-to-utc/19075291#19075291}
  *
  * Больше класс ничего не делает, только хранит подключения к базам.
  */
@@ -38,6 +44,10 @@ class DbConnection
      * Запоминаем подключения по $confKey. Полагаем, что в настройках приложения для каждого ключа описано <i>уникальное
      * сочетание</i> базы/пользователя, поскольку идентичный конфиг не имеет смысла.
      *
+     * Опционально ('set_timezone'): после установки соединения отправляется запрос на установку часового пояса сессии
+     * в соответствии с поясом, заданном для PHP-скриптов. В запросе используется числовое представление пояса,
+     * т.к. не всегда на MySQL-сервер загружена таблица с названиями часовых поясов.
+     *
      * Логика исключений: если включен DEBUG, пробрасываем дальше PDOException, иначе логируем ошибку и пробрасываем
      * обычный Exception с ссылкой на предыдущее исключение. Поймав такое исключение и проверив "есть предыдущее
      * исключение" можно определить, что писать еще раз в лог не нужно. Проще говоря: на проде все полезное делаем тут,
@@ -54,13 +64,18 @@ class DbConnection
             return self::$_cons[$confKey];
         }
 
-        $conf = App::conf($confKey);
-        if (!isset($conf['options'])) {
-            $conf['options'] = null;
-        }
+        $conf = array_merge(['options' => null, 'set_timezone' => true], App::conf($confKey));
 
         try {
-            self::$_cons[$confKey] = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
+            $dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
+
+            if ($conf['set_timezone']) {
+                $sql = 'SET SESSION time_zone = "' . date('P') . '"';
+                if ($dbh->exec($sql) === false) {
+                    throw new \PDOException("Ошибка установки часового пояса MySQL-сессии.\nЗапрос: $sql");
+                }
+            }
+            self::$_cons[$confKey] = $dbh;
         } catch (\PDOException $e) {
             if (DEBUG) {
                 throw $e;
@@ -83,6 +98,21 @@ class DbConnection
         }
 
         return self::$_cons[$confKey];
+    }
+
+    /**
+     * Закрыть соединение с базой.
+     *
+     * Ожидаем на входе имя db-настройки приложения, по которой было выполнено соединение.
+     *
+     * Метод используется для принудительного (явного) отключения от базы. В обычном режиме соединение будет закрыто
+     * при завершении работы приложения, что вызовет разрушение всех PDO-объектов.
+     *
+     * @param string $confKey ключ во массиве соединений
+     */
+    public static function disconnect($confKey)
+    {
+        unset(self::$_cons[$confKey]);
     }
 
     /**

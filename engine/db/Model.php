@@ -1,7 +1,8 @@
 <?php
 /**
- * Супер-класс моделей. Подключение и методы работы с БД
- * По вопросам PDO {@see http://phpfaq.ru/pdo} Очень полезная статья.
+ * Супер-класс моделей. Подключение и методы работы с БД.
+ *
+ * По вопросам PDO {@link http://phpfaq.ru/pdo} Очень полезная статья.
  */
 
 namespace engine\db;
@@ -14,8 +15,9 @@ class Model
     private $_dbh;
 
     /**
-     * @var string имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса.
-     * Суффикс "Model" будет отброшен, регистр букв сохраняется.
+     * Имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model"
+     * будет отброшен, регистр букв сохраняется.
+     * @var string
      */
     protected $table;
 
@@ -28,7 +30,8 @@ class Model
     /**
      * Конструктор.
      *
-     * Манипуляции с конфигами позволяют подключать модели к разным базам и/или с разными учетками.
+     * Определяем имя таблицы, если оно не задано в свойствах модели-наследника. Подключаемся к базе по указанной
+     * конфигурации. Манипуляции с конфигами позволяют подключать модели к разным базам и/или с разными учетками.
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
      */
@@ -61,76 +64,73 @@ class Model
      */
     public function switchConnection($confKey)
     {
+        $this->_confKey = $confKey;
         $this->_dbh = DbConnection::connect($confKey);
         return $this;
     }
 
     /**
-     * Готовим ассоциативный массив данных для вставки в PDO запрос.
-     * @var array $кеуs массив заготовок ключей, без ":" в начале.
-     * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
-     * @return array
-     */
-    protected function valueSet($кеуs, $data)
-    {
-        $values = array();
-        foreach ($кеуs as $k) {
-            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
-        }
-        return $values;
-    }
-
-    /**
      * Выполняем запрос.
      *
-     * Соединились, подготовили запрос, выполнили. Результат вернули.
+     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Все действия в одном месте:
+     * соединились, подготовили запрос, выполнили. Результат вернули.
      *
-     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Хочется чего-то особенного?
-     * Нивапрос! Пишите метод в своей модели, вызывайте connect() и дальше в ней все самостоятельно.
+     * Параметрами метода может быть строка или ассоциативный массив. В первом случае ожидаем только текст запроса, без
+     * подстановок. Полный массив параметров такой:
+     * <pre>
+     * [
+     *   'sql'     => string
+     *   'params'  => array | [],
+     *   'style'   => const | \PDO::FETCH_ASSOC,
+     *   'one_row' => bool | false,
+     *   'guess'   => bool | string | true,
+     * ]
+     * </pre>
      *
-     * Обязательные параметры:
-     *
-     *  q = query - текст запроса, прямым текстом с плейсхолдерами, если нужно.
-     *
-     * Необязательные параметры:
      * <ul>
-     * <li>p = params - массив параметров для PDOStatement</li>
-     * <li>fs = fetch style - в каком стиле выдать результат SELECT, см. константы тут
+     * <li>sql - текст запроса, прямым текстом с плейсхолдерами, если нужно.</li>
+     * <li>params - массив параметров для PDOStatement</li>
+     * <li>style - в каком стиле выдать результат SELECT, см. константы тут
      * {@see http://php.net/manual/ru/pdostatement.fetch.php}</li>
-     * <li>one = fetch one row - (bool) ожидаем только один ряд. В результате будет меньшая вложенность массива.</li>
+     * <li>one_row - TRUE = ожидаем только один ряд. В результате будет меньшая вложенность массива.</li>
      * <li>guess - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
      * указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
-     * количество рядов.</li>
+     * количество рядов. ПО умолчанию - TRUE.</li>
      * </ul>
      *
      * Логика исключений повторяет DBConnection::connect()
      *
-     * @param $ops
-     * @return mixed
+     * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
+     * @return array | int
      * @throws \PDOException
      * @throws \Exception
      */
     public function query($ops)
     {
-        $default = array(
-            'q'     => null,
-            'p'     => array(),
-            'fs'    => \PDO::FETCH_ASSOC,
-            'one'   => false,
-            'guess' => true,
-        );
+        $default = [
+            'sql'     => null,
+            'params'  => [],
+            'style'   => \PDO::FETCH_ASSOC,
+            'one_row' => false,
+            'guess'   => true,
+        ];
+
+        if (is_string($ops)) {
+            $ops = ['sql' => $ops];
+        }
+
         $ops = array_merge($default, $ops);
         extract($ops);
 
-        if (!$q) {
+        if (!$sql) {
             throw new \Exception('Не указан текст запроса');
         }
 
-        $sth = $this->_dbh->prepare($q);
+        $sth = $this->_dbh->prepare($sql);
         //$sth->debugDumpParams(); exit;//DBG
 
         try {
-            $sth->execute($p);
+            $sth->execute($params);
         } catch (\PDOException $e) {
             if (DEBUG) {
                 throw $e;
@@ -140,7 +140,7 @@ class Model
             $trace = $e->getTrace();
             if (isset($trace[1])) {
                 $msg .= "\nЗапрос отправлен из " . str_replace(ROOT_PATH, '', $trace[1]['file'])
-                    . '(' . $trace[1]['line'] .') ';
+                    . '(' . $trace[1]['line'] . ') ';
             }
 
             if (isset($trace[2])) {
@@ -153,41 +153,71 @@ class Model
         }
 
         if ($guess === true) {
-            if (preg_match('~select|update|insert|delete~i', $q, $m)) {
+            if (preg_match('~select|update|insert|delete~i', $sql, $m)) {
                 $guess = $m[0];
             }
         }
 
         return ($guess && strtolower($guess) == 'select')
-            ? ($one ? $sth->fetch($fs) : $sth->fetchAll($fs))
+            ? ($one_row ? $sth->fetch($style) : $sth->fetchAll($style))
             : $sth->rowCount();
     }
 
     /**
-     * Поиск записи по заданному полю. Например найти юзера по id или логину.. или мылу :)
-     * Или всех забанненых юзеров, всех женщин, всех в Томске, ну и т.д., применений - масса.
-     * @param string $f   по какому полю искать
-     * @param string $p   параметры для подстановки в запрос
-     * @param array  $ops доп.параметры,  см. $dummy[] в коде
+     * Готовим ассоциативный массив данных для вставки в PDO запрос.
+     *
+     * Метод сокращает количество писанины, когда нужно к каждому ключу ассоциативного массива данных приписать
+     * двоеточие для передачи его в качестве массива подстановок.
+     *
+     * @var array $keys массив заготовок ключей, без ":" в начале.
+     * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
      * @return array
      */
-    public function findByField($f, $p, $ops = array())
+    protected function valueSet($keys, $data)
     {
-        $dummy = [
-            'select' => '*', //поля для выбора. Без экранирования, просто через запятую.
-            'one'    => true,   //ожидаем одну запись?
-            'cond'   => '',    //доп.условия. Прям так и писать, 'AND|OR ...'.
+        $values = array();
+        foreach ($keys as $k) {
+            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
+        }
+        return $values;
+    }
+
+    /**
+     * Поиск записи по заданному полю.
+     *
+     * Например, найти юзера по id или логину.. или мылу :)
+     *
+     * Доп. параметры, передаваемые в $ops, описываются массивом:
+     * <pre>
+     * [
+     *   'select'  => string | '*',  поля для выбора. Без экранирования, просто через запятую.
+     *   'one_row' => bool | true,   ожидаем одну запись?
+     *   'cond'    => string | '',   доп.условия. Прям так и писать, 'AND|OR ...'.
+     * ]
+     * </pre>
+     *
+     * @param string $field  по какому полю искать
+     * @param string $params параметры для подстановки в запрос
+     * @param array  $ops    доп.параметры
+     * @return array
+     */
+    public function findByField($field, $params, $ops = [])
+    {
+        $default = [
+            'select'  => '*',
+            'one_row' => true,
+            'cond'    => '',
         ];
-        $ops = array_merge($dummy, $ops);
+        $ops = array_merge($default, $ops);
         extract($ops);
         if ($select !== '*') {
             $select = '`' . preg_replace('~,\s?~', '`, `', $select) . '`';
         }
-        $p = [$p]; //параметры подстановки должны быть в массиве
 
-        $cond = "`{$f}` = ? " . $cond;
+        $cond = "`{$field}` = ? " . $cond;
 
-        $q = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one ? ' LIMIT 1' : '');
-        return $this->query(compact('q', 'p', 'one'));
+        $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
+        $params = [$params]; //параметры подстановки должны быть в массиве
+        return $this->query(compact('sql', 'params', 'one_row'));
     }
 }

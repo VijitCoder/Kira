@@ -5,13 +5,15 @@
  * Обязательный параметр - только 'environment'
  */
 return [
-    'environment' => 'local', // local|dev|stage|production
+    'environment' => 'local', // local | dev | stage | production
 
     'db'  => [
         'dsn'      => 'mysql:dbname=testdb; host=127.0.0.1; charset=UTF8',
         'user'     => 'user',
         'password' => 'password',
-        'options'  => [],
+        'options'  => [],        // {@link http://php.net/manual/ru/pdo.setattribute.php}
+        'set_timezone' => false, // по умолчанию - TRUE
+
     ],
 
     // имя домена. Для ситуаций, когда его невозможно определить из $_SERVER (например, в консоли).

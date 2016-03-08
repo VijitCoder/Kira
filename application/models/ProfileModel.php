@@ -30,11 +30,11 @@ class ProfileModel extends \engine\db\Model
      */
     public function getProfile($uid)
     {
-        $q = '
+        $sql = '
             SELECT u.login, u.mail, u.`status`, u.salt, up.*, UNIX_TIMESTAMP(up.birth_date) AS b_date
             FROM user u
             LEFT JOIN user_profile up USING (id)
             WHERE u.id = ?';
-        return $this->query(['q' => $q, 'p' => [$uid], 'one' => true]);
+        return $this->query(['sql' => $sql, 'params' => [$uid], 'one_row' => true]);
     }
 }

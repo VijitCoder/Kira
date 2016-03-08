@@ -278,7 +278,7 @@ class Log
                 $source = '...' . mb_substr($source, $len - 97);
             }
 
-            $data = [
+            $params = [
                 $logIt['ts']->format('Y-m-d H:i:s'),
                 $logIt['timezone'],
                 $logIt['type'],
@@ -288,7 +288,7 @@ class Log
                 $source,
             ];
 
-            $result = (bool)(new Model($this->_conf['db_conf_key']))->query(['q' => $sql, 'p' => $data]);
+            $result = (bool)(new Model($this->_conf['db_conf_key']))->query(compact('sql', 'params'));
         } catch (\Exception $e) {
             $logIt['message'] .= "\n\nДополнительно. Не удалось записать это сообщение в лог БД, причина: "
                 . $e->getMessage();

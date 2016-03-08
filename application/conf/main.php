@@ -54,14 +54,14 @@ $main = [
         'dsn'      => 'mysql:dbname=base0; host=127.0.0.1; charset=UTF8',
         'user'     => 'guest',
         'password' => '',
-        'options'  => [
-            PDO::ATTR_TIMEOUT            => 10,                     // таймаут соединения, в секудах
+        'options'  => [ // {@link http://php.net/manual/ru/pdo.setattribute.php}
+            PDO::ATTR_TIMEOUT            => 21,                     // таймаут соединения, в секудах
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // позволит ловить исключения PDO
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC        // по умолчанию - в ассоциативный массив
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // по умолчанию - в ассоциативный массив
         ],
     ],
 ];
 
 $env = require __DIR__ . '/env.php';
 
-return engine\utils\Arrays::merge_recursive($main, $env);
+return engine\utils\Arrays::merge_recursive($main, $env, true);

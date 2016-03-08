@@ -18,17 +18,17 @@ trait AddUserTrait  {
      */
     private function _add($fields, $data)
     {
-        $values = $this->valueSet($fields, $data);
+        $params = $this->valueSet($fields, $data);
 
-        //Это только для ProfileModel, данных может не быть вообще. Для UserModel - некорректно, но данные там обеспечены
-        //валидацией. Так что используем условие, как общее и не паримся.
-//        if (!$values) return 1;
+        // Это только для ProfileModel, данных может не быть вообще. Для UserModel - некорректно, но данные там
+        // обеспечены валидацией. Так что используем условие, как общее и не паримся.
+        //if (!$values) return 1;
 
         $fields = '`' . implode('`,`', $fields) . '`';
-        $ph = implode(',', array_keys($values));//ph = placeholders
+        $ph = implode(',', array_keys($params));//ph = placeholders
 
-        $q = "INSERT INTO {$this->table} ({$fields}) VALUES ({$ph})";
+        $sql = "INSERT INTO {$this->table} ({$fields}) VALUES ({$ph})";
 
-        return $this->query(['q' => $q, 'p' => $values]);
+        return $this->query(compact('sql', 'params'));
     }
 }
