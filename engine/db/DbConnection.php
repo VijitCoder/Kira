@@ -14,7 +14,10 @@
  * ]
  * </pre>
  *
- * Ключ 'db' - ожидаемый по умолчанию.
+ * Ключ 'db' - ожидаемый по умолчанию. Все параметры соответствуют параметрам конструктора класса PDO,
+ * {@see http://php.net/manual/en/pdo.construct.php}.
+ *
+ * Про 'options' можно почитать в PDO::setAttribute() {@link http://php.net/manual/ru/pdo.setattribute.php}
  *
  * Больше класс ничего не делает, только хранит подключения к базам.
  */
@@ -35,9 +38,15 @@ class DbConnection
      * Запоминаем подключения по $confKey. Полагаем, что в настройках приложения для каждого ключа описано <i>уникальное
      * сочетание</i> базы/пользователя, поскольку идентичный конфиг не имеет смысла.
      *
-     * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
+     * Логика исключений: если включен DEBUG, пробрасываем дальше PDOException, иначе логируем ошибку и пробрасываем
+     * обычный Exception с ссылкой на предыдущее исключение. Поймав такое исключение и проверив "есть предыдущее
+     * исключение" можно определить, что писать еще раз в лог не нужно. Проще говоря: на проде все полезное делаем тут,
+     * на деве - передаем ситуацию разработчику как есть.
      *
+     * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
      * @return PDO объект подключения к БД
+     * @throws \PDOException
+     * @throws \Exception
      */
     public static function connect($confKey)
     {
@@ -50,8 +59,28 @@ class DbConnection
             $conf['options'] = null;
         }
 
-        //Тут можно ловить PDOException. Сейчас исключения ловит перехватчик в App.php
-        self::$_cons[$confKey] = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
+        try {
+            self::$_cons[$confKey] = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
+        } catch (\PDOException $e) {
+            if (DEBUG) {
+                throw $e;
+            }
+
+            $msg = $e->getMessage();
+            $trace = $e->getTrace();
+            if (isset($trace[2])) {
+                $msg .= "\nИнициатор подключения " . str_replace(ROOT_PATH, '', $trace[2]['file'])
+                    . '(' . $trace[1]['line'] . ') ';
+            }
+
+            if (isset($trace[3])) {
+                $msg .= $trace[3]['function'] . '(...)';
+            }
+
+            App::log()->add(['message' => $msg, 'type' => \engine\Log::DB_CONNECT, 'file_force' => true]);
+
+            throw new \Exception($e->getMessage(), 0, $e);
+        }
 
         return self::$_cons[$confKey];
     }

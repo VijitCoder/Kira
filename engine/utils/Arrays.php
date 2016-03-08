@@ -67,9 +67,11 @@ class Arrays
      * в рекурсивном вызове этой функции.
      *
      * Схематично (для строковых ключей):
+     * <pre>
      *  value1 + array2 = array2
      *  array1 + value2 = value2
      *  array1 + array2 > recurse call
+     * </pre>
      *
      * @param array $array1
      * @param array $array2

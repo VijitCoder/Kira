@@ -66,26 +66,48 @@ class Model
     }
 
     /**
+     * Готовим ассоциативный массив данных для вставки в PDO запрос.
+     * @var array $кеуs массив заготовок ключей, без ":" в начале.
+     * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
+     * @return array
+     */
+    protected function valueSet($кеуs, $data)
+    {
+        $values = array();
+        foreach ($кеуs as $k) {
+            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
+        }
+        return $values;
+    }
+
+    /**
      * Выполняем запрос.
      *
      * Соединились, подготовили запрос, выполнили. Результат вернули.
      *
-     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Хочется чего-то особенного? Нивапрос!
-     * Пишите метод в своей модели, вызывайте connect() и дальше в ней все самостоятельно.
+     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Хочется чего-то особенного?
+     * Нивапрос! Пишите метод в своей модели, вызывайте connect() и дальше в ней все самостоятельно.
      *
      * Обязательные параметры:
+     *
      *  q = query - текст запроса, прямым текстом с плейсхолдерами, если нужно.
      *
      * Необязательные параметры:
-     *  p = params - массив параметров для PDOStatement
-     *  fs = fetch style - в каком стиле выдать результат при SELECT
-     *  one = fetch one row - (bool) ожидаем только один ряд. В результате будет меньшая вложенность массива.
-     *  guess - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
-     *  указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
-     *  количество рядов.
+     * <ul>
+     * <li>p = params - массив параметров для PDOStatement</li>
+     * <li>fs = fetch style - в каком стиле выдать результат SELECT, см. константы тут
+     * {@see http://php.net/manual/ru/pdostatement.fetch.php}</li>
+     * <li>one = fetch one row - (bool) ожидаем только один ряд. В результате будет меньшая вложенность массива.</li>
+     * <li>guess - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
+     * указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
+     * количество рядов.</li>
+     * </ul>
+     *
+     * Логика исключений повторяет DBConnection::connect()
      *
      * @param $ops
      * @return mixed
+     * @throws \PDOException
      * @throws \Exception
      */
     public function query($ops)
@@ -110,10 +132,8 @@ class Model
         try {
             $sth->execute($p);
         } catch (\PDOException $e) {
-
             if (DEBUG) {
                 throw $e;
-                // дальше выполнения функции не будет. Исключение поймает финальная ловушка (если других нет)
             }
 
             $msg = $e->getMessage();
@@ -129,7 +149,7 @@ class Model
 
             App::log()->addTyped($msg, \engine\Log::DB_QUERY);
 
-            return null;
+            throw new \Exception($e->getMessage(), 0, $e);
         }
 
         if ($guess === true) {
@@ -141,21 +161,6 @@ class Model
         return ($guess && strtolower($guess) == 'select')
             ? ($one ? $sth->fetch($fs) : $sth->fetchAll($fs))
             : $sth->rowCount();
-    }
-
-    /**
-     * Готовим ассоциативный массив данных для вставки в PDO запрос.
-     * @var array $кеуs массив заготовок ключей, без ":" в начале.
-     * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
-     * @return array
-     */
-    protected function valueSet($кеуs, $data)
-    {
-        $values = array();
-        foreach ($кеуs as $k) {
-            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
-        }
-        return $values;
     }
 
     /**

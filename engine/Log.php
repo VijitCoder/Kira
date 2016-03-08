@@ -49,17 +49,23 @@ class Log
         DB_QUERY = 'DB query',
         EXCEPTION = 'exception',
         HTTP_ERR = 'HTTP error', // например, 404, 403 можно логировать
-        PHP = 'PHP',             // ошибки PHP. Не уверен, что это целесообразно. Возможно удалю.
         UNTYPED = 'untyped';
 
     // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
     const
         STORE_ERROR = 0,
-        STORE_IN_DB = 1,
-        STORE_IN_FILES = 2;
+        STORE_IN_FILES = 1,
+        STORE_IN_DB = 2;
 
     /** @var array конфигурация логера */
     private $_conf;
+
+    /**
+     * Внутреннее представление данных для логирования. Чтобы между функциями не передавать этот массив, оформил в поле
+     * класса.
+     * @var array
+     */
+    private $_logIt;
 
     /**
      * Конструктор.
@@ -84,7 +90,7 @@ class Log
             App::conf('log')
         );
 
-        $conf['_mail'] = App::conf('admin_mail');
+        $conf['_mail'] = App::conf('admin_mail', false);
 
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
             throw new \LogicException("Ошибка конфигурации логера: указан 'db_conf_key' к несуществующей настройке.\n"
@@ -96,7 +102,7 @@ class Log
                 . 'Логирование в файлы невозможно.');
         }
 
-         $this->_conf = $conf;
+        $this->_conf = $conf;
     }
 
     /**
@@ -122,12 +128,12 @@ class Log
      * Источник сообщения ('src')- любой текст, например, имя метода или вообще произвольное описание.
      * См. так же волшебные константы PHP {@see http://php.net/manual/ru/language.constants.predefined.php}
      *
-     * Уведомление на почту отсылается, если ящик указан в конфиге приложения, 'admin_mail'.
+     * Пишем письмо админу, если установлен флаг "notify" или произойдет сбой логирования в файлы. Ящик получателя
+     * должен быть указан в конфиге приложения, 'admin_mail'.
      *
-     * 'file_force' = TRUE может пригодиться, для логирования ошибок типа 'DB'. Например, есть вероятность, что
-     * MySQL-сервер у вас сбоит. Тогда часть ошибок такого типа может попасть в таблицу, а часть - нет, из-за сбоя.
-     * Чтобы потом не собирать из разных мест картину сбоя в целом, можно всегда логировать сообщения типа 'DB'
-     * принудительно в файлы. Экспериментальная настройка, возможно будет удалена в будущем.
+     * 'file_force' = TRUE движок логирует ошибки подключения в базе. Всегда пишет их в файлы, для принудительного
+     * переключения служит этот флаг. Можно использовать его и в своих целях. Кстати, ошибки SQL-запросов тоже
+     * логируются движком.
      *
      * @param string|array $data
      * @return void
@@ -159,12 +165,58 @@ class Log
             throw new \LogicException('Нет сообщения для записи в лог.');
         }
 
-        if ($conf['timezone']) {
+        $this->_prepareLogData($data);
+
+        // Заранее готовимся к сбою. Так избежим циклических вызовов, когда классы DB попытаются логировать свои ошибки
+        // в базу, которая уже лежит.
+        $store = $this->_conf['store'];
+        $result = false;
+        if (!$data['file_force'] && $store == self::STORE_IN_DB) {
+            $this->_conf['store'] = self::STORE_IN_FILES;
+            if ($result = $this->_writeToDb()) {
+                $this->_conf['store'] = $store;
+            }
+        }
+
+        /*
+        Если использовать закомменченное условие, тогда при двух сбоях подряд (ни в базу, ни в файлы) придет всего одно
+        сообщение на мыло. НО! В нем будет инфа только об этих сбоях. С текущим условием писем будет два: первое о сбоях
+        в логере, второе - собственно то сообщение, которое не удалось никуда записать. Это работает, если заранее
+        готовимся к сбою в файлах.
+        */
+        //if (!$result && $store == self::STORE_IN_FILES) {
+
+        if (!$result) {
+            $this->_conf['store'] = self::STORE_ERROR;
+            if ($this->_writeToFile()) {
+                $this->_conf['store'] = $store;
+            } else {
+                $data['notify'] = true;
+            }
+        }
+
+        if ($data['notify']) {
+            $this->_mailToAdmin();
+        }
+    }
+
+    /**
+     * Готовим данные для логирования.
+     *
+     * Кроме сообщения, переданного клиентским кодом, добавляем полезную инфу: дата/время, часовой пояс, IP юзера,
+     * URL запроса.
+     *
+     * @param array $data исходные данные
+     * @return void
+     */
+    private function _prepareLogData(&$data)
+    {
+        if ($customTZ = $this->_conf['timezone']) {
             $timezone = date_default_timezone_get();
-            date_default_timezone_set($conf['timezone']);
+            date_default_timezone_set($customTZ);
         }
         $ts = new \DateTime();
-        $logIt = [
+        $this->_logIt = [
             'type'     => $data['type'],
             'ts'       => $ts,
             'timezone' => $ts->format('\G\M\T P'),
@@ -174,40 +226,9 @@ class Log
             // Убираем tab-отступы
             'message'  => str_replace(chr(9), '', $data['message']),
         ];
-        if ($conf['timezone']) {
+        if ($customTZ) {
             date_default_timezone_set($timezone);
             unset($timezone);
-        }
-
-        // Заранее готовимся к сбою. Так избежим циклических вызовов, когда классы DB попытаются логировать свои ошибки
-        // в базу, которая уже лежит.
-        $store = $this->_conf['store'];
-        $result = false;
-        if (!$data['file_force'] && $store == self::STORE_IN_DB) {
-            $this->_conf['store'] = self::STORE_IN_FILES;
-            if ($result = $this->_writeToDb($logIt)) {
-                $this->_conf['store'] = $store;
-            }
-        }
-
-        /*
-        Если использовать закомменченное условие, тогда при двух сбоях подряд (ни в базу, ни в файлы) придет всего одно
-        сообщение на мыло. НО! В нем будет инфа только об этих сбоях. С текущим условием писем будет два: первое о сбоях
-        в логере, второе - собственно то сообщение, которое не удалось никуда записать.
-        */
-        //if (!$result && $store == self::STORE_IN_FILES) {
-
-        if (!$result) {
-            $this->_conf['store'] = self::STORE_ERROR;
-            if ($this->_writeToFile($logIt)) {
-                $this->_conf['store'] = $store;
-            } else {
-                $data['notify'] = true;
-            }
-        }
-
-        if ($data['notify']) {
-            $this->_mailToAdmin($logIt);
         }
     }
 
@@ -217,9 +238,8 @@ class Log
      * Как оказалось, из всех параметров обычной записи в лог наиболее актуальным является тип лога, остальное можно
      * принять по умолчанию. Для сокращенного вызова записи в лог служит данная обертка.
      *
-     * @param string $msg  текст сообщения
-     * @param string $type тип лога, см. константы этого класса
-     * @return void
+     * @param string $message текст сообщения
+     * @param string $type    тип лога, см. константы этого класса
      */
     public function addTyped($message, $type)
     {
@@ -238,11 +258,11 @@ class Log
      * <li>'source' 100 символов, обрезается с начала строки, приписывается троеточие</li>
      * </ul>
      *
-     * @param array $logIt
      * @return bool
      */
-    private function _writeToDb(&$logIt)
+    private function _writeToDb()
     {
+        $logIt = $this->_logIt;
         try {
             $sql = '
                 INSERT INTO `kira_log` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
@@ -281,17 +301,19 @@ class Log
     /**
      * Запись сообщения в лог-файл.
      *
-     * Тут важно поймать ошибки PHP и сообщить о них админу, когда error_reporting = 0. В этом случае добавляем свой
-     * обработчик ошибок. {@see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
+     * Тут важно поймать ошибки PHP и сообщить о них админу, когда они отключены через error_reporting. В этом случае
+     * добавляем свой обработчик ошибок. {@see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
+     * Рассматриваем только ситацию error_reporting == 0. Только в этом случае свой перехватчик.
      *
      * TODO возможна смена прав доступа к файлу, если его отредактировать под Kate. После этого логер падает. Нужно
      * придумать, как БЫСТРО и красиво управлять правами доступа.
      *
-     * @param array &$logIt
      * @return bool
      */
-    private function _writeToFile(&$logIt)
+    private function _writeToFile()
     {
+        $logIt = $this->_logIt;
+
         if ($customHandler = (error_reporting() == 0)) {
             set_error_handler(function ($errno, $errstr, $errfile, $errline) {
                 throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -339,13 +361,12 @@ class Log
     /**
      * Письмо админу с текущим сообщение лога.
      *
-     * Пишем, если в параметрах сообщения установлен флаг "notify" или в случае сбоя логирования.
-     *
-     * @param array $logIt
      * @return void
      */
-    private function _mailToAdmin(&$logIt)
+    private function _mailToAdmin()
     {
+        $logIt = $this->_logIt;
+
         if (!$mailTo = $this->_conf['_mail']) {
             $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', self::ENGINE);
             return;
@@ -378,44 +399,23 @@ class Log
     }
 
     /**
-     * Отправить логи на указанный адрес.
+     * @DEPRECATED
      *
-     * Выбирает из логов данные от указанной даты включительно (unix timestamp) до текущего момента. Если заданы типы
-     * лога, они учитываются. Получателей может быть несколько, указывать через запятую.
+     * Геттер данных из последней процедуры логирования.
      *
-     * Можно получить детальный отчет - копия логов за указанный период, или только сводку - по каждому типу количество
-     * сообщений. При этом типы с нулевым количеством пропускаются.
+     * Служебная функция, для отладки функционала. Возможно будет удалена в дальнейшем. Возвращает внутреннее
+     * представление данных для логирования, подготовленных в последнем обращении к логеру.
      *
-     * Предполагается работа в связке с cron через внешний управляющий php-скрипт. В нем описываем параметры и вызываем
-     * этот метод.
-     *
-     * @param string $mails    email получателя(ей)
-     * @param int    $from_ts  временная метка (unix timestamp), от которой до текущего момент выбрать логи
-     * @param bool   $detailed детальный отчет или только сводка
-     * @param array  $types    типы логов, см. константы этого класса
+     * @return array
      */
-    public static function report($mails, $from_ts, $detailed, $types = [])
+    public function getLogData()
     {
-        // TODO реализация
+        return $this->_logIt;
     }
 
     /**
-     * Удаление логов.
+     * TODO
      *
-     * Все логи с начала и до указанной временной метки включительно (unix timestamp). Если метка не задана, тогда
-     * вообще все логи.
-     *
-     * Предполагается работа в связке с cron через внешний управляющий php-скрипт. В нем описываем параметры и вызываем
-     * этот метод.
-     *
-     * @param int $till временная метка (unix timestamp), до которой удалить логи.
-     */
-    public static function delete($till = null)
-    {
-        // TODO реализация
-    }
-
-    /**
      * Инициализация окружения логера.
      *
      * Предполагается одноразовый вызов метода, например через мастер создания приложения.
@@ -428,7 +428,6 @@ class Log
      */
     public static function init()
     {
-        // TODO реализация
         // При логировании в базу нужно проверить наличие БД и создать ее, если требуется.
 
         // Работаем в заданной из index.php кодировке. Внимание! Нет прямого совпадения в названиях кодировок у PHP и

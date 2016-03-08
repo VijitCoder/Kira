@@ -22,6 +22,9 @@ class Handlers
      *
      * После выполнения этого обработчика программа остановится, обеспечено PHP.
      *
+     * Если указано предыдущее исключение, отсюда не пишем в лог. Сей факт указывает на то, что реальное исключение
+     * уже было поймано и обработано. Считаем, что необходимость логирования была решена в предыдущих обработчиках.
+     *
      * @param Exception $ex
      */
     public static function exceptionHandler($ex)
@@ -40,7 +43,10 @@ class Handlers
             echo Render::make('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
         } else {
             echo Render::make('exception_prod.htm', ['domain' => Env::domainName()]);
-            Log::addTyped("Class: $class\nMessage: $message\nSource: $file:$line\n\nTrace: $trace", Log::EXCEPTION);
+            if ($ex->getPrevious() === null) {
+                App::log()->addTyped("Class: $class\nMessage: $message\nSource: $file:$line\n\nTrace: $trace",
+                    Log::EXCEPTION);
+            }
         }
     }
 
@@ -130,9 +136,8 @@ class Handlers
             }
 
             $stack_output = "
+                <p>Стек вызова в хронологическом порядке:</p>
                 <table class = 'php-err-stack'>
-                    <caption class='php-err-txtright'><small>Стек вызова в хронологическом порядке</small></caption>
-                    <tr><th class='php-err-txtright'>Место, где</th><th class='php-err-txtleft'>Вызвана функция</th></tr>
                     {$stack_output}
                 </table>
             ";
