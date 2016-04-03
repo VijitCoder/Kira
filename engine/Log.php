@@ -49,6 +49,7 @@ class Log
         DB_QUERY   = 'DB query',
         EXCEPTION  = 'exception',
         HTTP_ERROR = 'HTTP error', // например, 404, 403 можно логировать
+        INFO       = 'information',
         UNTYPED    = 'untyped';
 
     // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
