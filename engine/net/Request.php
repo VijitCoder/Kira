@@ -16,9 +16,9 @@ use engine\Env;
 /**
  * Class Request
  *
- * Серия методов для работы с суперглобальными переменными $_GET, $_POST и $_REQUEST. Логика у них одинаковая,
+ * Серия методов для работы с суперглобальными переменными $_GET, $_POST, $_COOKIE и $_REQUEST. Логика у них одинаковая,
  * реализация оформлена в магическом методе. Удобство этих методов том, что в клиентском коде не придется проверять
- * значение массива на существование и/или приведение к типу.
+ * значение из массива на существование и/или приведение к типу.
  *
  * Получение одного значения из массива GET|POST|REQUEST. Если ключ в массиве не существует, вернем NULL:
  *
@@ -52,8 +52,13 @@ use engine\Env;
  * @method static string|null cookieAsRegexp(string $key, string $pattern)
  * @method static string|null requestAsRegexp(string $key, string $pattern)
  *
- * Прим.: в данном случае синтаксически неправильно писать "get AS regexp", логичнее "get IF regexp". Оставил "AS" для
- * поддержания единого стиля в именах методов.
+ * Значение из массива, с проверкой с в списке допустимых значений. Если параметр не существует или его нет в списке
+ * вернем NULL:
+ *
+ * @method static string|null getAsEnum(string $key, string $expect)
+ * @method static string|null postAsEnum(string $key, string $expect)
+ * @method static string|null cookieAsEnum(string $key, string $expect)
+ * @method static string|null requestAsEnum(string $key, string $expect)
  */
 class Request
 {
@@ -77,7 +82,7 @@ class Request
      */
     public static function __callStatic($method, $params)
     {
-        if (preg_match('/(?<verb>get|post|request|cookie)(As(?<type>Int|Bool|Regexp))?/', $method, $m)) {
+        if (preg_match('/^(?<verb>get|post|request|cookie)(As(?<type>Int|Bool|Regexp|Enum))?$/', $method, $m)) {
             $verb = $m['verb'];
             $type = isset($m['type']) ? $m['type'] : null;
         } else {
@@ -95,8 +100,9 @@ class Request
 
         if (!$params) {
             if ($type) {
+                $secondParam = $type == 'Regexp' ? ', $pattern' : ($type == 'Enum' ? ', $expect' : '');
                 throw new \RuntimeException("Пропущен обязательный параметр функции: имя ключа в массиве \$_{$verb}"
-                    . "\nСигнатрура вызова: {$method}(\$key" . ($type == 'Regexp' ? ', $pattern' : '') . ")");
+                    . "\nСигнатрура вызова: {$method}(\$key{$secondParam})");
             }
             return $arr;
         }
@@ -120,6 +126,12 @@ class Request
                 }
                 $pattern = &$params[1];
                 return preg_match($pattern, $val) ? $val : null;
+            case 'Enum':
+                if (!isset($params[1])) {
+                    throw new \RuntimeException("Пропущен обязательный параметр функции: массив допустимых значений.\n"
+                        . "Сигнатрура вызова: {$verb}AsEnum(\$key, \$expect)");
+                }
+                return in_array($val, $params[1]) ? $val : null;
         }
     }
 
