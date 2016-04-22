@@ -158,4 +158,24 @@ class Response
     {
         setcookie($name, $value, time() + 31536000, '/', '.' . Env::domainName(), false, true);
     }
+
+    /**
+     * Отвечаем браузеру json-строкой с соответствующим заголовком.
+     *
+     * Кроме отправки заголовка, остальное - обертка json_encode(), с предустановленной опцией JSON_UNESCAPED_UNICODE.
+     *
+     * Возвращает результат прямо в output. Не завершает выполнение программы, об этом должен заботиться клиентский код.
+     *
+     * @see http://php.net/manual/ru/function.json-encode.php
+     *
+     * @param mixed $data    данные для упаковки в json-строку
+     * @param int   $options параметры упаковки
+     * @param int   $depth   максимальная глубина вложения
+     * @return void
+     */
+    static public function json($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data, $options, $depth);
+    }
 }

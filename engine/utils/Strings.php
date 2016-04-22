@@ -130,4 +130,70 @@ class Strings
         $str = preg_replace($pattern, '$0' . $end, $str);
         return rtrim($str, $end);
     }
+
+    /*
+     * Константы для генерации пароля. Определяют обязательный набор символов, зайдествованных в пароле.
+     * Можно использовать с побитовыми операторами, по аналогии c константами обработки ошибок PHP,
+     * {@see http://php.net/manual/ru/errorfunc.constants.php}
+     */
+    const
+        SET_LOWER = 1,
+        SET_UPPER = 2,
+        SET_DIGITS = 4,
+        SET_SPECIAL = 8,
+        SET_ALL = 15;
+
+    /**
+     * Генератор пароля
+     *
+     * Возможные наборы символов: латинские буквы в обоих регистрах, цифры и некоторые спец.символы. Параметром задается
+     * обязательная минимальная комбинация символов. Если требуемая длина пароля меньше количества обязательных наборов
+     * символов, результат непредсказуем.
+     *
+     * Пример: в пароле обязательно должны быть буквы двух регистров и числа.
+     * Маска: SET_LOWER | SET_UPPER | SET_DIGITS. Длину требовать минимум 3 символа, меньше не имеет смысла.
+     *
+     * По умолчанию пароль 10 символов, из всех наборов.
+     *
+     * @param int $requireSet обязательный наборов символов, битовая маска. См. константы self::SET_*
+     * @param int $length     требуемая длина пароля. Будет ровно столько, сколько требуется.
+     * @return string
+     */
+    public static function generatePassword($requireSet = self::SET_ALL, $length = 10)
+    {
+        $sets = [
+            self::SET_LOWER   => 'abcdefghijklmnopqrstuvwxyz',
+            self::SET_UPPER   => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            self::SET_DIGITS  => '0123456789',
+            self::SET_SPECIAL => '_-!@#$%^&`~',
+        ];
+
+        $setsLength = array_map('strlen', $sets);
+
+        // обязательный минимум
+        $customSet = '';
+        $customLen = 0;
+        $cnt = 0;
+        foreach ($sets as $k => $v) {
+            if ($k & $requireSet) {
+                $arr[] = $v[rand(0, $setsLength[$k] - 1)];
+                $customSet .= $v;
+                $customLen += $setsLength[$k];
+                $cnt++;
+            }
+        }
+
+        // добираем до требуемой длины
+        if ($cnt > $length) {
+            $arr = array_slice($arr, 0, $length);
+        } else {
+            $length -= $cnt;
+            for ($i = 0; $i < $length; $i++) {
+                $arr[] = $customSet[rand(0, $customLen - 1)];
+            }
+        }
+
+        shuffle($arr);
+        return implode('', $arr);
+    }
 }
