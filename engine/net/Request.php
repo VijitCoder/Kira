@@ -18,7 +18,7 @@ use engine\Env;
  *
  * Серия методов для работы с суперглобальными переменными $_GET, $_POST, $_COOKIE и $_REQUEST. Логика у них одинаковая,
  * реализация оформлена в магическом методе. Удобство этих методов том, что в клиентском коде не придется проверять
- * значение из массива на существование и/или приведение к типу.
+ * значение из массива на существование и/или валидировать его под конкретный тип данных.
  *
  * Получение одного значения из массива GET|POST|REQUEST. Если ключ в массиве не существует, вернем NULL:
  *
@@ -30,12 +30,15 @@ use engine\Env;
  * Прим: если ключ не указан, возвращаем весь массив, что ничем не отличается от прямого обращения к суперглобальной
  * переменной. Такой вызов поддерживаются для полноты картины.
  *
- * Значение из массива, приведенное к числу:
+ * Значение из массива, приведенное к целому числу (ведущие нули не сохраняются):
  *
  * @method static int|null getAsInt(string $key)
  * @method static int|null postAsInt(string $key)
  * @method static int|null cookieAsInt(string $key)
  * @method static int|null requestAsInt(string $key)
+ *
+ * Если значение является именно целым числом, оно будет приведено к типу и возвращено. Иначе - NULL. Т.е. не происходит
+ * выделение числа из строки, так же содержащей нечисловые символы. Она считается невалидной.
  *
  * Значение из массива, приведенное к булевому типу:
  *
@@ -43,6 +46,8 @@ use engine\Env;
  * @method static bool|null postAsBool(string $key)
  * @method static bool|null cookieAsBool(string $key)
  * @method static bool|null requestAsBool(string $key)
+ *
+ * Значение true|1|on|yes|checked = TRUE, false|0|off|no|unchecked = FALSE. Любой регистр. В остальных случаях - NULL.
  *
  * Значение из массива, с валидацией через регулярное выражение. Если параметр не существует или не подходит
  * по регулярке, вернем NULL:
@@ -102,7 +107,7 @@ class Request
             if ($type) {
                 $secondParam = $type == 'Regexp' ? ', $pattern' : ($type == 'Enum' ? ', $expect' : '');
                 throw new \RuntimeException("Пропущен обязательный параметр функции: имя ключа в массиве \$_{$verb}"
-                    . "\nСигнатрура вызова: {$method}(\$key{$secondParam})");
+                    . "\nСигнатура вызова: {$method}(\$key{$secondParam})");
             }
             return $arr;
         }
@@ -110,26 +115,28 @@ class Request
         $key = &$params[0];
         $val = (isset($arr[$key])) ? $arr[$key] : null;
 
-        if (!$type || !$val) {
+        if (!$type || $val == '') {
             return $val;
         }
 
         switch ($type) {
             case 'Int':
-                return intval($val);
+                return preg_match('~^-?\d+$~', $val) ? intval($val) : null;
             case 'Bool':
-                return preg_match('~^true|1|on|checked|истина|да$~u', $val) ? true : false;
+                return preg_match('~^true|1|on|yes|checked$~i', $val)
+                    ? true
+                    : (preg_match('~^false|0|off|no|unchecked$~i', $val) ? false : null);
             case 'Regexp':
                 if (!isset($params[1])) {
                     throw new \RuntimeException("Пропущен обязательный параметр функции: шаблон регулярного выражения.\n"
-                        . "Сигнатрура вызова: {$verb}AsRegexp(\$key, \$pattern)");
+                        . "Сигнатура вызова: {$verb}AsRegexp(\$key, \$pattern)");
                 }
                 $pattern = &$params[1];
                 return preg_match($pattern, $val) ? $val : null;
             case 'Enum':
                 if (!isset($params[1])) {
                     throw new \RuntimeException("Пропущен обязательный параметр функции: массив допустимых значений.\n"
-                        . "Сигнатрура вызова: {$verb}AsEnum(\$key, \$expect)");
+                        . "Сигнатура вызова: {$verb}AsEnum(\$key, \$expect)");
                 }
                 return in_array($val, $params[1]) ? $val : null;
         }
