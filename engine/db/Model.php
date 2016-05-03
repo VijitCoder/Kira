@@ -15,6 +15,18 @@ class Model
     private $_dbh;
 
     /**
+     * @var string тест запроса, с плейсходерами. Только для отладки.
+     */
+    private $_sql = '';
+
+    /**
+     * Связываемые параметры. Как раз те значения, что будут подставляться в запрос. Только для отладки.
+     *
+     * @var array
+     */
+    protected $_binds = [];
+
+    /**
      * Имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model"
      * будет отброшен, регистр букв сохраняется.
      * @var string
@@ -82,8 +94,8 @@ class Model
      *   'sql'     => string
      *   'params'  => array | [],
      *   'style'   => const | \PDO::FETCH_ASSOC,
-     *   'one_row' => bool | false,
-     *   'guess'   => bool | string | true,
+     *   'one_row' => bool | FALSE,
+     *   'read'    => bool | NULL,
      * ]
      * </pre>
      *
@@ -92,17 +104,21 @@ class Model
      * <li>params - массив параметров для PDOStatement</li>
      * <li>style - в каком стиле выдать результат SELECT, см. константы тут
      * {@see http://php.net/manual/ru/pdostatement.fetch.php}</li>
-     * <li>one_row - TRUE = ожидаем только один ряд. В результате будет меньшая вложенность массива.</li>
-     * <li>guess - bool|string - тип запроса в нотации CRUD. Либо определим по первому глаголу (наугад) либо явно
-     * указать, какой запрос. По факт функция вернет выборку или количество рядов. Fallback-ситация: вернет
-     * количество рядов. ПО умолчанию - TRUE.</li>
+     * <li>one_row - если ожидаем только один ряд, ставим TRUE. В результате будет меньшая вложенность массива.</li>
+     * <li>read - bool - тип запроса в нотации CRUD. Запрос либо на чтение - TRUE, либо на изменение - FALSE. Если
+     * параметр не задан, определим по первому глаголу (наугад). По факту функция вернет выборку или количество рядов.
+     * Fallback-ситация: вернет количество рядов.</li>
      * </ul>
      *
-     * Логика исключений повторяет DBConnection::connect()
+     * Поддержка IN()-выражений: в тексте запроса пишем типа "<i>SELECT * FROM table1 WHERE id IN(:ids)</i>", передаем
+     * в параметрах для подстановки [':ids' => [id1, id2, ... idN]]. Остальное сделает этот класс.
+     *
+     * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
      *
      * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
      * @return array | int
      * @throws \Exception
+     * @throws \LogicException
      */
     public function query($ops)
     {
@@ -111,7 +127,7 @@ class Model
             'params'  => [],
             'style'   => \PDO::FETCH_ASSOC,
             'one_row' => false,
-            'guess'   => true,
+            'read'    => null,
         ];
 
         if (is_string($ops)) {
@@ -123,6 +139,13 @@ class Model
 
         if (!$sql) {
             throw new \Exception('Не указан текст запроса');
+        }
+
+        $this->_replaceIfArray($sql, $params);
+
+        if (DEBUG) {
+            $this->_sql = $sql;
+            $this->_binds = $params;
         }
 
         $sth = $this->_dbh->prepare($sql);
@@ -151,15 +174,62 @@ class Model
             throw new \Exception($e->getMessage(), 0, $e);
         }
 
-        if ($guess === true) {
+        if (is_null($read)) {
             if (preg_match('~select|update|insert|delete~i', $sql, $m)) {
-                $guess = $m[0];
+                $read = strtolower($m[0]) == 'select';
+            } else {
+                $read = false;
             }
         }
 
-        return ($guess && strtolower($guess) == 'select')
+        return $read
             ? ($one_row ? $sth->fetch($style) : $sth->fetchAll($style))
             : $sth->rowCount();
+    }
+
+    /**
+     * Замена плейсхолдера на массив значений. Придумано для подстановки значений в выражение IN() в sql-запросе,
+     * используется в составе self::query().
+     *
+     * Суть: экранируем строковые значения, объединяем все через запятую и заменяем плейсхолдер прям в sql-запросе на
+     * полученный результат.
+     *
+     * Подстановка возможна только для именованного плейсходлера, т.к. заменить какой-то из кучи безымянных (помеченных
+     * знаком вопроса) - нетривиальная задача. Проще тогда написать свой парсер целиком.
+     *
+     * Текстовые значения будут экранированы, другие значения останутся без изменений. Содержимое всего массива
+     * определяется по его первому элементу, т.е. считается что в нем однотипные данные.
+     *
+     * Для экранирования строк используется PDO::quote() {@see http://php.net/manual/en/pdo.quote.php}
+     * У него тоже есть ограничения, но это лучше, чем ничего.
+     *
+     * @param $sql
+     * @param $params
+     * @return void
+     * @throws \LogicException
+     */
+    private function _replaceIfArray(&$sql, &$params)
+    {
+        $replaces = [];
+        foreach ($params as $name => $value) {
+            if (is_array($value)) {
+                if (is_int($name)) {
+                    throw new \LogicException('Подстановка массива возможна только для именованного плейсходера.');
+                }
+
+                if (is_string(current($value))) {
+                    $value = array_map([$this->_dbh, 'quote'], $value);
+                }
+
+                $replaces[$name] = implode(',', $value);
+
+                unset($params[$name]);
+            }
+        }
+
+        if ($replaces) {
+            $sql = str_replace(array_keys($replaces), $replaces, $sql);
+        }
     }
 
     /**
@@ -218,5 +288,48 @@ class Model
         $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
         $params = [$params]; //параметры подстановки должны быть в массиве
         return $this->query(compact('sql', 'params', 'one_row'));
+    }
+
+    /**
+     * Текст последнего запроса с подставленными в него значениями.
+     *
+     * Функция только для отладки, не использовать в реальном обращении к серверу БД. Экранирование строк полагается
+     * на функцию PDO::quote().
+     *
+     * После подстановок сохраняем итоговый запрос и очищаем массив параметров за ненадобностью.
+     *
+     * @return string
+     */
+    public function getLastQuery()
+    {
+        if (!DEBUG) {
+            return 'Заполненный текст запроса доступен только в DEBUG-режиме.';
+        }
+
+        if (!$sql = &$this->_sql) {
+            return 'Модель еще не выполнила ни одного запроса. Нечего показать.';
+        }
+
+        if ($binds = &$this->_binds) {
+            $replaces = [];
+            foreach ($binds as $placeholder => $value) {
+                if (is_null($value)) {
+                    $value = 'NULL';
+                } else if (is_string($value)) {
+                    $value = $this->_dbh->quote($value);
+                }
+
+                if (is_int($placeholder)) {
+                    $placeholder = '\?';
+                }
+
+                $placeholder = "/$placeholder/";
+                $sql = preg_replace($placeholder, $value, $sql, 1);
+            }
+
+            $binds = [];
+        }
+
+        return $sql;
     }
 }

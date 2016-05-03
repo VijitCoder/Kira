@@ -96,7 +96,7 @@ $row = $this->query(['sql' => $sql, 'params' => [$uid], 'one_row' => true]);
 
 **#3. Служебные манипуляции, без выделения модели-наследника**
 ```PHP
-(new db\Model)->query(['sql' => 'TRUNCATE kira_log', 'guess' => false]);
+(new db\Model)->query(['sql' => 'TRUNCATE kira_log', 'read' => false]);
 ```
 
 **#4. Оформление транзакции через нативные функции PDO**
