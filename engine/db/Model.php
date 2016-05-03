@@ -3,6 +3,8 @@
  * Супер-класс моделей. Подключение и методы работы с БД.
  *
  * По вопросам PDO {@link http://phpfaq.ru/pdo} Очень полезная статья.
+ *
+ * Одна из проблем PDO: поддержка IN()-выражений. Реализацию см. в self::prepareIN()
  */
 
 namespace engine\db;
@@ -110,9 +112,6 @@ class Model
      * Fallback-ситация: вернет количество рядов.</li>
      * </ul>
      *
-     * Поддержка IN()-выражений: в тексте запроса пишем типа "<i>SELECT * FROM table1 WHERE id IN(:ids)</i>", передаем
-     * в параметрах для подстановки [':ids' => [id1, id2, ... idN]]. Остальное сделает этот класс.
-     *
      * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
      *
      * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
@@ -140,8 +139,6 @@ class Model
         if (!$sql) {
             throw new \Exception('Не указан текст запроса');
         }
-
-        $this->_replaceIfArray($sql, $params);
 
         if (DEBUG) {
             $this->_sql = $sql;
@@ -188,11 +185,17 @@ class Model
     }
 
     /**
-     * Замена плейсхолдера на массив значений. Придумано для подстановки значений в выражение IN() в sql-запросе,
-     * используется в составе self::query().
+     * Поддержка подстановок в IN()-выражения.
+     *
+     * Функция в роли модификатора, меняет текст запроса и параметры по ссылкам. Возможен вызов по цепочке. Пример
+     * использования:
+     *
+     * $sql = 'SELECT * FROM table1 WHERE id IN(:ids) AND someType = :type';
+     * $params = [':ids' => [id1, id2, ... idN], ':type' => 'First'];
+     * $rows = (new Model)->prepareIN($sql, $params)->query(compact('sql', 'params'));
      *
      * Суть: экранируем строковые значения, объединяем все через запятую и заменяем плейсхолдер прям в sql-запросе на
-     * полученный результат.
+     * полученный результат. Убираем из параметров задействованные подстановки.
      *
      * Подстановка возможна только для именованного плейсходлера, т.к. заменить какой-то из кучи безымянных (помеченных
      * знаком вопроса) - нетривиальная задача. Проще тогда написать свой парсер целиком.
@@ -203,12 +206,12 @@ class Model
      * Для экранирования строк используется PDO::quote() {@see http://php.net/manual/en/pdo.quote.php}
      * У него тоже есть ограничения, но это лучше, чем ничего.
      *
-     * @param $sql
-     * @param $params
-     * @return void
+     * @param &$sql    текст запроса с плейсходерами
+     * @param &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
+     * @return $this
      * @throws \LogicException
      */
-    private function _replaceIfArray(&$sql, &$params)
+    public function prepareIN(&$sql, &$params)
     {
         $replaces = [];
         foreach ($params as $name => $value) {
@@ -230,6 +233,8 @@ class Model
         if ($replaces) {
             $sql = str_replace(array_keys($replaces), $replaces, $sql);
         }
+
+        return $this;
     }
 
     /**
@@ -266,11 +271,11 @@ class Model
      * </pre>
      *
      * @param string $field  по какому полю искать
-     * @param string $params параметры для подстановки в запрос
+     * @param string $value  значение поля для подстановки в запрос
      * @param array  $ops    доп.параметры
      * @return array
      */
-    public function findByField($field, $params, $ops = [])
+    public function findByField($field, $value, $ops = [])
     {
         $default = [
             'select'  => '*',
@@ -280,13 +285,13 @@ class Model
         $ops = array_merge($default, $ops);
         extract($ops);
         if ($select !== '*') {
-            $select = '`' . preg_replace('~,\s?~', '`, `', $select) . '`';
+            $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
         }
 
         $cond = "`{$field}` = ? " . $cond;
 
         $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
-        $params = [$params]; //параметры подстановки должны быть в массиве
+        $params = [$value]; //параметры подстановки должны быть в массиве
         return $this->query(compact('sql', 'params', 'one_row'));
     }
 
