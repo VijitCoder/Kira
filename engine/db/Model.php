@@ -102,7 +102,6 @@ class Model
      *
      * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
      * @return array | int
-     * @throws \PDOException
      * @throws \Exception
      */
     public function query($ops)

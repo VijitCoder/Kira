@@ -5,8 +5,7 @@
 
 namespace engine\web;
 
-use Exception,
-    engine\net\Response;
+use engine\net\Response;
 
 class Controller
 {
@@ -30,7 +29,7 @@ class Controller
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     protected function render($view, $data = array(), $output = true)
     {
@@ -54,7 +53,7 @@ class Controller
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     protected function renderPartial($view, $data = array(), $output = true)
     {
@@ -73,12 +72,12 @@ class Controller
      *                         вероятности совпадения с параметрами шаблона
      * @param array  $data     параметры в шаблон
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     private function _renderFile($_view123, $data)
     {
         if (isset($data['_view123'])) {
-            throw new Exception ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);
+            throw new \Exception ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);
         }
 
         extract($data);

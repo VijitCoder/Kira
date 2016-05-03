@@ -77,6 +77,8 @@ class Log
      *
      * Прим.: конструктор не проверяет возможность записи лога по указанным настройкам. Это отслеживается
      * непосредственно при записи через возникающие ошибки.
+     *
+     * @throws \LogicException
      */
     public function __construct()
     {
@@ -138,6 +140,7 @@ class Log
      *
      * @param string|array $data
      * @return void
+     * @throws \LogicException
      */
     public function add($data)
     {
@@ -260,6 +263,7 @@ class Log
      * </ul>
      *
      * @return bool
+     * @throws \Exception
      */
     private function _writeToDb()
     {
@@ -310,6 +314,7 @@ class Log
      * придумать, как БЫСТРО и красиво управлять правами доступа.
      *
      * @return bool
+     * @throws \ErrorException
      */
     private function _writeToFile()
     {

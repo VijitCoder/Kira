@@ -52,8 +52,8 @@ class Session
      *
      * @param string $key    ключ в сессии
      * @param bool   $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
-     * @return string
-     * @throws Exception
+     * @return string | null
+     * @throws \Exception
      */
     public static function read($key = null, $strict = false)
     {
@@ -64,7 +64,7 @@ class Session
             } elseif (!$strict) {
                 return;
             } else {
-                throw new Exception("В сессии не найдено значение с ключом '{$key}'");
+                throw new \Exception("В сессии не найдено значение с ключом '{$key}'");
             }
         } else {
             return DEBUG ? $_SESSION : null;

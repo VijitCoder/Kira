@@ -55,7 +55,6 @@ class DbConnection
      *
      * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
      * @return PDO объект подключения к БД
-     * @throws \PDOException
      * @throws \Exception
      */
     public static function connect($confKey)
@@ -118,10 +117,12 @@ class DbConnection
     /**
      * Запрещаем любое размножение объекта. Установка private доступа к этим методам не позволит выполнить
      * соответствующие действия над объектом.
+     *
+     * @throws \Exception
      */
     private function __construct()
     {
-        throw new Exception('Создание объекта запрещено. Только статичное использование.');
+        throw new \Exception('Создание объекта запрещено. Только статичное использование.');
     }
 
     private function __clone()

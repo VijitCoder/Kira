@@ -25,8 +25,8 @@ class Registration extends \app\controllers\Front
 
         $vPass = App::conf('validators.password');
         $params = [
-            'minPass' => $vPass['minLen'],
-            'minComb' => $vPass['minComb'],
+            'minPass' => $vPass['min_len'],
+            'minComb' => $vPass['min_comb'],
             'imgConstrains' => App::conf('avatar'),
         ];
 

@@ -34,7 +34,7 @@ class App
      * @param string $key    ключ в конфиге
      * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
      * @return mixed|null
-     * @throws Exception
+     * @throws \Exception
      */
     public static function conf($key, $strict = true)
     {

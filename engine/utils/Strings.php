@@ -155,11 +155,11 @@ class Strings
      *
      * По умолчанию пароль 10 символов, из всех наборов.
      *
-     * @param int $requireSet обязательный наборов символов, битовая маска. См. константы self::SET_*
-     * @param int $length     требуемая длина пароля. Будет ровно столько, сколько требуется.
+     * @param int $strength стойкость пароля, битовая маска. См. константы self::SET_*
+     * @param int $length   требуемая длина пароля. Будет ровно столько, сколько требуется.
      * @return string
      */
-    public static function generatePassword($requireSet = self::SET_ALL, $length = 10)
+    public static function generatePassword($strength = self::SET_ALL, $length = 10)
     {
         $sets = [
             self::SET_LOWER   => 'abcdefghijklmnopqrstuvwxyz',
@@ -170,12 +170,12 @@ class Strings
 
         $setsLength = array_map('strlen', $sets);
 
-        // обязательный минимум
+        // собираем минимум под требуемую стойкость
         $customSet = '';
         $customLen = 0;
         $cnt = 0;
         foreach ($sets as $k => $v) {
-            if ($k & $requireSet) {
+            if ($k & $strength) {
                 $arr[] = $v[rand(0, $setsLength[$k] - 1)];
                 $customSet .= $v;
                 $customLen += $setsLength[$k];

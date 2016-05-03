@@ -97,7 +97,9 @@ class Response
     /**
      * Редирект с выходом из приложения.
      *
-     * Прим.: указание абсолютного URI - требование спецификации HTTP/1.1, {@see http://php.net/manual/ru/function.header.php}
+     * Прим.: указание абсолютного URL - требование спецификации HTTP/1.1,
+     * {@see http://php.net/manual/ru/function.header.php}
+     *
      * Быстрая справка по кодам с редиректом {@see http://php.net/manual/ru/function.header.php#78470}
      *
      * @param string $url  новый относительный адрес, с ведущим слешем
@@ -122,7 +124,11 @@ class Response
      * а открывают. Функция же создана для принудительного скачивания. Поэтому по любому файлу сообщаем
      * "Content-type: application/octet-stream".
      *
-     * Рекомедуется завершить приложение после вызова этой функции. Или, как минимум, ничего больше не передавать в output.
+     * Обязательно объявлять размер! Иначе отправляется Transfer-Encoding: chunked, что приводит к неполной загрузке
+     * файла, если в нем обнаруживается CRLF.
+     *
+     * Рекомедуется завершить приложение после вызова этой функции. Или, как минимум, ничего больше не передавать
+     * в output.
      *
      * @param string $file полный путь + файл
      * @return void
@@ -132,11 +138,9 @@ class Response
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . basename($file) . '"');
-        //Обязательно объявлять размер! иначе отправялется Transfer-Encoding: chunked, что приводит к неполной загрузке
-        //файла, если в нем обнаруживается CRLF.
         header('Content-Length: ' . filesize($file));
 
-        //антикеш
+        // антикеш
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
@@ -162,9 +166,15 @@ class Response
     /**
      * Отвечаем браузеру json-строкой с соответствующим заголовком.
      *
-     * Кроме отправки заголовка, остальное - обертка json_encode(), с предустановленной опцией JSON_UNESCAPED_UNICODE.
+     * Кроме отправки заголовка, остальное - обертка json_encode(), с предустановленными опциями:
+     * <ul>
+     * <li><b>JSON_UNESCAPED_UNICODE</b>. Работаем с UTF-8, javascript так же работает только в этой кодировке.
+     * Т.о. лишнее кодирование национальных алфавитов тут действительно лишнее, зато усложняет отладку и увеличивает вес
+     * ответа.</li>
+     * <li> в режиме отладки добавляем <b>JSON_PRETTY_PRINT</b>, для удобства.</li>
+     * </ul>
      *
-     * Возвращает результат прямо в output. Не завершает выполнение программы, об этом должен заботиться клиентский код.
+     * Возвращаем результат прямо в output. Не завершаем выполнение программы, об этом должен заботиться клиентский код.
      *
      * @see http://php.net/manual/ru/function.json-encode.php
      *
@@ -173,9 +183,12 @@ class Response
      * @param int   $depth   максимальная глубина вложения
      * @return void
      */
-    static public function json($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
+    static public function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
     {
         header('Content-Type: application/json');
+        if (DEBUG) {
+            $options = $options | JSON_PRETTY_PRINT;
+        }
         echo json_encode($data, $options, $depth);
     }
 }
