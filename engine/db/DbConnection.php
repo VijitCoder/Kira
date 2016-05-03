@@ -7,11 +7,11 @@
  * Конфигурация подключения в настройках приложения:
  * <pre>
  * 'db' => [
- *    'dsn' => string,
- *    'user' => string,
- *    'password' => string,
- *    'options' => array | []
- *    'set_timezone' => bool | TRUE
+ *    'dsn'            => string,
+ *    'user'           => string,
+ *    'password'       => string,
+ *    'options'        => array | []
+ *    'mysql_timezone' => string | '+00:00'
  * ]
  * </pre>
  *
@@ -20,10 +20,8 @@
  *
  * Про 'options' можно почитать в PDO::setAttribute() {@link http://php.net/manual/ru/pdo.setattribute.php}
  *
- * Если поднят флаг 'set_timezone', то после установки соединения отправляется запрос на установку часового пояса сессии
- * в соответствии с поясом, заданном для PHP-скриптов. Это гарантирует работу БД и PHP в одном времени. По теме часовых
- * поясов в MySQL хорошо расписано тут
- * {@link http://stackoverflow.com/questions/19023978/should-mysql-have-its-timezone-set-to-utc/19075291#19075291}
+ * Если указан часовой пояс в 'mysql_timezone', то после установки соединения отправляется запрос на установку часового
+ * пояса сессии. Подробнее см. в доке "DB.md"
  *
  * Больше класс ничего не делает, только хранит подключения к базам.
  */
@@ -44,9 +42,8 @@ class DbConnection
      * Запоминаем подключения по $confKey. Полагаем, что в настройках приложения для каждого ключа описано <i>уникальное
      * сочетание</i> базы/пользователя, поскольку идентичный конфиг не имеет смысла.
      *
-     * Опционально ('set_timezone'): после установки соединения отправляется запрос на установку часового пояса сессии
-     * в соответствии с поясом, заданном для PHP-скриптов. В запросе используется числовое представление пояса,
-     * т.к. не всегда на MySQL-сервер загружена таблица с названиями часовых поясов.
+     * Опционально ('mysql_timezone'): после установки соединения отправляется запрос на установку часового пояса сессии.
+     * Подробнее см. в доке "DB.md"
      *
      * Логика исключений: если включен DEBUG, пробрасываем дальше PDOException, иначе логируем ошибку и пробрасываем
      * обычный Exception с ссылкой на предыдущее исключение. Поймав такое исключение и проверив "есть предыдущее
@@ -63,17 +60,20 @@ class DbConnection
             return self::$_cons[$confKey];
         }
 
-        $conf = array_merge(['options' => null, 'set_timezone' => true], App::conf($confKey));
+        $conf = array_merge(['options' => null, 'mysql_timezone' => '+00:00'], App::conf($confKey));
 
         try {
             $dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
 
-            if ($conf['set_timezone']) {
-                $sql = 'SET SESSION time_zone = "' . date('P') . '"';
-                if ($dbh->exec($sql) === false) {
-                    throw new \PDOException("Ошибка установки часового пояса MySQL-сессии.\nЗапрос: $sql");
+            if ($conf['mysql_timezone']) {
+                $sql = 'SET time_zone = ?';
+                $tz = &$conf['mysql_timezone'];
+                if (false === $dbh->prepare($sql)->execute([$tz])) {
+                    throw new \PDOException("Ошибка установки часового пояса MySQL-сессии.\n"
+                        . 'Запрос: ' . str_replace('?', "'$tz'", $sql));
                 }
             }
+
             self::$_cons[$confKey] = $dbh;
         } catch (\PDOException $e) {
             if (DEBUG) {

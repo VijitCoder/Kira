@@ -10,11 +10,11 @@
  * Описывается группой настроек в конфиге приложения:
  * <pre>
  * 'log' => [
- *      'switch_on'   => true,      // включить логирование
- *      'store'       => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
- *      'db_conf_key' => 'db',      // ключ конфига БД, если храним логи в базе
- *      'log_path'    => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах
- *      'timezone'    => '',        // часовой пояс для записи лога
+ *      'switch_on'    => true,      // включить логирование
+ *      'store'        => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
+ *      'db_conf_key'  => 'db',      // ключ конфига БД, если храним логи в базе
+ *      'log_path'     => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах
+ *      'php_timezone' => '',        // часовой пояс для записи лога
  * ]
  * </pre>
  *
@@ -54,9 +54,9 @@ class Log
 
     // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
     const
-        STORE_ERROR = 0,
+        STORE_ERROR    = 0,
         STORE_IN_FILES = 1,
-        STORE_IN_DB = 2;
+        STORE_IN_DB    = 2;
 
     /** @var array конфигурация логера */
     private $_conf;
@@ -84,11 +84,11 @@ class Log
     {
         $conf = array_merge(
             [
-                'switch_on' => true,
-                'store'     => self::STORE_IN_FILES,
+                'switch_on'    => true,
+                'store'        => self::STORE_IN_FILES,
                 //'db_conf_key' => 'db',
-                'log_path'  => TEMP_PATH,
-                'timezone'  => '',
+                'log_path'     => TEMP_PATH,
+                'php_timezone' => '',
             ],
             App::conf('log')
         );
@@ -215,11 +215,10 @@ class Log
      */
     private function _prepareLogData(&$data)
     {
-        if ($customTZ = $this->_conf['timezone']) {
-            $timezone = date_default_timezone_get();
-            date_default_timezone_set($customTZ);
-        }
-        $ts = new \DateTime();
+        $ts = $this->_conf['php_timezone']
+            ? new \DateTime(null, new \DateTimeZone($this->_conf['php_timezone']))
+            :  new \DateTime();
+
         $this->_logIt = [
             'type'     => $data['type'],
             'ts'       => $ts,
@@ -230,10 +229,6 @@ class Log
             // Убираем tab-отступы
             'message'  => str_replace(chr(9), '', $data['message']),
         ];
-        if ($customTZ) {
-            date_default_timezone_set($timezone);
-            unset($timezone);
-        }
     }
 
     /**
@@ -314,7 +309,7 @@ class Log
      * придумать, как БЫСТРО и красиво управлять правами доступа.
      *
      * @return bool
-     * @throws \ErrorException
+     * @throws \LogicException
      */
     private function _writeToFile()
     {

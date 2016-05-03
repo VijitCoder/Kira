@@ -152,7 +152,7 @@ class Request
      *
      * @return string|null
      */
-    public function method()
+    public static function method()
     {
         return isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null;
     }
@@ -167,7 +167,7 @@ class Request
      *
      * @return string|null
      */
-    public function absoluteURL()
+    public static function absoluteURL()
     {
         if (!isset($_SERVER['HTTP_HOST'])) {
             return false;
@@ -212,7 +212,7 @@ class Request
      * @link http://stackoverflow.com/questions/15699101/get-the-client-ip-address-using-php
      * @return string|null
      */
-    public function userIP()
+    public static function userIP()
     {
         return
             getenv('HTTP_CLIENT_IP') ?:
@@ -233,7 +233,7 @@ class Request
      *
      * @return bool
      */
-    public function isAjax()
+    public static function isAjax()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
             && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
@@ -246,7 +246,7 @@ class Request
      *
      * @return bool
      */
-    public function isMobileBrowser()
+    public static function isMobileBrowser()
     {
         return isset($_SERVER['HTTP_USER_AGENT'])
             ? (bool)(preg_match(
