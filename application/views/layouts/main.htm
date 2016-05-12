@@ -3,16 +3,17 @@
 <head>
     <meta charset="utf-8">
     <title><?=$this->title;?></title>
-    <link href="<?=ASSETS_URL . 'style.css';?>" rel="stylesheet" type="text/css" />
-    <script src="<?=ASSETS_URL . 'i18n/'. engine\App::detectLang() . '.js';?>"></script>
+    <script src='/public/assets/js/jquery-2.1.4.min.js'></script>
+    <script src='/public/assets/js/jquery.cookie.js'></script>
 
-    <script src="<?=ASSETS_URL . 'jquery-2.1.4.min.js';?>"></script>
-    <script src="<?=ASSETS_URL . 'jquery.cookie.js';?>"></script>
     <!-- JQuery UI. Маленькая сборка. Только datepicker -->
-    <script src="<?=ASSETS_URL . 'jquery-ui-1.11.4.custom/jquery-ui.min.js';?>"></script>
-    <link href="<?=ASSETS_URL . 'jquery-ui-1.11.4.custom/jquery-ui.min.css';?>" rel="stylesheet" type="text/css" />
+    <script src='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.js'></script>
+    <link href='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.css' rel="stylesheet" type="text/css" />
 
-    <script src="<?=ASSETS_URL . 'common.js';?>"></script>
+    <script src="<?='/public/assets/js/i18n/'. engine\App::detectLang() . '.js';?>"></script>
+    <script src='/public/assets/js/common.js'></script>
+
+    <link href='/public/assets/css/style.css' rel="stylesheet" type="text/css" />
 </head>
 <body>
 
