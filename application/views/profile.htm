@@ -3,9 +3,11 @@
  * Страница профиля пользователя
  * array $d данные по юзеру
  */
+
+use engine\App;
 ?>
 
-<h4><?=engine\App::t('Профиль');?></h4>
+<h4><?=App::t('Профиль');?></h4>
 
 <? $this->renderPartial('_flash'); ?>
 
@@ -17,37 +19,37 @@
     <col width='170'>
     <col width='450'>
     <tr>
-        <td class='user-prop'><?=engine\App::t('Логин');?></td>
+        <td class='user-prop'><?=App::t('Логин');?></td>
         <td class='user-value'><?=$d['login'];?></td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Email');?></td>
+        <td><?=App::t('Email');?></td>
         <td class='user-value'>
             <?=$d['mail'];?>
             <?if ($d['status'] == 'new') {;?>
-                <span class='error'><?=engine\App::t('не подтвержден');?></span>
-                &nbsp;&nbsp;&nbsp;<a href="<?=$d['confirmUrl'];?>"><?=engine\App::t('исправить');?>
+                <span class='error'><?=App::t('не подтвержден');?></span>
+                &nbsp;&nbsp;&nbsp;<a href="<?=$d['confirmUrl'];?>"><?=App::t('исправить');?>
             <? } ?>
         </td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Имя');?></td>
+        <td><?=App::t('Имя');?></td>
         <td class='user-value'><?=$d['firstname'];?></td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Фамилия');?></td>
+        <td><?=App::t('Фамилия');?></td>
         <td class='user-value'><?=$d['secondname'];?></td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Пол');?></td>
-        <td class='user-value'><?=engine\App::t($d['sex']);?></td>
+        <td><?=App::t('Пол');?></td>
+        <td class='user-value'><?=App::t($d['sex']);?></td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Дата рождения');?></td>
+        <td><?=App::t('Дата рождения');?></td>
         <td class='user-value'><?=$d['birth_date'];?></td>
     </tr>
     <tr>
-        <td><?=engine\App::t('Город проживания');?></td>
+        <td><?=App::t('Город проживания');?></td>
         <td class='user-value'><?=$d['town'];?></td>
     </tr>
 </table>

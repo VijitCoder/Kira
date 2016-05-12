@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+
+<?php use engine\App, engine\Env;?>
+
 <HTML lang='ru'>
 <head>
     <meta charset="utf-8">
@@ -10,10 +13,13 @@
     <script src='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.js'></script>
     <link href='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.css' rel="stylesheet" type="text/css" />
 
-    <script src="<?='/public/assets/js/i18n/'. engine\App::detectLang() . '.js';?>"></script>
+    <script src="<?='/public/assets/js/i18n/'. App::detectLang() . '.js';?>"></script>
     <script src='/public/assets/js/common.js'></script>
 
     <link href='/public/assets/css/style.css' rel="stylesheet" type="text/css" />
+
+    <link href='/public/images/favicon.ico' rel="icon" type="image/x-icon" />
+    <link href='/public/images/favicon.ico' rel='shortcut icon' type='image/x-icon' />
 </head>
 <body>
 
@@ -21,7 +27,7 @@
 		<div id='header'>
 		    <? $lang = (isset($_COOKIE['lang'])) ? $_COOKIE['lang'] : 'ru'; ?>
 		    <div class='top-menu-left'>
-		        <?=engine\App::t('Язык');?>
+		        <?=App::t('Язык');?>
 		        <select id='cmbLang'>
 				    <option value="ru" <?if ($lang=='ru') echo 'selected';?>>русский</option>
 				    <option value="en" <?if ($lang=='en') echo 'selected';?>>english</option>
@@ -30,11 +36,11 @@
 
 		    <div class='top-menu-right'>
 	            <? if ($this->userId): ?>
-			        <a href="<?=$this->urls['logout'];?>"><?=engine\App::t('Выйти');?></a>
-			        / <a href="<?=$this->urls['profile'];?>"><?=engine\App::t('Личный кабинет');?></a>
+			        <a href="<?=$this->urls['logout'];?>"><?=App::t('Выйти');?></a>
+			        / <a href="<?=$this->urls['profile'];?>"><?=App::t('Личный кабинет');?></a>
 		        <? else: ?>
-                    <a href="<?=$this->urls['login'];?>"><?=engine\App::t('Вход');?></a>
-                    / <a href="<?=$this->urls['reg'];?>"><?=engine\App::t('Регистрация');?></a>
+                    <a href="<?=$this->urls['login'];?>"><?=App::t('Вход');?></a>
+                    / <a href="<?=$this->urls['reg'];?>"><?=App::t('Регистрация');?></a>
 		        <? endif ?>
 		    </div>
 
@@ -50,11 +56,11 @@
 
     <div id='footer'>
 		<div class='float-left'>
-            <a href="<?=engine\Env::indexPage();?>"><?=engine\Env::domainName();?></a> &copy; 7Lives, 2015
+            <a href="<?=Env::indexPage();?>"><?=Env::domainName();?></a> &copy; 7Lives, 2015
         </div>
 		<div class='float-right'>
             <small><i>
-               <?=engine\App::t('Работает на');?> <a href="<?=engine\App::ENGINE_URL?>"><?=engine\App::VERSION?></a>
+               <?=App::t('Работает на');?> <a href="<?=App::ENGINE_URL?>"><?=App::VERSION?></a>
             </i></small>
         </div>
 	</div>

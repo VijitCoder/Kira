@@ -1,17 +1,19 @@
-<h4><?=engine\App::t('Восстановление пароля');?></h4>
+<?php use engine\App;?>
+
+<h4><?=App::t('Восстановление пароля');?></h4>
 
 <form id='fmLogin' method="POST">
 	<p>
-	   <a href="<?=$this->urls['login'];?>"><?=engine\App::t('Вход');?></a>  |
-	   <a href="<?=$this->urls['reg'];?>"><?=engine\App::t('зарегистрироваться');?></a>
+	   <a href="<?=$this->urls['login'];?>"><?=App::t('Вход');?></a>  |
+	   <a href="<?=$this->urls['reg'];?>"><?=App::t('зарегистрироваться');?></a>
 	</p>
 
 	<p><input type='text' name='mail' maxlength=50 required placeholder='email'></p>
 
-	<p class='hint'><?=engine\App::t('На указанный email будут высланы инструкции по восстановлению пароля.');?></p>
+	<p class='hint'><?=App::t('На указанный email будут высланы инструкции по восстановлению пароля.');?></p>
 
 	<p>
-	    <input type='submit' value='<?=engine\App::t('Восстановить');?>'>
+	    <input type='submit' value='<?=App::t('Восстановить');?>'>
 	</p>
 
 	<p class='error clear'><?=$error;?></p>
