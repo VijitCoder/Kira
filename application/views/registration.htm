@@ -25,7 +25,7 @@ $err = $form->getErrorsAsString();
 	<div class='form-row'>
 	    <label class='required'><?= engine\App::t('Логин'); ?></label><br>
 	    <input type='text' name='login' required maxlength=30 value='<?= $data['login']; ?>'>
-	    <img class='gif-process' src="<?= '/images/process.gif'; ?>">
+	    <img class='gif-process' src='/public/images/process.gif'>
 	    <span class='error'><?= $err['login']; ?></span><br>
 	    <span class='hint'><?= engine\App::t('Допускаются цифры, латинские буквы, тире и знак подчеркивания'); ?></span>
 	</div>
@@ -50,7 +50,7 @@ $err = $form->getErrorsAsString();
     <div class='form-row'>
         <label class='required'>email</label><br>
         <input type='email' name='mail' required maxlength=50 value='<?= $data['mail']; ?>'>
-        <img class='gif-process' src="<?= '/images/process.gif'; ?>">
+        <img class='gif-process' src='/public/images/process.gif'>
         <span class='error'><?= $err['mail']; ?></span>
     </div>
 
@@ -99,10 +99,10 @@ $err = $form->getErrorsAsString();
 
     <div class='form-row'>
     <?= engine\App::t('Ваше фото'); ?>
-    <? if ($uri = $form->getValues('avatar')) { ?>
+    <? if ($fn = $form->getValues('avatar')) { ?>
         <br>
-        <img class='avatar' src='<?= $uri; ?>' width='150px'>
-        <input type='hidden' name='avatar' value='<?= $uri; ?>'>
+        <img class='avatar' src='<?= engine\App::conf('avatar.url') . $fn; ?>' width='150px'>
+        <input type='hidden' name='avatar' value='<?= $fn; ?>'>
     <? } else { ?>
         <input type='file' name='avatar' accept="image/jpeg,image/png,image/gif">
         <span class='error'><?= $err['avatar']; ?></span><br>
@@ -110,9 +110,9 @@ $err = $form->getErrorsAsString();
 	        <?= engine\App::t('Формат файла - FORMAT.', ['FORMAT' => $imgConstrains['format']]); ?>
             <?= engine\App::t('Размер изображения не меньше SIZE px по узкой стороне, вес файла в пределах MIN Кбайт - MAX Мб.',
                 [
-                    'SIZE' => $imgConstrains['minSize'],
-                    'MIN' => $imgConstrains['minWeight'],
-                    'MAX' => $imgConstrains['maxWeight'],
+                    'SIZE' => $imgConstrains['min_size'],
+                    'MIN' => $imgConstrains['min_weight'],
+                    'MAX' => $imgConstrains['max_weight'],
                 ]);
             ?>
 	    </span>

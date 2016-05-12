@@ -18,7 +18,8 @@ class Env implements IDetectEnvironment
     public static function scheme()
     {
         $https = isset($_SERVER['HTTPS']) && (strcasecmp($_SERVER['HTTPS'], 'on') === 0 || $_SERVER['HTTPS'] == 1)
-            || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strcasecmp($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') === 0;
+            || isset($_SERVER['HTTP_X_FORWARDED_PROTO'])
+            && strcasecmp($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') === 0;
 
         return $https ? 'https://' : 'http://';
     }
@@ -77,9 +78,11 @@ class Env implements IDetectEnvironment
     /**
      * Определение среды окружения (local, dev, stage, production, mobile).
      *
-     * Пустышка. Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
+     * Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
+     * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
+     * его динамическим - невыгодно.
      *
-     * @return int см. константы "D_*" в этом классе.
+     * @return int см. константы "D_*" в IDetectEnvironment.
      */
     public static function detectEnvironment()
     {

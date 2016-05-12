@@ -98,9 +98,11 @@ class Response
      * Редирект с выходом из приложения.
      *
      * Прим.: указание абсолютного URL - требование спецификации HTTP/1.1,
-     * {@see http://php.net/manual/ru/function.header.php}
+     * {@link http://php.net/manual/ru/function.header.php}
      *
-     * Быстрая справка по кодам с редиректом {@see http://php.net/manual/ru/function.header.php#78470}
+     * Быстрая справка по кодам с редиректом {@link http://php.net/manual/ru/function.header.php#78470}
+     *
+     * Хитрый редирект на основе комментария {@link http://php.net/manual/ru/function.headers-sent.php#60450}
      *
      * @param string $url  новый относительный адрес, с ведущим слешем
      * @param int    $code код ответа HTTP
@@ -109,7 +111,20 @@ class Response
     public static function redirect($url, $code = 302)
     {
         $url = Env::domainUrl() . $url;
-        header('location:' . $url, true, $code);
+
+        if (!headers_sent())
+            header('location:' . $url, true, $code);
+        else {
+            echo "
+                <script type='text/javascript'>
+                    window.location.href='$url'
+                </script>
+                <noscript>
+                    <meta http-equiv='refresh' content='0; url=$url'/>
+                </noscript>
+            ";
+        }
+
         exit;
     }
 
@@ -135,6 +150,10 @@ class Response
      */
     public static function download($file)
     {
+        if (headers_sent($file, $line)) {
+            throw new LogicException("Не могу отправить заголовки, уже идет передача ответа. Началась тут $file:$line");
+        }
+
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . basename($file) . '"');

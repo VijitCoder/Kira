@@ -10,6 +10,7 @@ use \engine\App,
     \engine\net\Session,
     \engine\Env,
     \app\models\UserModel,
+    \app\models\ProfileModel,
     \app\forms\RegistrationForm,
     \app\helpers\MailHelper;
 
@@ -24,7 +25,7 @@ class RegistrationService
      */
     public function __construct()
     {
-         $this->_userModel = new UserModel;
+        $this->_userModel = new UserModel;
     }
 
     /**
@@ -37,6 +38,7 @@ class RegistrationService
     {
         //$_POST['login'] = $_POST['mail'] = AuthService::salt(10); //DBG
         $result = $form->load($_POST)->validate();
+        $imgService = new ImageFileService;
 
         # Аватарка
 
@@ -47,12 +49,12 @@ class RegistrationService
             && !is_array($_FILES['avatar']['name'])
             && $_FILES['avatar']['error'] != 4
         ) {
-            $res = ImageFileService::loadImage($_FILES['avatar'], App::conf('avatar'));
-            if (substr($res, 0, 1) != '/') {
-                $form->addError('avatar', $res);
-                $result = false;
+            $fn = $imgService->loadImage($_FILES['avatar'], App::conf('avatar'));
+            if ($fn) {
+                $form->setValue('avatar', $fn);
             } else {
-                $form->setValue('avatar', $res);
+                $form->addError('avatar', $imgService->getLastError());
+                $result = false;
             }
         }
 
@@ -78,7 +80,6 @@ class RegistrationService
 
         $fields = array_merge($fields, AuthService::encodePassword($fields['password']));
 
-        //Нужна транзакция, пишем в две таблицы.
         $model = $this->_userModel;
         $con = $model->getConnection();
         $con->beginTransaction();
@@ -86,14 +87,13 @@ class RegistrationService
         if ($result = $model->addUser($fields)) {
             $fields['id'] = $result;
 
-            //Если есть аватар, переносим его на постоянное хранение
-            if ($fields['avatar'] && $res = ImageFileService::moveToShard($fields['avatar'], $result)) {
-                if (substr($res, 0, 1) != '/') {
-                    $form->addError('avatar', $res);
-                    $result = false;
-                } else {
-                    $fields['avatar'] = $res;
+            if ($fields['avatar'] && $fn = $imgService->moveToShard($fields['avatar'], $result)) {
+                if ($fn) {
+                    $fields['avatar'] = $fn;
                     $result = (new ProfileModel)->addProfile($fields);
+                } else {
+                    $form->addError('avatar', $imgService->getLastError());
+                    $result = false;
                 }
             }
         }
@@ -105,7 +105,7 @@ class RegistrationService
             self::sendConfirm($fields['mail'], $fields['salt']);
             Session::write('auth', $fields['id']);
         } else {
-           $con->rollBack();
+            $con->rollBack();
             //@TODO лог, письмо админам. Можно так же данные в сообщение добавить, через var_export()
             Session::addFlash('errSql', 'Ошибка записи в БД. Пожалуйста повторите попытку позже.');
         }
@@ -161,7 +161,7 @@ class RegistrationService
 
         if ($res = MailHelper::sendHtml($mail, 'Подтверждение учетной записи', $html)) {
             Session::addFlash('infoConfirm', 'На указанный ящик отправлено письмо с ссылкой для подтверждения '
-                    . 'учетной записи. Пожалуйста, проверьте почту :)');
+                . 'учетной записи. Пожалуйста, проверьте почту :)');
         } else {
             Session::addFlash('errConfirm', 'Попытка отправить письмо не удалась. Повторите позже, пожалуйста.');
             //@TODO лог, письмо админам в случае, когда отправка поломалась.

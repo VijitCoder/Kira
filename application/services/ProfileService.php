@@ -31,6 +31,10 @@ class ProfileService {
 
         $d['sex'] = str_replace(['none', 'female', 'male'], ['не задан', 'женский', 'мужской'], $d['sex']);
 
+        $d['avatar'] = $d['avatar']
+            ? App::conf('avatar.url') . $d['avatar']
+            : '/public/images/plug-user.png';
+
         if ($d['status'] == 'new') {
             $d['confirmUrl'] = App::router()->url(
                 [APP_NS_PREFIX . 'controllers\\', 'registration/sendconfirm'],
