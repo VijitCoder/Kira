@@ -133,12 +133,12 @@ class Router implements \engine\IRouter
             }
         }
 
-//echo "{$namespace}{$right}";
+//echo "{$namespace}\\{$right}";
         $_GET = array_merge($params, $_GET);
 
         $right = explode('/', $right);
         return [
-            $namespace . $right[0],            //FQN controller
+            $namespace . '\\' . $right[0],     //FQN controller
             isset($right[1]) ? $right[1] : '', //action
             $params                            //params
         ];

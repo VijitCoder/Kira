@@ -145,7 +145,7 @@ class RegistrationService
     {
         $url = rtrim(Env::indexPage(), '/');
         $url .= App::router()->url(
-            [APP_NS_PREFIX . 'controllers\\', 'registration/confirm'],
+            ['app\controllers', 'registration/confirm'],
             ['m' => $mail, 'c' => md5($salt)]
         );
 

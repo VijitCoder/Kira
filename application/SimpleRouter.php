@@ -5,13 +5,16 @@
  * Этот роутер проще, работает с контроллерами в конкретном каталоге, может разобрать запросы типа
  *   /controller
  *   /controller/action
- *   /controller/action/pd/NN/ps/WWW
- *   /controller/action/pd/NN/odd
+ *   /controller/action/param1/value1/param2/value2
+ *   /controller/action/param1/value1/odd
+ *
+ * Роут распарсится в контроллер + действие + ассоциативный массив параметров. Если нехватает пары для параметра,
+ * считаем его ключом без значения.
  *
  * В именах контроллеров и URL-ах нужно учитывать регистр. Имя контроллера в адресе пишем <b>полностью</b>.
  *
  * Практические примеры использования такого роутера:
- * - mod_rewite уже разобрал маршрут и передал сюда /controller/action...
+ * - mod_rewrite уже разобрал маршрут и передал сюда /controller/action...
  * - сайт-визитка. 3-4 простых URL-а
  */
 
@@ -21,8 +24,8 @@ use engine\App;
 
 class SimpleRouter implements \engine\IRouter
 {
-    //Пространство имен контроллеров. Без учета префикса приложения APP_NS_PREFIX.
-    const CTRL_NS = 'controllers\\';
+    //Пространство имен контроллеров.
+    const CTRL_NS = 'app\controllers\\';
 
     /**
      * Парсинг маршрута и вызов соответствующего контроллера.
@@ -44,7 +47,7 @@ class SimpleRouter implements \engine\IRouter
         }
 
         $parsedUrl = $this->_parseUrl($url);
-        $ctrlName = APP_NS_PREFIX . self::CTRL_NS . $parsedUrl['controller'];
+        $ctrlName = self::CTRL_NS . $parsedUrl['controller'];
         $action = $parsedUrl['action'];
         $params = $parsedUrl['params'];
 
@@ -80,7 +83,7 @@ class SimpleRouter implements \engine\IRouter
      */
     private function _createController($ctrl)
     {
-        $pattern = '~^' . str_replace('\\', '/', APP_NS_PREFIX) . '~';
+        $pattern = '~^' . str_replace('\\', '/', 'app\\') . '~';
         $str = str_replace('\\', '/', $ctrl);
         $file = preg_replace($pattern, APP_PATH, $str, 1) . '.php';
 
@@ -92,7 +95,7 @@ class SimpleRouter implements \engine\IRouter
      *
      * Если есть конечный слеш - редиректим на адрес без него.
      *
-     * Первая часть до слеша - контроллер, потом действие, остальное - параметры. Полученные параметры объединяются в
+     * Первая часть до слеша - контроллер, потом действие, остальное - параметры. Полученные параметры объединяются с
      * GET-параметрами, причем у GET приоритет.
      *
      * @param string $url запрос к серверу, без ведущего слеша и без GET-параметров.

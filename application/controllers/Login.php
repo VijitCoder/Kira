@@ -16,7 +16,7 @@ class Login extends \app\controllers\Front
     public function __construct()
     {
         parent::__construct();
-        $this->urls['recover'] = App::router()->url([APP_NS_PREFIX . 'controllers\\', 'login/recover']);
+        $this->urls['recover'] = App::router()->url(['app\controllers', 'login/recover']);
     }
 
     /**

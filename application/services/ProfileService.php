@@ -37,7 +37,7 @@ class ProfileService {
 
         if ($d['status'] == 'new') {
             $d['confirmUrl'] = App::router()->url(
-                [APP_NS_PREFIX . 'controllers\\', 'registration/sendconfirm'],
+                ['app\controllers', 'registration/sendconfirm'],
                 ['m' => $d['mail'], 'c' => $d['salt']]
             );
 

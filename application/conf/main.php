@@ -4,14 +4,14 @@
  */
 $main = [
     // FQN контроллера + метод для главной страницы сайта
-    'indexHandler' => APP_NS_PREFIX . 'controllers\Login',
+    'indexHandler' => 'app\controllers\Login',
 
     // FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
     // ошибками 401-404, 500
-    'errorHandler' => APP_NS_PREFIX . 'controllers\Error',
+    'errorHandler' => 'app\controllers\Error',
 
-    // 'router' => APP_NS_PREFIX . 'SimpleRouter',
-    'routes'       => require __DIR__ . '/routes.php',
+    // 'router' => 'app\SimpleRouter',
+    'routes'       => require 'routes.php',
 
     'validators' => [
         'password' => [
@@ -63,6 +63,6 @@ $main = [
     ],
 ];
 
-$env = require __DIR__ . '/env.php';
+$env = require 'env.php';
 
 return engine\utils\Arrays::merge_recursive($main, $env, true);

@@ -37,7 +37,7 @@ class Front extends \engine\web\Controller
             'reg'     => 'registration',
         ];
         foreach ($urls as &$v) {
-            $v = App::router()->url([APP_NS_PREFIX . 'controllers\\', $v]);
+            $v = App::router()->url([ 'app\controllers', $v]);
         }
         $this->urls = $urls;
     }
