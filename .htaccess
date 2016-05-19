@@ -3,9 +3,9 @@
 
 # Конфиг МОЕГО сервера запрещает доступ к файлам, начинающимся с ".ht" (типа .htaccess, .htpasswd)
 # Но на всякий случай можно явно указать здесь.
-#<FilesMatch "^\.ht">
-#    deny from all
-#</FilesMatch>
+<FilesMatch "^\.ht">
+    deny from all
+</FilesMatch>
 
 DefaultLanguage ru
 
@@ -16,7 +16,8 @@ ErrorDocument 500 /Error
 
 RewriteEngine On
 RewriteBase /
+
 # Если запрос не совпадает с перечисленным - отправлять его в index.php
 # Это быстрее, чем классическая проверка "не файл|не каталог". К тому же запретит прямое обращение к скриптам.
-RewriteCond %{REQUEST_URI} !^/(index\.php|robots\.txt|sitemap\.xml|public|sandbox)
+RewriteCond %{REQUEST_URI} !^/(index\.php|robots\.txt|sitemap\.xml|install/.*|public|sandbox)
 RewriteRule .* index.php [L,QSA]

@@ -1,0 +1,21 @@
+<?php
+/**
+ * Контроллер приветствия.
+ */
+
+namespace {{NX_PREFIX}}\controllers;
+
+use engine\App;
+
+class Welcome extends  \engine\web\Controller
+{
+    protected $title = 'Добро пожаловать';
+
+    /**
+     * Действие контроллера по умолчанию
+     */
+    public function index()
+    {
+        $this->render('welcome', ['domain' => Env::domainName()]);
+    }
+}

@@ -1,4 +1,8 @@
 <?php
+// Скрипты, которые не могут быть загружены автоматически.
+require 'dump_shortcut.php';
+require 'Interfaces.php';
+
 /**
  * Автозагрузчик почти по стандарту PSR-4 (через пространства имен) {@link http://www.php-fig.org/psr/psr-4/ru/}
  *
@@ -56,7 +60,6 @@ function customLoader($class)
     }
 }
 
-require_once 'Interfaces.php';
 spl_autoload_register('PSR4_loader');
 
 // Глобальный перехватчик для исключений, которые не будут пойманы в контексте

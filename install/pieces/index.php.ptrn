@@ -2,6 +2,8 @@
 /**
  * Главный скрипт
  */
+
+// В случае мультибайтной кодировки сайта. Для кодировки типа 'windows-1251' это можно удалить.
 mb_internal_encoding('UTF-8');
 
 // Часовой пояс для PHP-функций времени. Можно задать через php.ini. Так или иначе часовой пояс должен быть определен.
@@ -11,20 +13,20 @@ date_default_timezone_set('Asia/Novosibirsk');
 define('ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
 
 // Префикс пространства имен приложения. Все классы приложения, должны быть в его подпространстве.
-define('APP_NS_PREFIX', 'app\\');
+define('APP_NS_PREFIX', '{{ns_prefix}}');
 
 // Каталог приложения.
-define('APP_PATH', ROOT_PATH . 'application/');
+define('APP_PATH', {{app_path}});
 
 // Каталог шаблонов приложения.
-define('VIEWS_PATH', APP_PATH . 'views/');
+define('VIEWS_PATH', {{views_path}});
 
 // Временный каталог приложения. В него, как минимум, складываются логи. Обязательно создать этот каталог и дать доступ
 // на запись для процесса веб-сервера.
-define('TEMP_PATH', APP_PATH . 'temp/');
+define('TEMP_PATH', {{temp_path}});
 
-// Путь к основному файлу конфигурации приложения
-define('MAIN_CONFIG', APP_PATH . 'conf/main.php');
+// Путь к файлу основноЙ конфигурации приложения
+define('MAIN_CONFIG', {{main_conf}});
 
 define('DEBUG', true);
 

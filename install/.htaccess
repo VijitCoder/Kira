@@ -1,0 +1,8 @@
+# Используйте htpasswd (пакет apache2-utils) для создания пароля. Или аналогичную программу.
+#AuthType Basic
+#AuthUserFile /path/to/.htpasswd
+#AuthName "Restricted area. Who are you?"
+#require user admin
+
+RewriteCond %{REQUEST_URI} !^/install/static/.*
+RewriteRule .* index.php [L,QSA]

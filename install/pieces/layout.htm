@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<?php use engine\App, engine\Env;?>
+
+<HTML lang='ru'>
+<head>
+    <meta charset="utf-8">
+    <title><?=$this->title;?></title>
+    <script src='/public/assets/js/jquery-2.1.4.min.js'></script>
+    <script src='/public/assets/js/jquery.cookie.js'></script>
+
+    <!-- JQuery UI. Маленькая сборка. Только datepicker -->
+    <script src='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.js'></script>
+    <link href='/public/assets/jquery-ui-1.11.4.custom/jquery-ui.min.css' rel="stylesheet" type="text/css" />
+
+    <script src="<?='/public/assets/js/i18n/'. App::detectLang() . '.js';?>"></script>
+    <script src='/public/assets/js/common.js'></script>
+
+    <link href='/public/assets/css/style.css' rel="stylesheet" type="text/css" />
+
+    <link href='/public/images/favicon.ico' rel="icon" type="image/x-icon" />
+    <link href='/public/images/favicon.ico' rel='shortcut icon' type='image/x-icon' />
+</head>
+<body>
+
+	<div id='base'>
+		<div id='header'>
+		    <? $lang = (isset($_COOKIE['lang'])) ? $_COOKIE['lang'] : 'ru'; ?>
+		    <div class='top-menu-left'>
+		        <?=App::t('Язык');?>
+		        <select id='cmbLang'>
+				    <option value="ru" <?if ($lang=='ru') echo 'selected';?>>русский</option>
+				    <option value="en" <?if ($lang=='en') echo 'selected';?>>english</option>
+		        </select>
+		    </div>
+
+		    <div class='top-menu-right'>
+	            <? if ($this->userId): ?>
+			        <a href="<?=$this->urls['logout'];?>"><?=App::t('Выйти');?></a>
+			        / <a href="<?=$this->urls['profile'];?>"><?=App::t('Личный кабинет');?></a>
+		        <? else: ?>
+                    <a href="<?=$this->urls['login'];?>"><?=App::t('Вход');?></a>
+                    / <a href="<?=$this->urls['reg'];?>"><?=App::t('Регистрация');?></a>
+		        <? endif ?>
+		    </div>
+
+		    <hr class='clear'>
+		</div>
+
+		<div id='content'>
+		    <?=$content;?>
+	    </div>
+
+	    <div id="fempty"></div>
+    </div>
+
+    <div id='footer'>
+		<div class='float-left'>
+            <a href="<?=Env::indexPage();?>"><?=Env::domainName();?></a> &copy; 7Lives, 2015
+        </div>
+		<div class='float-right'>
+            <small><i>
+               <?=App::t('Работает на');?> <a href="<?=App::ENGINE_URL?>"><?=App::VERSION?></a>
+            </i></small>
+        </div>
+	</div>
+
+</body>
+</html>

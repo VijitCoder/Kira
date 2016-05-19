@@ -254,7 +254,6 @@ class Form
                 continue;
             }
 
-            //чтоб каждое на isset() не проверять. Так код читабельнее будет.
             $tmp = array_merge($dummy, $this->filters[$k]);
             extract($tmp);
 

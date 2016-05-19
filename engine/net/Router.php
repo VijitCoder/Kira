@@ -13,14 +13,16 @@ class Router implements \engine\IRouter
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      *
      * @TODO это хреновое решение, нужно придумать лучше.
-     * Если "HTTP status code" в списке тех кодов ошибок, на которые веб-сервер может навешать хендлер, то сразу передаем
-     * управление в него. Например, для Apache это "ErrorDocument". Для других веб-серверов тоже есть подобная возможность.
+     * Если "HTTP status code" в списке тех кодов ошибок, на которые веб-сервер может навешать хендлер, то сразу
+     * передаем управление в него. Например, для Apache это "ErrorDocument". Для других веб-серверов тоже есть
+     * подобная возможность.
      * При этом, чтобы там ни было прописано у сервера, запрос получит тот контроллер, который указан в конфиге
      * 'errorHandler'. И это - тоже слабая часть решения, т.к. эта настройка - необязательна.
      */
     public function callAction()
     {
         $code = http_response_code();
+
 //        if (in_array($code, [401, 403, 404, 500])) {
         if ($code >= 400) {
             return $this->_notFound($code);
@@ -30,7 +32,7 @@ class Router implements \engine\IRouter
             return $this->_notFound();
         }
 
-        $url = explode('?', $_SERVER['REQUEST_URI'])[0]; //берем часть запроса до "?"
+        $url = explode('?', $_SERVER['REQUEST_URI'])[0];
         $url = urldecode(ltrim($url, '/'));
 
         if (!$url) {
