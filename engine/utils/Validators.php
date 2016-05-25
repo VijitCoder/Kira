@@ -1,32 +1,24 @@
 <?php
-/**
- * Общие валидаторы.
- *
- * Некоторые валидаторы настраиваются через конфиг приложения. В коментариях указано, какие именно настройки им нужны.
- * В конфиге должен быть массив 'validators'. В нем каждый ключ - имя валидатора. Значение - массив с настройками
- * для этого валидатора.
- *
- * Любой валидатор возвращает либо готовое значение (если подразумевалась очистка), либо массив с текстами ошибок.
- * Проверка переданного значения ведется до конца, не прерываясь на первой ошибке, поэтому массив.
- */
 
 namespace engine\utils;
 
 use engine\App;
 
+/**
+ * Общие валидаторы.
+ *
+ * От варианта вызова зависят параметры метода и возвращаемое значение. Если валидатор расчитан на вызвов через
+ * filter_var(FILTER_CALLBACK), то он принимает только один параметр - проверяемое значение. Возвращает либо проверенное
+ * значение либо FALSE.
+ *
+ * Если валидатор расчитан на вызов через call_user_func(), тогда первый парамер - проверяемое значение, второй -
+ * массив дополнительных параметров метода (необязательный). Такой метод всегда возвращает либо ['errors' => ...], либо
+ * ['value' => ...].
+ */
 class Validators
 {
     /**
      * Валидатор пароля.
-     *
-     * Валидатору нужны следующие значения в конфиге (сразу с примерами):
-     * <pre>
-     * 'validators'   => [
-     *     'password' => [
-     *       'min_len'  => 5, // минимальная длина пароля. 0 = любая длина подходит.
-     *       'min_comb' => 3, // минимальная комбинация наборов символов в пароле
-     * ]
-     * </pre>
      *
      * В пароле разрешены следующие наборы символов:
      * <ul>
@@ -38,21 +30,32 @@ class Validators
      *
      * Буквы в верхнем/нижнем регистре считаются разными наборами при проверке минимальной комбинации символов.
      *
-     * @param string $pass
-     * @return array | string
+     * Доп. настройки валидатора могут быть (указаны значения по умолчанию):
+     * <pre>
+     * [
+     *    'min_len'  => 0, // минимальная длина пароля. 0 = любая длина подходит.
+     *    'min_comb' => 1, // минимальная комбинация наборов символов в пароле
+     * ]
+     * </pre>
+     *
+     * @param string $pass проверяемый пароль
+     * @param array  $options доп.настройки валидатора
+     * @return array
      */
-    public static function password($pass)
+    public static function password($pass, $options = [])
     {
         $errors = array();
+        $options = array_merge(['min_len' => 1, 'min_comb' => 0], $options);
+
         if (!preg_match('~^[\w!@#$%^&`\~]+$~u', $pass)) {
             $errors[] = App::t('Недопустимые символы.');
         }
 
-        if (mb_strlen($pass) < App::conf('validators.password.min_len')) {
+        if (mb_strlen($pass) < $options['min_len']) {
             $errors[] = App::t('Пароль слишком короткий.');
         }
 
-        if ($minComb = App::conf('validators.password.min_comb')) {
+        if ($options['min_comb']) {
             $cnt = 0;
             $tmp1 = preg_replace('~[^\w!@#$%^&`\~]+~u', '', $pass); //убираем левое
             $tmp2 = preg_replace('~[!@#$%^&`\~_-]+~', '', $tmp1);   //убрали спец.символы
@@ -66,12 +69,12 @@ class Validators
                 $cnt++; //факт того, что к этому моменту строка не опустела
             }
 
-            if ($cnt < $minComb) {
-                $errors[] = App::t('Пароль слишком простой.') . ", {$cnt}/{$minComb}";
+            if ($cnt < $options['min_comb']) {
+                $errors[] = App::t('Пароль слишком простой') . ", {$cnt}/{$options['min_comb']}";
             }
         }
 
-        return $errors ?: $pass;
+        return $errors ? ['errors' => $errors] : ['value' => $pass];
     }
 
     /**
@@ -79,12 +82,11 @@ class Validators
      *
      * Проверка на корректность и черный список серверов.
      *
-     * Валидатору нужны следующие значения в конфиге (необязательно):
+     * Доп. настройки валидатора могут быть:
      * <pre>
-     * 'validators'   => [
-     *     'mail' => [
-     *       'regexp' => '~.+@.+\..+~',
-     *       'black_servers' => ['example1.com', 'example2.com',]
+     * [
+     *   'regexp' => '~.+@.+\..+~', // значение по умолчанию
+     *   'black_servers' => array | NULL
      * ]
      * </pre>
      *
@@ -94,23 +96,26 @@ class Validators
      * Проверка на черный список серверов необязательна. Нет списка - нет проверки.
      *
      * @param string $mail
-     * @return array | string
+     * @param array  $options доп.настройки валидатора
+     * @return array
      */
-    public static function mail($mail)
+    public static function mail($mail, $options)
     {
-        $regexp = App::conf('validators.mail.regexp', false) ? : '~.+@.+\..+~';
+        $options = array_merge(['regexp' => '~.+@.+\..+~', 'black_servers' => null], $options);
 
-        if (!preg_match($regexp, $mail)) {
-            return [App::t('неверный формат почтового адреса.')];
+        if (!preg_match($options['regexp'], $mail)) {
+            return ['errors' => App::t('неверный формат почтового адреса.')];
         }
 
-        $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
-        $black = App::conf('validators.mail.black_servers', false) ? : [];
-        if (in_array($server, $black)) {
-            return [App::t('Почтовый сервер вашего email в черном списке. Пожалуйста укажите другой адрес.')];
+        if ($black = $options['black_servers']) {
+            $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
+            if (in_array($server, $black)) {
+                return ['errors' => App::t('Почтовый сервер вашего email в черном списке. '
+                    .'Пожалуйста укажите другой адрес.')];
+            }
         }
 
-        return $mail;
+        return ['value' => $mail];
     }
 
     /**
@@ -122,21 +127,21 @@ class Validators
      * Возвращаемое значение приводится в формат MySQL "yyyy-mm-dd" для корректного сохранения в БД.
      *
      * @param string $date
-     * @return array | string возвращаем в формате yyyy-mm-dd (mysql)
+     * @return array возвращаем в формате yyyy-mm-dd (mysql)
      */
     public static function date($date)
     {
         if (!preg_match('~\d{2}\.\d{2}\.\d{4}~', $date)) {
             $msg = App::t('Неверный формат даты. Ожидается "FORMAT".', ['FORMAT' => 'dd.mm.yyyy']);
-            return [$msg];
+            return ['errors' => $msg];
         }
 
         list($d, $m, $y) = explode('.', $date);
         if (!checkdate($m, $d, $y)) {
-            return [App::t('Нереальная дата')];
+            return ['errors' => App::t('Нереальная дата')];
         }
 
-        return sprintf('%d-%d-%d', $y, $m, $d);
+        return ['value' => sprintf('%d-%d-%d', $y, $m, $d)];
     }
 
     /**
@@ -145,6 +150,8 @@ class Validators
      * Удаляем начальные и конечные пробельные пробелы, а так же "\n, \r, \t, \v, \0". Удаляем лишние пробелы внутри
      * строки. Преобразуем html-сущности, кодировка 'UTF-8'. Удаляем обратные слеши для исключения возможности написания
      * скриптов на Perl.
+     *
+     * Прим: вызов валидатора предполагается по правилам filter_var(FILTER_CALLBACK). Результат соответствующий.
      *
      * @param string $phrase
      * @return string

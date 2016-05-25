@@ -11,36 +11,27 @@ $main = [
     'errorHandler' => 'app\controllers\Error',
 
     // 'router' => 'app\SimpleRouter',
-    'routes'       => require 'routes.php',
+    'routes' => require 'routes.php',
 
-    'validators' => [
-        'password' => [
-            'min_len'  => 5, // минимальная длина пароля
-            'min_comb' => 3, // минимальная комбинация наборов символов в пароле
-        ],
-
-        'mail' => [
-            // Запрещенные для регистрации mail-сервера (это сервисы 5-тиминутных ящиков)
-            'black_servers' => [
-                'fakeinbox.com', 'sharklasers.com', 'mailcker.com', 'yopmail.com', 'jnxjn.com', 'jnxjn.com', '0815.ru',
-                '10minutemail.com', 'agedmail.com', 'ano-mail.net', 'asdasd.ru', 'brennendesreich.de', 'buffemail.com',
-                'bund.us', 'cool.fr.nf', 'courriel.fr.nf', 'cust.in', 'dbunker.com', 'dingbone.com', 'discardmail.com',
-                'discardmail.de', 'dispostable.com', 'duskmail.com', 'emaillime.com', 'flyspam.com', 'fudgerub.com',
-                'guerrillamail.com', 'hulapla.de', 'jetable.fr.nf', 'jetable.org', 'lookugly.com', 'mailcatch.com',
-                'mailspeed.ru', 'mega.zik.dj', 'meltmail.com', 'moncourrier.fr.nf', 'monemail.fr.nf', 'monmail.fr.nf',
-                'noclickemail.com', 'nomail.xl.cx', 'nospam.ze.tc', 'rtrtr.com', 's0ny.net', 'smellfear.com',
-                'spambog.com', 'spambog.de', 'spambog.ru', 'speed.1s.fr', 'superstachel.de', 'teewars.org',
-                'tempemail.net', 'tempinbox.com', 'tittbit.in', 'yopmail.fr', 'yopmail.net', 'ypmail.webarnak.fr.eu.org',
-                'cuvox.de', 'armyspy.com', 'dayrep.com', 'einrot.com', 'fleckens.hu', 'gustr.com', 'jourrapide.com',
-                'rhyta.com', 'superrito.com', 'teleworm.us', 'trbvm.com', 'cherevatyy.ru', 'my.dropmail.me',
-                'dropmail.me', '10mail.org', 'yomail.info', 'excite.co.jp',
-            ],
-        ],
+    // Запрещенные для регистрации mail-сервера (это сервисы 5-тиминутных ящиков)
+    'mail_black_servers' => [
+        'fakeinbox.com', 'sharklasers.com', 'mailcker.com', 'yopmail.com', 'jnxjn.com', 'jnxjn.com', '0815.ru',
+        '10minutemail.com', 'agedmail.com', 'ano-mail.net', 'asdasd.ru', 'brennendesreich.de', 'buffemail.com',
+        'bund.us', 'cool.fr.nf', 'courriel.fr.nf', 'cust.in', 'dbunker.com', 'dingbone.com', 'discardmail.com',
+        'discardmail.de', 'dispostable.com', 'duskmail.com', 'emaillime.com', 'flyspam.com', 'fudgerub.com',
+        'guerrillamail.com', 'hulapla.de', 'jetable.fr.nf', 'jetable.org', 'lookugly.com', 'mailcatch.com',
+        'mailspeed.ru', 'mega.zik.dj', 'meltmail.com', 'moncourrier.fr.nf', 'monemail.fr.nf', 'monmail.fr.nf',
+        'noclickemail.com', 'nomail.xl.cx', 'nospam.ze.tc', 'rtrtr.com', 's0ny.net', 'smellfear.com',
+        'spambog.com', 'spambog.de', 'spambog.ru', 'speed.1s.fr', 'superstachel.de', 'teewars.org',
+        'tempemail.net', 'tempinbox.com', 'tittbit.in', 'yopmail.fr', 'yopmail.net', 'ypmail.webarnak.fr.eu.org',
+        'cuvox.de', 'armyspy.com', 'dayrep.com', 'einrot.com', 'fleckens.hu', 'gustr.com', 'jourrapide.com',
+        'rhyta.com', 'superrito.com', 'teleworm.us', 'trbvm.com', 'cherevatyy.ru', 'my.dropmail.me',
+        'dropmail.me', '10mail.org', 'yomail.info', 'excite.co.jp',
     ],
 
     'language' => [
         'translate' => true, // включить переводчик
-        'default' => 'ru',   // для указанного языка словарь не использовать, считая его языком оригинальных текстов
+        'default'   => 'ru',   // для указанного языка словарь не использовать, считая его языком оригинальных текстов
     ],
 
     // конфигурация аватарок
@@ -56,7 +47,7 @@ $main = [
     ],
 
     // Заготовка. Реальный конфиг подключения сливается из env.php  (см. dummy_env.php)
-    'db'         => [
+    'db' => [
         'dsn'      => 'mysql:dbname=base0; host=127.0.0.1; charset=UTF8',
         'user'     => 'guest',
         'password' => '',
