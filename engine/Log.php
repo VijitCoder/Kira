@@ -10,11 +10,12 @@
  * Поведение логера описывается группой настроек в конфиге приложения:
  * <pre>
  * 'log' => [
- *      'switch_on'    => true,      // включить логирование
+ *      'switch_on'    => true,       // включить логирование
  *      'store'        => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
- *      'db_conf_key'  => 'db',      // ключ конфига БД, если храним логи в базе
- *      'log_path'     => TEMP_PATH, // путь к каталогу, куда складывать файлы логов, если храним в файлах
- *      'php_timezone' => '',        // часовой пояс для записи лога
+ *      'db_conf_key'  => 'db',       // ключ конфига БД (пример), если храним логи в базе
+ *      'table_name'   => 'kira_log', // таблица лога (значение по умолчанию) при записи в БД
+ *      'log_path'     => TEMP_PATH,  // путь к каталогу, куда складывать файлы логов, если храним в файлах
+ *      'php_timezone' => '',         // часовой пояс для записи лога
  * ]
  * </pre>
  *
@@ -89,6 +90,7 @@ class Log
                 //'db_conf_key' => 'db',
                 'log_path'     => TEMP_PATH,
                 'php_timezone' => '',
+                'table_name'   => 'kira_log',
             ],
             App::conf('log')
         );
@@ -264,9 +266,10 @@ class Log
     {
         $logIt = $this->_logIt;
         try {
-            $sql = '
-                INSERT INTO `kira_log` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
-                VALUES (?,?,?,?,?,?,?)';
+            $table = $this->_conf['table_name'];
+            $sql =
+                "INSERT INTO `{$table}` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
+                VALUES (?,?,?,?,?,?,?)";
 
             $request = $logIt['request'];
             if (mb_strlen($request) > 255) {
