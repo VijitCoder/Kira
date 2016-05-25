@@ -87,18 +87,20 @@ $(document).on('change', '#db-server, #db-name, #db-charset', function () {
 });
 
 /**
- * Логер. При выборе записи логи в базу выдаем информационные сообщения.
+ * Логер. При выборе записи логи в базу выдаем предупреждение, если нет конфигурации БД. Иначе - поле для ввода таблицы.
  */
 $(document).on('change', '#log-store', function () {
-    var logInfo = $("#log-db-info");
+    var logWarn = $("#log-db-warn"),
+        logTable = $("#log-db-table");
+
+        $(logWarn).hide();
+        $(logTable).hide();
+
     if ($(this).val() == 'db') {
         if($('#dsn').text() == 'none') {
-            logInfo.html('Требуется определить конфигурацию БД').css('color', 'red').show();
+            $(logWarn).show();
         } else {
-            logInfo.html('Будет создана таблица `' + $("#db-name").val() + '`.`kira_log` ')
-                .css('color', 'green').show();
+            $(logTable).show();
         }
-    } else {
-        logInfo.hide();
     }
 });
