@@ -121,6 +121,7 @@ class Form
      * все косяки.
      *
      * @return bool успешна пройдена валидация или нет
+     * @throws \LogicException
      */
     public final function validate()
     {
@@ -199,9 +200,14 @@ class Form
 
             # Длина
 
-            if ($value) {
-                $min = $rule['min'];
-                $max = $rule['max'];
+            $min = &$rule['min'];
+            $max = &$rule['max'];
+            if ($value && ($min || $max)) {
+                if (!is_string($value)) {
+                    throw new \LogicException('Проверка длины не применима к текущему типу данных: '. gettype($value)
+                        . ". В значении '$field' нужна строка.");
+                }
+
                 $len = mb_strlen($value);
 
                 if ($min && $len < $min) {
