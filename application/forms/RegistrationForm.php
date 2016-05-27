@@ -68,7 +68,7 @@ class RegistrationForm extends \engine\web\Form
 
     public function __construct()
     {
-        $this->filters['mail']['options']['black_servers'] = \engine\App::conf('mail_black_servers');
+        $this->filters['mail']['options']['black_servers'] = require APP_PATH . 'conf/black_servers.php';
         parent::__construct();
     }
 }
