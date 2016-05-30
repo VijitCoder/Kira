@@ -53,7 +53,7 @@ class RegistrationService
             if ($fn) {
                 $form->setValue('avatar', $fn);
             } else {
-                $form->addError('avatar', $imgService->getLastError());
+                $form->addError(['avatar' => $imgService->getLastError()]);
                 $result = false;
             }
         }
@@ -63,12 +63,12 @@ class RegistrationService
         # Проверки доступности логина/почты
 
         if ($msg = $this->isLoginTaken($fields['login'])) {
-            $form->addError('login', $msg);
+            $form->addError(['login' => $msg]);
             $result = false;
         }
 
         if ($msg = $this->isMailTaken($fields['mail'])) {
-            $form->addError('mail', $msg);
+            $form->addError(['mail' => $msg]);
             $result = false;
         }
 
@@ -92,7 +92,7 @@ class RegistrationService
                     $fields['avatar'] = $fn;
                     $result = (new ProfileModel)->addProfile($fields);
                 } else {
-                    $form->addError('avatar', $imgService->getLastError());
+                    $form->addError(['avatar' => $imgService->getLastError()]);
                     $result = false;
                 }
             }

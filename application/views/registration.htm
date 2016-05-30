@@ -10,7 +10,7 @@
 use engine\App;
 
 $data = $form->getRawdata();
-$err = $form->getErrorsAsString();
+$err = implode(' ', $form->getErrors());
 ?>
 
 <h4><?= App::t('Регистрация нового пользователя'); ?></h4>
