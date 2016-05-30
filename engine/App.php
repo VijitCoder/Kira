@@ -16,8 +16,8 @@ class App
     /** @var array конфигурация приложения */
     private static $config;
 
-    /** @var array словарь локализации. Если переводчик отключен, значение будет FALSE. */
-    private static $_lexicon = null;
+    /** @var array словарь локализации */
+    private static $_lexicon;
 
     /** @var string заданный файл локализации. Инфа для проброса исключения */
     private static $_lang;
@@ -43,7 +43,7 @@ class App
         }
 
         $level = self::$config;
-        foreach (explode('.', $key) as $k => $part) {
+        foreach(explode('.', $key) as $k => $part) {
             if (!isset($level[$part])) {
                 if ($strict) {
                     throw new Exception("В конфигурации не найден ключ '{$part}'");
@@ -59,27 +59,21 @@ class App
     }
 
     /**
-     * Определяем язык интерфейса.
-     *
-     * Соответствующий конфиг: language. Если его нет, или переводчик отключен - считаем язык русский.
+     * Определяем язык интерфейса
      *
      * @return string ru|en и т.д.
      */
     public static function detectLang()
     {
         if (!self::$_lang) {
-            $lang = self::conf('language.default', false) ? : 'ru';
-
-            if (self::conf('language.translate', false)) {
-                $langPath = APP_PATH . 'i18n/';
-                if (isset($_COOKIE['lang'])) {
-                    $try = $_COOKIE['lang'];
-                    if (preg_match('~[a-z]{2,3}~i', $try) && file_exists("{$langPath}{$try}.php")) {
-                        $lang = $try;
-                    }
+            $langPath = APP_PATH . 'i18n/';
+            $lang = 'ru';
+            if (isset($_COOKIE['lang'])) {
+                $try = $_COOKIE['lang'];
+                if (preg_match('~[a-z]{2,3}~i', $try) && file_exists("{$langPath}{$try}.php")) {
+                    $lang = $try;
                 }
             }
-
             self::$_lang = $lang;
         }
 
@@ -89,49 +83,38 @@ class App
     /**
      * Переводчик.
      *
-     * Соответствующий конфиг: language. Если его нет, или переводчик отключен (language[translate]) - считаем язык
-     * русский, словарь не грузим и возвращаем фразу без перевода, только с заменой вставок.
-     *
-     * Для языка по умолчанию (language[default]) нет словаря. Как создавать локализацию: заводим файл словаря,
+     * По умолчанию принят русский. Для него нет словаря. Как создавать локализацию: заводим файл словаря,
      * переключаемся на язык, находим непереведенные фразы. Они станут ключами в массиве словаря. Значения
      * массива - те же фразы, но на заданном языке. Все просто :)
      *
-     * @param string $phrase фраза на языке, заданном по умолчанию
-     * @param array  $ins    массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб
-     *                       с простым текстом фразы не совпало.
+     * @param string $key фраза на русском языке
+     * @param array  $ins массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб
+     *                    с простым текстом фразы не совпало.
      * @return string фраза в заданном языке
      */
-    public static function t($phrase, $ins = array())
+    public static function t($key, $ins = array())
     {
-        if (!$phrase) {
-            return '';
+        //загружаем словарь, если этого еще не делали
+        if (!self::$_lexicon) {
+            $langPath = APP_PATH . 'i18n/';
+            $lang = self::detectLang();
+            self::$_lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
         }
 
-        if (self::$_lexicon === null) {
-            if (self::conf('language.translate', false)) {
-                $langPath = APP_PATH . 'i18n/';
-                $defaultLang = self::conf('language.default', false) ? : 'ru';
-                $lang = self::detectLang();
-                self::$_lexicon = $lang == $defaultLang ? array() : require_once "{$langPath}{$lang}.php";
-            } else {
-                self::$_lexicon = false;
-            }
-        } else if (self::$_lexicon && isset(self::$_lexicon[$phrase])) {
-            $phrase = self::$_lexicon[$phrase];
-        }
-
+        //поиск перевода. Русского словаря нет, он без перевода работает
+        $str = (self::$_lang == 'ru' || !isset(self::$_lexicon[$key])) ? $key : self::$_lexicon[$key];
         if ($ins) {
-            $phrase = str_replace(array_keys($ins), $ins, $phrase);
+            $str = str_replace(array_keys($ins), $ins, $str);
         }
 
-        return $phrase;
+        return $str;
     }
 
     /**
      * Завершение приложения. Последние процедуры после отправки ответа браузеру.
      *
      * @param callable $callback функция, которую следует выполнить перед выходом.
-     * @param string   $msg      сообщение на выходе
+     * @param string   $msg сообщение на выходе
      */
     public static function end($callback = null, $msg = '')
     {

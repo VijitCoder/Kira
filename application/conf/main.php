@@ -13,11 +13,6 @@ $main = [
     // 'router' => 'app\SimpleRouter',
     'routes' => require 'routes.php',
 
-    'language' => [
-        'translate' => true, // включить переводчик
-        'default'   => 'ru',   // для указанного языка словарь не использовать, считая его языком оригинальных текстов
-    ],
-
     // конфигурация аватарок
     'avatar' => [
         'path'       => ROOT_PATH . 'public/files/avatar/',
