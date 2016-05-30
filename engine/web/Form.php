@@ -35,7 +35,9 @@ class Form
     private $_values;
 
     /**
-     * Ошибки валидации. По умолчанию массив заполнен ключами, но без данных.
+     * Ошибки валидации. По умолчанию массив заполнен ключами, но без данных. По любому полю ошибки хранятся в массиве,
+     * даже если там всего одно сообщение. Это необходимо для единообразия: клиентский код всегда может расчитывать на
+     * массив.
      * @var array
      */
     private $_errors;
@@ -92,6 +94,7 @@ class Form
     public function load(&$data)
     {
         $this->_rawData = Arrays::merge_recursive($this->_rawData, $data);
+
         return $this;
     }
 
@@ -156,11 +159,19 @@ class Form
      */
     public function hasErrors()
     {
-        foreach ($this->_errors as $v) {
-            if ($v) {
+        return $this->_internalHasErrors($this->_errors);
+    }
+
+    private function _internalHasErrors($errors)
+    {
+        foreach ($errors as $k => $v) {
+            if (is_string($k) && is_array($v)) {
+                return $this->_internalHasErrors($v);
+            } else if ($v) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -209,9 +220,9 @@ class Form
      * @param string $key ключ в массиве данных
      * @return array | string
      */
-    public function getRawdata($key = null)
+    public function getRawData($key = null)
     {
-        return $this->_getData($this->_rawdata, $key);
+        return $this->_getData($this->_rawData, $key);
     }
 
     /**

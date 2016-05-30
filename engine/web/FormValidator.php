@@ -65,64 +65,21 @@ class FormValidator
             return;
         }
 
-        $validators = $contractPart['validators'];
-
-        $required = isset($validators['required']) ? $validators['required'] : false;
-        if ($this->canSkip($data, $required, $value, $error)) {
-            return;
-        }
-
-        unset($validators['required']);
-
         $expectArray = isset($contractPart['expectArray']) && $contractPart['expectArray'] == true;
-        if (!$this->checkDataType($data, $expectArray, $error)) {
+        if (!$this->_checkDataType($data, $expectArray, $error)) {
             return;
         }
 
-        // каждый последующий валидатор должен работать с данными, обработанными предыдущим.
-        $newData = $data;
-        foreach ($validators as $type => $description) {
-            $method = 'validator' . ucfirst($type);
-            if ($expectArray) {
-                foreach ($newData as $k => $d) {
-                    $this->$method($description, $d, $value[$k], $error[$k]);
-                }
-            } else {
-                $this->$method($description, $newData, $value, $error);
+        $validators = &$contractPart['validators'];
+        $this->_popupRequired($validators);
+
+        if ($expectArray) {
+            foreach ($data as $k => $d) {
+                $this->_fireValidators($validators, $d, $value[$k], $error[$k]);
             }
-            $newData = $value;
+        } else {
+            $this->_fireValidators($validators, $data, $value, $error);
         }
-    }
-
-    /**
-     * Можно ли пропустить проверки.
-     *
-     * Если поле пустое, нет смысла его валидировать. При этом нужно проверить, задана ли в контакте его обязательность.
-     * Внутри функции пишем значение поля, возможно клиенту важно, какая именно пустота (строка, массив и т.д.).
-     * Пишем ошибку валидатора "required", если она есть.
-     *
-     * @param mixed      $data     проверяемые данные
-     * @param array|bool $required настройки валидатора "required"
-     * @param mixed      $value    куда писать значение
-     * @param mixed      $error    куда писать ошибку
-     * @return bool можно пропустить поле?
-     */
-    public function canSkip(&$data, &$required, &$value, &$error)
-    {
-        $skip = empty($data);
-
-        if ($skip) {
-            $value = $data;
-
-            if ($required) {
-                $this->isValid = false;
-                $error = isset($required['message'])
-                    ? $required['message']
-                    : App::t('Поле должно быть заполнено');
-            }
-        }
-
-        return $skip;
     }
 
     /**
@@ -133,19 +90,105 @@ class FormValidator
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    public function checkDataType(&$data, $expectArray, &$error)
+    private function _checkDataType(&$data, $expectArray, &$error)
     {
         $isArray = is_array($data);
         if ($expectArray && !$isArray) {
             $this->isValid = false;
-            $error = App::t('По контракту ожидаем массив данных. Получили :type.', [':type' => gettype($data)]);
+            $error[] = App::t('По контракту ожидаем массив данных. Получили :type.', [':type' => gettype($data)]);
             return false;
         } elseif (!$expectArray && $isArray) {
             $this->isValid = false;
-            $error = App::t('Данные в массиве. В контракте не заявлено.');
+            $error[] = App::t('Данные в массиве. В контракте не заявлено.');
             return false;
         }
         return true;
+    }
+
+    /**
+     * Ставим валидатор "required" на первое место.
+     *
+     * Валидатор "required" имеет особое значение: соответствующий ему метод так же проверяет, можно ли в принципе
+     * пропустить  проверки, если поле пустое. Т.о. вызов валидатора "required" необходим в любом случае. Чтобы
+     * не перегружать логику основного метода валидации, делаем так, чтобы "required" всегда присутствовал в списке
+     * валидаторов. Если он не описан в контракте, тогда просто ставим его в FALSE.
+     *
+     * @param array $validators
+     * @return void
+     */
+    private function _popupRequired(&$validators)
+    {
+        if (isset($validators['required'])) {
+            if (key($validators) !== 'required') {
+                $tmp = ['required' => $validators['required']];
+                unset($validators['required']);
+                $validators = array_merge($tmp, $validators);
+                unset($tmp);
+            }
+        } else {
+            $validators = array_merge(['required' => false], $validators);
+        }
+    }
+
+    /**
+     * Последовательный вызов всех заявленных валидаторов для конкретного значения.
+     * Каждый последующий валидатор должен работать с данными, обработанными предыдущим.
+     * Если какой-то валидатор забракует значение, прерываем проверки.
+     *
+     * @param array $validators валидаторы данных
+     * @param mixed $data       проверяемые данные
+     * @param mixed $value      куда писать значение
+     * @param mixed $error      куда писать ошибку
+     * @return void
+     */
+    private function _fireValidators(&$validators, &$data, &$value, &$error)
+    {
+        $newData = $data;
+        foreach ($validators as $type => $description) {
+            $method = 'validator' . ucfirst($type);
+            $passed = $this->$method($description, $newData, $value, $error);
+            if (!$passed) {
+                break;
+            }
+            $newData = $value;
+        }
+    }
+
+    /**
+     * Типовой валидатор "required"
+     *
+     * Валидатор с особым поведением. Он вызывается всегда, т.к. в нем выясняем, можно ли пропустить проверки.
+     *
+     * Если поле пустое, нет смысла его валидировать. При этом нужно проверить, задана ли в контакте его обязательность.
+     * Внутри функции пишем значение поля, возможно клиенту важно, какая именно пустота (строка, массив и т.д.).
+     * Пишем ошибку валидатора "required", если она есть.
+     *
+     * Прим: разделение логики этого метода повлечет за собой сильное усложнение основного метода валидации.
+     *
+     * @param array|bool $required настройки валидатора "required"
+     * @param mixed      $data     проверяемые данные
+     * @param mixed      $value    куда писать значение
+     * @param mixed      $error    куда писать ошибку
+     * @return bool
+     */
+    protected function validatorRequired(&$required, &$data, &$value, &$error)
+    {
+        $passed = !empty($data);
+
+        if (!$passed) {
+            $value = $data;
+
+            if ($required) {
+                $this->isValid = false;
+                $error[] = isset($required['message'])
+                    ? $required['message']
+                    : App::t('Поле должно быть заполнено');
+            }
+        } else {
+            $value = $data;
+        }
+
+        return $passed;
     }
 
     /**
@@ -164,10 +207,10 @@ class FormValidator
      * @param mixed $data  проверяемые данные
      * @param mixed $value куда писать валидное значение
      * @param mixed $error куда писать ошибку
-     * @return void
+     * @return bool
      * @throws \LogicException
      */
-    public function validatorFilter_var(&$desc, &$data, &$value, &$error)
+    protected function validatorFilter_var(&$desc, &$data, &$value, &$error)
     {
         if (!isset($desc['filter'])) {
             throw new \LogicException('Не задан обязательный параметр "filter"');
@@ -175,16 +218,19 @@ class FormValidator
         $filter = $desc['filter'];
         $options = isset($desc['options']) ? ($desc['options']) : null;
 
-        $result = filter_var($data, $filter, ['options' => $options]);
-        if ($result === false) {
+        $passed = filter_var($data, $filter, ['options' => $options]);
+
+        if ($passed === false) {
             $this->isValid = false;
             $value = null;
             $message = isset($desc['message']) ? $desc['message'] : 'Ошибка валидации поля';
             $message = [App::t($message)];
             $error = is_array($error) ? array_merge($error, $message) : $message;
         } else {
-            $value = $result;
+            $value = $passed;
         }
+
+        return $passed;
     }
 
     /**
@@ -208,21 +254,22 @@ class FormValidator
      * @param mixed $data  проверяемые данные
      * @param mixed $value куда писать валидное значение
      * @param mixed $error куда писать ошибку
-     * @return void
+     * @return bool
      * @throws \LogicException
      */
-    public function validatorExternal(&$desc, &$data, &$value, &$error)
+    protected function validatorExternal(&$desc, &$data, &$value, &$error)
     {
         if (!isset($desc['function'])) {
             throw new \LogicException('Не задан обязательный параметр "function"');
         }
         $function = $desc['function'];
-        $options = isset($desc['options']) ? ($desc['options']) : null;
+        $options = isset($desc['options']) ? ($desc['options']) : [];
 
         $result = call_user_func($function, $data, $options);
 
         if (isset($result['errors'])) {
             $this->isValid = false;
+            $passed = false;
             $value = null;
 
             $message = isset($desc['message']) ? App::t($desc['message']) : $result['errors'];
@@ -232,6 +279,7 @@ class FormValidator
 
             $error = is_array($error) ? array_merge($error, $message) : $message;
         } elseif (isset($result['value'])) {
+            $passed = true;
             $value = $result['value'];
         } else {
             if (is_array($function)) {
@@ -239,6 +287,8 @@ class FormValidator
             }
             throw new \LogicException("Внешний валидатор {$function}() вернул неопознанный ответ");
         }
+
+        return $passed;
     }
 
     /**
@@ -262,16 +312,11 @@ class FormValidator
      * @param string $data  проверяемые данные
      * @param mixed  $value куда писать валидное значение
      * @param mixed  $error куда писать ошибку
-     * @return void
+     * @return bool
      * @throws \LogicException
      */
-    public function validatorLength(&$desc, &$data, &$value, &$error)
+    protected function validatorLength(&$desc, &$data, &$value, &$error)
     {
-        if (is_null($data)) {
-            $this->isValid = false;
-            return;
-        }
-
         // Предохранитель для разработчика
         if (!is_string($data)) {
             throw new \LogicException('Проверка длины строки не применима к текущему типу данных: '
@@ -292,11 +337,13 @@ class FormValidator
             $errMsg = null;
         }
 
-        if ($errMsg) {
+        if (!($passed = !$errMsg)) {
             $this->isValid = false;
             $value = null;
             $error = is_array($error) ? array_merge($error, $errMsg) : $errMsg;
         }
+
+        return $passed;
     }
 
     /**
@@ -321,10 +368,10 @@ class FormValidator
      * @param number $data  проверяемые данные
      * @param mixed  $value куда писать валидное значение
      * @param mixed  $error куда писать ошибку
-     * @return void
+     * @return bool
      * @throws \LogicException
      */
-    public function validatorBounds(&$desc, &$data, &$value, &$error)
+    protected function validatorBounds(&$desc, &$data, &$value, &$error)
     {
         if (is_null($data)) {
             $this->isValid = false;
@@ -349,11 +396,13 @@ class FormValidator
             $errMsg = null;
         }
 
-        if ($errMsg) {
+        if (!($passed = !$errMsg)) {
             $this->isValid = false;
             $value = null;
             $error = is_array($error) ? array_merge($error, $errMsg) : $errMsg;
         }
+
+        return $passed;
     }
 
     /**
