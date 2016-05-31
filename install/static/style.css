@@ -82,6 +82,7 @@ abbr {border-bottom: 1px dotted;}
 p {margin: 10px 0;}
 
 strong, b {font-weight: 700;}
+em, i {font-style: italic;}
 
 .float-left {float: left;}
 .float-right {float: right;}
@@ -120,14 +121,14 @@ div.wrapper {
     border-left: 3px solid;
 }
 
-.note.blue {
+.note.info {
     background-color: rgba(24, 204, 200, 0.2);
     border-color: #0e52cc;
     color: #0e52cc;
 }
 
-.note.red {
-    background-color: rgba(204, 12, 54, 0.2);
+.note.error {
+    background-color: rgba(204, 12, 54, 0.15);
     border-color: #cc092d;
     color: #cc092d;
 }

@@ -18,17 +18,17 @@ class MasterForm extends \engine\web\Form
 
         'ns_prefix' => [
             'validators' => [
-                'required' => ['message' => 'Необходимо указать преффикс пространства имен'],
+                'required' => ['message' => 'Необходимо указать префикс пространства имен'],
 
                 'filter_var' => [
                     'filter'  => FILTER_VALIDATE_REGEXP,
                     'options' => ['regexp' => '~^[0-9a-z\_-]+$~i'],
-                    'message' => 'Недопустимые символы в преффиксе пространства имен. Ожидается [a-z\_-]',
+                    'message' => 'Недопустимые символы в префиксе пространства имен. Ожидается [a-z\_-]',
                 ],
 
                 'length' => [
                     'max'     => 100,
-                    'message' => 'Очень длинный преффикс пространства имен. Максимум 100 символов',
+                    'message' => 'Очень длинный префикс пространства имен. Максимум 100 символов',
                 ],
             ],
         ],
@@ -112,6 +112,8 @@ class MasterForm extends \engine\web\Form
         ],
 
         'lang' => [
+            'switch' => null,
+
             'other' => [
                 'validators' => [
                     'filter_var' => [

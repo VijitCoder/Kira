@@ -3,14 +3,14 @@
 <p>Мастер создания приложения очень упрощен и не охватывает все многообразие возможных сайтов, СУБД и фантазию кодера. Мастер написан для легкого старта работы с движком, не более того.</p>
 
 <form method="POST">
-    <div class="note blue">
+    <div class="note info">
         <p>При указании путей рекомендую использовать прямые слеши (" / ") независимо от вашей <abbr title="операционная система">ОС</abbr>. Движок поддерживает кроссплатформу и все равно преобразует пути к прямым слешам.</p>
 
-        <p>Объявляемые тут каталоги не должны существовать на момент создания приложения. Это необходимо во избежание случайной перезаписи содержимого каталогов. После создания, к каталогам назначаются <strong>полные права доступа</strong>.</p>
+        <p>Объявляемые тут каталоги не должны существовать на момент создания приложения. Это необходимо во избежание случайной перезаписи содержимого каталогов. После создания, назначаются <strong>полные права доступа</strong> к каталогам.</p>
     </div>
 
     <?php if ($errors['required']): ?>
-        <div class="note red"><?=$errors['required']?></div>
+        <div class="note error"><?=$errors['required']?></div>
     <?php endif ?>
 
     <div class="row">
@@ -55,14 +55,14 @@
             <div class="input-wrapper"><input type="email" name="email" value="<?=$d['email']?>"></div>
     </div>
 
-    <div class="note blue">
+    <div class="note info">
         <p>В конфигурации БД подразумевается СУБД <strong>MySQL</strong>. Для других серверов вам потребуется вручную исправить конфиги. И да, кодировки только две :) Установка иной кодировки - задача непростая.</p>
 
         <p>Указываемая вами база данных должна существовать на сервере, мастер ее создавать не будет. Это обусловлено тем, что обычно для такой операции требуются особые права, да и не каждая хостинг-компания такие права дает.</p>
     </div>
 
     <?php if ($errors['db']): ?>
-        <div class="note red"><?=$errors['db']?></div>
+        <div class="note error"><?=$errors['db']?></div>
     <?php endif ?>
 
     <div class="row">
@@ -103,7 +103,7 @@
         </div>
     </div>
 
-    <div class="note blue">
+    <div class="note info">
         <p>Логер вообще можно не настраивать. По умолчанию он включен, пишет лог в файлы, складывает их в temp-каталог приложения.</p>
 
         <p><strong>Каталог для логов</strong> желательно задать даже при логировании в БД. В случае ошибок базы, лог пойдет в файлы.</p>
@@ -112,7 +112,7 @@
     </div>
 
     <?php if ($errors['log']): ?>
-        <div class="note red"><?=$errors['log']?></div>
+        <div class="note error"><?=$errors['log']?></div>
     <?php endif ?>
 
     <div class="row">
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <div class="note blue">
+    <div class="note info">
         <p>Если ваш сайт будет переведен на несколько языков, здесь вы можете указать их коды. Будут созданы заготовки языковых пакетов:</p>
 
         <ul>
@@ -172,13 +172,18 @@
     </div>
 
     <?php if ($errors['lang']): ?>
-        <div class="note red"><?=$errors['lang']?></div>
+        <div class="note error"><?=$errors['lang']?></div>
     <?php endif ?>
 
     <div class="row">
         <h4>Языковая поддержка</h4>
 
-         <div class="cell-12">
+        <div>
+            <label><input type="checkbox" name="lang[switch]"
+                <?php if ($d['lang']['switch']) echo 'checked="checked"'?>> Создать окружение</label>
+        </div>
+
+        <div class="cell-12">
             <div class="take-left">Код основного языка: <strong>ru</strong>. Другие языки, через запятую</div>
             <div class="input-wrapper"><input type="text" name="lang[other]" value="<?=$d['lang']['other']?>"></div>
         </div>

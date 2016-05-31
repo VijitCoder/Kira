@@ -13,7 +13,7 @@ class SingleController extends \engine\web\Controller
      * Индесная страница: форма мастера.
      * POST. Обработка формы мастера.
      *
-     * От сервиса контроллер ожидает либо массив [data, errors] либо TRUE в случае создания приложения. Если в процессе
+     * От сервиса контроллер ожидает либо массив [d, errors] либо TRUE в случае создания приложения. Если в процессе
      * создания были ошибки, информация будет предоставлена на странице сводки. Этот метод работает только с формой
      * и ее ошибками валидации.
      */
@@ -22,10 +22,10 @@ class SingleController extends \engine\web\Controller
         $svc = new MasterService;
 
         if (!$_POST) {
-            $this->render('form', $svc->getInitialData());
+            $this->render('form', $svc->prepareViewData());
         } else {
-            if (true !== ($result = $svc->createApp())) {
-                $this->render('form', $result);
+            if (true !== ($viewData = $svc->createApp())) {
+                $this->render('form', $viewData);
             } else {
                 $this->redirect('finish');
             }
