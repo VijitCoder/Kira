@@ -10,25 +10,30 @@ class SingleController extends \engine\web\Controller
     protected $title = 'Kira Engine. Создание нового приложения';
 
     /**
-     * Индесная страница: форма мастера
+     * Индесная страница: форма мастера.
+     * POST. Обработка формы мастера.
+     *
+     * От сервиса контроллер ожидает либо массив [data, errors] либо TRUE в случае создания приложения. Если в процессе
+     * создания были ошибки, информация будет предоставлена на странице сводки. Этот метод работает только с формой
+     * и ее ошибками валидации.
      */
     public function index()
     {
-        $this->render('form');
+        $svc = new MasterService;
+
+        if (!$_POST) {
+            $this->render('form', $svc->getInitialData());
+        } else {
+            if (true !== ($result = $svc->createApp())) {
+                $this->render('form', $result);
+            } else {
+                $this->redirect('finish');
+            }
+        }
     }
 
     /**
-     * Обработка формы мастера
-     */
-    public function createApp()
-    {
-        new MasterService;
-        //...TODO
-        $this->redirect('success');
-    }
-
-    /**
-     * Успешно создано приложение. Поздравляем и выдаем сводку по процессу.
+     * Приложение создано. Выдаем сводку по процессу. Если были ошибки в процессе, тут их сообщаем.
      */
     public function finish()
     {

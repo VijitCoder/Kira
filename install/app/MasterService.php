@@ -5,131 +5,102 @@
 
 namespace install\app;
 
+use engine\net\Request;
+use engine\utils\Arrays;
+
 class MasterService
 {
     /**
-     * Ошибки валидации
+     * Ошибки валидации, разобранные по блокам в соответствии блокам формы
      * @var array
      */
-    public $errors = [];
+    private $_errorBlocks = [
+        'required' => null,
+        'db'       => null,
+        'log'      => null,
+        'lang'     => null,
+    ];
 
     /**
-     *
-     * @var resource
+     * @var object MasterForm
      */
-    private $_confHandle;
+    private $_form;
 
-    /**
-     * Конструктор
-     */
     public function __construct()
     {
-        dd($_POST); exit; //DBG
-        $expect = array_flip(['path', 'db', 'log', 'lang', 'main_conf', 'ns_prefix', 'email',]);
-
-        $post = array_intersect_key($_POST, $expect);
-
-        if (count($post) != count($expect)) {
-            exit('Переданы не все параметры.');
-        }
-
-        $paths = array_flip(['app', 'view', 'temp', 'js']);
-        $post['path'] = array_intersect_key($post['path'], $paths);
-        $paths = array_filter($post['path']);
-
-        $conf = pathinfo($post['main_conf']);
-        $paths['conf'] = $conf['dirname'];
-
-        if ($structReady = $this->_sanitizePaths($paths)) {
-            //$structReady = $this->_createPaths($paths);    // <-------------- TODO включить после отладки
-            $post['main_conf'] = $paths['conf'] . $conf['basename'];
-            $post['path'] = $paths;
-        }
-        unset($paths);
-
-        if ($structReady) {
-            $this->_writeIndex($post);
-        }
-    }
-
-    private function __writeIndex(&$post)
-    {
-        $data = [
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-            '' => '',
-        ];
-
-        $file = Render::make(ROOT_PATH . 'install/source/index.php.ptrn', $data);
-exit($file);
+        $this->_form = new MasterForm();
     }
 
     /**
-     * Валидация каталогов
-     *
-     * Проверяем каталог на попытки переходов типа "../path/" или "some/../../path/". Это недопустимо.
-     *
-     * Каталог НЕ должен существовать, чтобы была возможность его создать без риска перезаписи чего-нибудь.
-     *
-     * @param array &$paths
-     * @return bool если ошибок нет - TRUE.
+     * Пустые массивы для выдачи формы без данных.
+     * @return array
      */
-    private function _sanitizePaths(&$paths)
+    public function getInitialData()
     {
-        $errors = [];
-        foreach ($paths as $k => &$path) {
-            $path = trim(str_replace('\\', '/', $path), '/') . '/';
-
-            if (preg_match('~^[.]{2}/|/[.]{2}/~', $path)) {
-                $errors[$k] = 'Неправильный каталог. Он должен быть в пределах сайта.';
-                continue;
-            }
-
-            $p = ROOT_PATH . $path;
-            if (file_exists($p)) {
-                $errors[$k] = "Каталог [$p] уже существует.";
-            }
-        }
-
-        if ($errors) {
-             $this->errors['path'] = $errors;
-        }
-
-        return empty($errors);
+        return ['d' => $this->_form->getRawData(), 'errors' => $this->_errorBlocks];
     }
 
     /**
-     * Создание каталогов
+     * Создаем приложение по заданной форме.
      *
-     * Только после валидации!
+     * Сначала - валидация формы. В случае ошибок объединяем данные, пересобираем массив ошибок и возвращаем контроллеру.
      *
-     * @param array &$paths
-     * @return bool если ошибок нет - TRUE.
+     * @return array|bool
      */
-    private function _createPaths(&$paths)
+    public function createApp()
     {
-        $hasErrors = false;
+        $form = $this->_form;
+        $form->load($_POST)->validate();
+        $form->setValue(['log' => ['switch' => Request::postAsBool(['log' => 'switch'])]]);
 
-        // @see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        if (!$form->isValid()) {
+            $values = Arrays::array_filter_recursive($form->getValues());
+            $raw = $form->getRawData();
+            $values = Arrays::merge_recursive($raw, $values);
+            return ['d' => $values, 'errors' => $this->recombineErrors($form->getErrors())];
+        }
 
-        foreach ($paths as $k => $path) {
-            try {
-                $path = ROOT_PATH . $path;
-                mkdir($path, 0777, true);
-                chmod($path, 0777);
-            } catch (\ErrorException $e) {
-                $this->errors['path'][$k] = "Не удалось создать каталог [$path]. Причина: " . $e->getMessage();
-                $hasErrors = true;
+        //dd($form->getValues());
+        exit('Stop on ' . __METHOD__); //DBG
+        return true;
+    }
+
+    /**
+     * Пересобираем ошибки в формат, необходимый форме.
+     *
+     * На входе - многомерный массив с ошибками. На выходе - одномерный массив, всего 4 элемента. Ошибки объеденены
+     * по блокам через [br].
+     *
+     * @param array $arr исходный массив с ошибками
+     * @return array
+     */
+    public function recombineErrors($arr)
+    {
+        $arr = Arrays::array_filter_recursive($arr);
+        $errors = $this->_errorBlocks;
+
+        if (isset($arr['path']) || isset($arr['main_conf'])) {
+            $errors['required'][] = 'Тут все пути должны быть заполнены';
+        }
+
+        foreach (['ns_prefix', 'email',] as $key) {
+            if (isset($arr[$key])) {
+                $errors['required'][] = $arr[$key];
             }
         }
 
-        restore_error_handler();
+        foreach (['db', 'log', 'lang',] as $key) {
+            if (isset($arr[$key])) {
+                $errors[$key] = $arr[$key];
+            }
+        }
 
-        return !$hasErrors;
+        foreach ($errors as &$v) {
+            if ($v) {
+                $v = Arrays::implode_recursive($v, '<br>');
+            }
+        }
+
+        return $errors;
     }
 }

@@ -126,6 +126,12 @@ div.wrapper {
     color: #0e52cc;
 }
 
+.note.red {
+    background-color: rgba(204, 12, 54, 0.2);
+    border-color: #cc092d;
+    color: #cc092d;
+}
+
 .note code {
     background-color: rgba(0, 0, 0, 0.06);
 }
@@ -146,7 +152,7 @@ div.wrapper {
     color: gray;
 }
 
-input[type=text], input[type=password], .take-left, .with-select {height: 28px;}
+input[type=text], input[type=password], input[type=email], .take-left, .with-select {height: 28px;}
 
 /* Размещение блока произвольной ширины слева от <input.text>. Сам <input> при этом займет все оставшееся пространство. */
 .take-left {
@@ -159,7 +165,7 @@ input[type=text], input[type=password], .take-left, .with-select {height: 28px;}
     padding-top: 4px;
 }
 
-input[type=text], input[type=password] {
+input[type=text], input[type=password], input[type=email] {
     padding: 5px;
     border: 1px solid #ccc;
     -webkit-border-radius: 5px;
@@ -169,7 +175,7 @@ input[type=text], input[type=password] {
     width: 100%;
 }
 
-input[type=text]:focus, input[type=password]:focus {
+input[type=text]:focus, input[type=password]:focus, input[type=email]:focus {
     border-color: #333;
 }
 
