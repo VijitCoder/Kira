@@ -136,4 +136,38 @@ class Arrays
 
         return ltrim($result, $glue);
     }
+
+    /**
+     * Получение значения массива по заданной цепочке ключей.
+     *
+     * Допустим, есть некий многомерный массив:
+     * <pre>
+     * $data = [
+     *    'path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],
+     *    ...
+     * ];
+     * </pre>
+     *
+     * Нужно получить значение из 'level2'. В обычной ситуации это будет:
+     * <pre>
+     * $v = $data['path']['app']['level2'];
+     * </pre>
+     *
+     * Но когда мы не можем напрямую обратиться к массиву, зато знаем цепочку ключей, используем эту функцию:
+     * <pre>
+     * $v = Arrays::getValue(['path' => ['app' => 'level2']]);
+     * </pre>
+     *
+     * @param array $arr
+     * @param mixed $chain массив ключей или строковый/числовой ключ
+     * @return mixed
+     */
+    public static function getValue(&$arr, $chain)
+    {
+        if (is_array($chain)) {
+            $key = key($chain);
+            return isset($arr[$key]) ? self::getValue($arr[$key], $chain[$key]) : null;
+        }
+        return isset($arr[$chain]) ? $arr[$chain] : null;
+    }
 }

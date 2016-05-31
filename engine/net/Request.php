@@ -12,6 +12,7 @@
 namespace engine\net;
 
 use engine\Env;
+use engine\utils;
 
 /**
  * Class Request
@@ -29,6 +30,9 @@ use engine\Env;
  *
  * Прим: если ключ не указан, возвращаем весь массив, что ничем не отличается от прямого обращения к суперглобальной
  * переменной. Такой вызов поддерживаются для полноты картины.
+ *
+ * Ключ можно указать составной, типа "['lvl1' => ['lvl2' => 'param1']]".
+ * см. комментарий к engine\utils\Arrays::getValue()
  *
  * Значение из массива, приведенное к целому числу (ведущие нули не сохраняются):
  *
@@ -84,6 +88,7 @@ class Request
      * @param array $params  параметры метода
      * @return mixed
      * @throws \RuntimeException
+     * @throws \LogicException
      */
     public static function __callStatic($method, $params)
     {
@@ -113,10 +118,15 @@ class Request
         }
 
         $key = &$params[0];
-        $val = (isset($arr[$key])) ? $arr[$key] : null;
+        $val = utils\Arrays::getValue($arr, $key);
 
         if (!$type || $val == '') {
             return $val;
+        }
+
+        if (is_array($val)) {
+            throw new \LogicException('Для массива данных проверки содержимого невозможны. Полученное значение:'
+                . utils\Dumper::dumpAsString($val));
         }
 
         switch ($type) {
