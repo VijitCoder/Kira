@@ -54,6 +54,36 @@ class Arrays
     }
 
     /**
+     * Фильтрация многомерного массива.
+     *
+     * Функция на основе array_filter() {@see http://php.net/manual/ru/function.array-filter.php}, просто вызывает ее
+     * для каждого подмассива.
+     *
+     * TODO полностью заменить array_filter() на свою реализацию. Это будет быстрее. Проблема: как работать
+     * с константами, которых нет до PHP 5.6 ? Для клиентского кода их использование должно быть прозрачным на любой
+     * версии PHP.
+     *
+     * @param array    $array
+     * @param callable $callback
+     * @param int      $flag
+     * @return array
+     */
+    public static function array_filter_recursive(array $array, callable $callback = null, $flag = 0)
+    {
+        foreach ($array as &$v) {
+            if (is_array($v)) {
+                $v = self::array_filter_recursive($v, $callback, $flag);
+            }
+        }
+
+        if (!$callback) {
+            return array_filter($array);
+        } else {
+            return phpversion() < '5.6' ? array_filter($array, $callback) : array_filter($array, $callback, $flag);
+        }
+    }
+
+    /**
      * Рекурсивное объединение <b>двух</b> массивов.
      *
      * По мотивам {@link http://php.net/manual/ru/function.array-merge-recursive.php#92195}
@@ -127,9 +157,12 @@ class Arrays
 
         $result = '';
         foreach ($arr as $v) {
+            if (is_null($v)) {
+                continue;
+            }
             if (is_array($v)) {
                 $result .= $eol;
-                $v = implode_recursive($v, $glue, $eol);
+                $v = self::implode_recursive($v, $glue, $eol);
             }
             $result .= $glue . $v;
         }
