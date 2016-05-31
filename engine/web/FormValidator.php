@@ -6,6 +6,10 @@ use engine\App;
 /**
  * Служебный класс для модели формы. Содержит только методы валидации. Готовые данные и ошибки передаются в клиентский
  * класс и тут не хранятся.
+ *
+ * Прим: проверенные значения хранятся в отдельном массиве. Очередной валидатор меняет там значение только в случае
+ * успешной проверки (если конечно предполагается такое изменение). Иначе значение остается прежним. Такой подход
+ * позволит комбинировать выдачу юзеру. Можно вернуть текущее значение и указать на ошибку.
  */
 class FormValidator
 {
@@ -222,7 +226,6 @@ class FormValidator
 
         if ($passed === false) {
             $this->isValid = false;
-            $value = null;
             $message = isset($desc['message']) ? $desc['message'] : 'Ошибка валидации поля';
             $message = [App::t($message)];
             $error = is_array($error) ? array_merge($error, $message) : $message;
@@ -270,7 +273,6 @@ class FormValidator
         if (isset($result['errors'])) {
             $this->isValid = false;
             $passed = false;
-            $value = null;
 
             $message = isset($desc['message']) ? App::t($desc['message']) : $result['errors'];
             if (!is_array($message)) {
@@ -339,7 +341,6 @@ class FormValidator
 
         if (!($passed = !$errMsg)) {
             $this->isValid = false;
-            $value = null;
             $error = is_array($error) ? array_merge($error, $errMsg) : $errMsg;
         }
 
@@ -398,7 +399,6 @@ class FormValidator
 
         if (!($passed = !$errMsg)) {
             $this->isValid = false;
-            $value = null;
             $error = is_array($error) ? array_merge($error, $errMsg) : $errMsg;
         }
 

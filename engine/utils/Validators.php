@@ -99,7 +99,7 @@ class Validators
      * @param array  $options доп.настройки валидатора
      * @return array
      */
-    public static function mail($mail, $options)
+    public static function mail($mail, $options = [])
     {
         $options = array_merge(['regexp' => '~.+@.+\..+~', 'black_servers' => null], $options);
 
