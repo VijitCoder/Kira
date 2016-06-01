@@ -1,0 +1,69 @@
+<?php
+/**
+ * array $d данные полей формы. Многомерный массив, соответствующий своей структурой именам полей
+ * array $errors ошибки, через <br>. Разобранные по блокам
+ */
+?>
+
+<div class="note info">
+    <p>В конфигурации БД подразумевается СУБД <strong>MySQL</strong>. Для других серверов вам потребуется вручную исправить конфиги. И да, кодировки только две :) Установка иной кодировки - задача непростая.</p>
+
+    <p>Указываемая вами база данных должна существовать на сервере, мастер ее создавать не будет. Это обусловлено тем, что обычно для такой операции требуются особые права, да и не каждая хостинг-компания такие права дает.</p>
+</div>
+
+<?php if ($errors['db']): ?>
+    <div class="note error"><?= $errors['db'] ?></div>
+<?php endif ?>
+
+<div class="row">
+    <h4>Конфигурация БД</h4>
+
+    <div>
+        <label class="checkboxed" for="db-switch">
+            <input type="checkbox" name="db[switch]" id="db-switch"
+                <?php if ($d['db']['switch']) echo 'checked="checked"' ?>>
+            включить
+        </label>
+    </div>
+
+    <div class="panel">
+        <div class="disable-items" id="db-disabler"
+            <?php if ($d['db']['switch']) echo 'style="display:none;"'?>></div>
+
+        <div class="take-left">Сервер[:порт]</div>
+        <div class="input-wrapper">
+            <input type="text" name="db[server]" id="db-server" value="<?= $d['db']['server'] ?>">
+        </div>
+
+        <div class="clear-float cell-6">
+            <div class="take-left">Имя базы</div>
+            <div class="input-wrapper">
+                <input type="text" name="db[name]" id="db-name" value="<?= $d['db']['name'] ?>">
+            </div>
+        </div>
+
+        <div class="cell-6 with-select">
+            <span class="pl-5">Кодировка</span>
+            <select name="db[charset]" id="db-charset">
+                <option value="utf8" <?php if ($d['db']['charset'] == 'utf8') echo 'selected' ?>>utf8</option>
+                <option value="cp1251" <?php if ($d['db']['charset'] == 'cp1251') echo 'selected' ?>>cp1251</option>
+            <select>
+        </div>
+
+        <div class="clear-float">DSN: <span id="dsn">none</span><hr></div>
+
+        <div class="cell-6">
+            <div class="take-left">Пользователь</div>
+            <div class="input-wrapper"><input type="text" name="db[user]" value="<?= $d['db']['user'] ?>"></div>
+        </div>
+
+         <div class="cell-6">
+            <div class="take-left pl-5">Пароль</div>
+            <div class="input-wrapper">
+                <input type="password" name="db[password]" value="<?= $d['db']['password'] ?>">
+            </div>
+        </div>
+
+        <div class='clear-float'></div>
+    </div>
+</div>

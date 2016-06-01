@@ -1,0 +1,72 @@
+<?php
+/**
+ * array $d данные полей формы. Многомерный массив, соответствующий своей структурой именам полей
+ * array $errors ошибки, через <br>. Разобранные по блокам
+ */
+?>
+
+<div class="note info">
+    <p>Логер вообще можно не настраивать. По умолчанию он включен, пишет лог в файлы, складывает их в temp-каталог приложения.</p>
+
+    <p><strong>Каталог для логов</strong> желательно задать даже при логировании в БД. В случае ошибок базы, лог пойдет в файлы.</p>
+
+    <p><strong>Часовой пояс</strong>: сайт может работать в одном поясе, а логи можно писать в поясе хостера хотя бы для того, чтобы <nobr>в случае</nobr> сбоя вести диалог с тех.поддержкой про одно и тоже время.</p>
+</div>
+
+<?php if ($errors['log']): ?>
+    <div class="note error"><?= $errors['log'] ?></div>
+<?php endif ?>
+
+<div class="row">
+    <h4>Конфигурация логера</h4>
+
+    <div>
+        <label class="checkboxed" for="log-switch">
+            <input type="checkbox" name="log[switch]" id="log-switch"
+                <?php if ($d['log']['switch']) echo 'checked="checked"' ?>>
+            включить
+        </label>
+    </div>
+
+    <div class="panel">
+        <div class="disable-items" id="log-disabler"
+            <?php if ($d['log']['switch']) echo 'style="display:none;"'?>></div>
+
+        <div class="cell-3 with-select">
+            Писать логи в
+            <select name="log[store]" id="log-store">
+                <option disabled <?php if (!$d['log']['store']) echo 'selected' ?>> ... </option>
+                <option value="db" <?php if ($d['log']['store'] == 'db') echo 'selected' ?>>базу</option>
+                <option value="files" <?php if ($d['log']['store'] == 'files') echo 'selected' ?>>файлы</option>
+            <select>
+        </div>
+
+        <div class="cell-9">
+            <div id="log-db-warn" class="mt-5" style="display: none;">Требуется определить конфигурацию БД</div>
+            <div id="log-db-table" style="display: none;">
+                <div class="take-left">Имя таблицы для логов</div>
+                <div class="input-wrapper">
+                    <input type="text" name="log[table]" value="<?= $d['log']['table'] ?: 'kira_log' ?>">
+                </div>
+            </div>
+        </div>
+
+        <div class="cell-12">
+            <label class="clear-float take-left">Каталог для логов:</label>
+            <div class="grayed take-left"><?= ROOT_PATH ?></div>
+            <div class="input-wrapper">
+                <input type="text" name="log[path]" id="log-path" value="<?= $d['log']['path'] ?>">
+            </div>
+        </div>
+
+        <div class="cell-12">
+            <div class="take-left">Часовой пояс в логах</div>
+            <div class="input-wrapper">
+                <input type="text" name="log[timezone]" value="<?= $d['log']['timezone'] ?>"
+                    placeholder="пояс по версии PHP">
+            </div>
+        </div>
+
+        <div class='clear-float'></div>
+    </div>
+</div>

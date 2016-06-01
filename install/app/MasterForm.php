@@ -42,23 +42,78 @@ class MasterForm extends \engine\web\Form
                 ],
 
                 'length' => [
-                    'max' => 50,
+                    'max'     => 50,
                     'message' => 'Очень длинный email. Максимум 50 символов',
                 ],
             ],
         ],
 
         'db' => [
-            'expectArray' => true,
-            'validators'  => [
-                'filter_var' => [
-                    'filter'  => FILTER_CALLBACK,
-                    'options' => ['\engine\utils\Validators', 'normalizeString'],
-                ],
+            'switch' => null,
 
-                'length' => [
-                    'max' => 100,
-                    'message' => 'Поля этого блока ограничены длиной 100 символов',
+            'server' => [
+                'validators' => [
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\engine\utils\Validators', 'normalizeString'],
+                    ],
+
+                    'length' => [
+                        'max'     => 100,
+                        'message' => 'Сервер[порт]. Максимум 100 символов',
+                    ],
+                ],
+            ],
+
+            'name' => [
+                'validators' => [
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\engine\utils\Validators', 'normalizeString'],
+                    ],
+
+                    'length' => [
+                        'max'     => 50,
+                        'message' => 'Имя базы. Максимум 50 символов',
+                    ],
+                ],
+            ],
+
+            'charset' => [
+                'validators' => [
+                    'filter_var' => [
+                        'filter'  => FILTER_VALIDATE_REGEXP,
+                        'options' => ['regexp' => '~^utf8|cp1251~'],
+                        'message' => 'Неправильное значение кодировки',
+                    ],
+                ],
+            ],
+
+            'user' => [
+                'validators' => [
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\engine\utils\Validators', 'normalizeString'],
+                    ],
+
+                    'length' => [
+                        'max'     => 30,
+                        'message' => 'Имя пользователя. Максимум 30 символов',
+                    ],
+                ],
+            ],
+
+           'password' => [
+                'validators' => [
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\engine\utils\Validators', 'normalizeString'],
+                    ],
+
+                    'length' => [
+                        'max'     => 30,
+                        'message' => 'Пароль. Максимум 30 символов',
+                    ],
                 ],
             ],
         ],
@@ -84,8 +139,8 @@ class MasterForm extends \engine\web\Form
                     ],
 
                     'length' => [
-                        'min' => 1,  //проверка нужна. Предыдущий валидатор может укоротить строку
-                        'max' => 50,
+                        'min'     => 1,  //проверка нужна. Предыдущий валидатор может укоротить строку
+                        'max'     => 50,
                         'message' => 'Имя таблицы должно быть в пределах [1, 50] символов',
                     ],
                 ],
@@ -104,7 +159,7 @@ class MasterForm extends \engine\web\Form
                     ],
 
                     'length' => [
-                        'max' => 50,
+                        'max'     => 50,
                         'message' => 'Часовой пояс максимум 50 символов',
                     ],
                 ],

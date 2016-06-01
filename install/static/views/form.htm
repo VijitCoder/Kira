@@ -1,0 +1,26 @@
+<?php
+/**
+ * array $d данные полей формы. Многомерный массив, соответствующий своей структурой именам полей
+ * array $errors ошибки, через <br>. Разобранные по блокам
+ */
+$params = compact('d', 'errors');
+?>
+
+<h3>Создание нового приложения</h3>
+
+<p>Мастер создания приложения очень упрощен и не охватывает все многообразие возможных сайтов, СУБД и фантазию кодера. Мастер написан для легкого старта работы с движком, не более того.</p>
+
+<form method="POST">
+
+    <? $this->renderPartial('_required', $params); ?>
+
+    <? $this->renderPartial('_db', $params); ?>
+
+    <? $this->renderPartial('_log', $params); ?>
+
+    <? $this->renderPartial('_lang', $params); ?>
+
+    <input type="submit" value="СОЗДАТЬ">
+</form>
+
+<script src='/install/static/script.js'></script>

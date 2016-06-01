@@ -1,0 +1,59 @@
+<?php
+/**
+ * array $d данные полей формы. Многомерный массив, соответствующий своей структурой именам полей
+ * array $errors ошибки, через <br>. Разобранные по блокам
+ */
+?>
+
+<div class="note info">
+    <p>При указании путей рекомендую использовать прямые слеши (" / ") независимо от вашей <abbr
+            title="операционная система">ОС</abbr>. Движок поддерживает кроссплатформу и все равно преобразует пути к прямым слешам.</p>
+
+    <p>Объявляемые тут каталоги не должны существовать на момент создания приложения. Это необходимо во избежание случайной перезаписи содержимого каталогов. После создания, назначаются <strong>полные права доступа</strong> к каталогам.</p>
+</div>
+
+<?php if ($errors['required']): ?>
+    <div class="note error"><?= $errors['required'] ?></div>
+<?php endif ?>
+
+<div class="row">
+    <h4>Необходимый минимум</h4>
+
+    <label>Каталог приложения</label>
+    <div class="grayed take-left"><?= ROOT_PATH ?></div>
+    <div class="input-wrapper">
+        <input type="text" name="path[app]" id="app-path" value="<?= $d['path']['app'] ?>">
+    </div>
+
+    <label class="clear-float">Каталог шаблонов</label>
+    <div class="grayed take-left"><?= ROOT_PATH ?></div>
+    <div class="input-wrapper">
+        <input type="text" name="path[view]" id="view-path" value="<?= $d['path']['view'] ?>">
+    </div>
+
+    <label class="clear-float">Каталог временных файлов</label>
+    <div class="grayed take-left"><?= ROOT_PATH ?></div>
+    <div class="input-wrapper">
+        <input type="text" name="path[temp]" id="temp-path" value="<?= $d['path']['temp'] ?>">
+    </div>
+
+    <label class="clear-float">Путь к основному файлу конфигурации приложения</label>
+    <div class="grayed take-left"><?= ROOT_PATH ?></div>
+    <div class="input-wrapper">
+        <input type="text" name="main_conf" id="main-conf" value="<?= $d['main_conf'] ?>">
+    </div>
+
+    <hr>
+
+    <div class="take-left cell-6">
+        Префикс пространства имен приложения (может отличаться от каталога приложения)
+    </div>
+    <div class="input-wrapper">
+        <input type="text" name="ns_prefix" placeholder="например 'app'" value="<?= $d['ns_prefix'] ?>">
+    </div>
+
+     <hr class="clear-float">
+
+        <div class="clear-float take-left">Email администратора</div>
+        <div class="input-wrapper"><input type="email" name="email" value="<?= $d['email'] ?>"></div>
+</div>
