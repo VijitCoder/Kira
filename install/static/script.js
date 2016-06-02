@@ -64,19 +64,19 @@ $(document).ready(function () {
     /**
      * Собираем DSN-строку подключения к базе.
      */
-    $(document).on('change', '#db-server, #db-name, #db-charset', function () {
+    $(document).on('change', '#db-server, #db-base, #db-charset', function () {
         var server = $("#db-server").val();
-        var db = $("#db-name").val();
+        var base = $("#db-base").val();
         var dsn = '';
 
-        if (server || db) {
+        if (server && base) {
             var charset = $("#db-charset").val();
             server = server.split(':');
             dsn = "mysql:host=" + server[0] + '; ';
             if (server.length == 2) {
                 dsn += "port=" + server[1] + '; ';
             }
-            dsn += "dbname=" + db + "; charset=" + charset;
+            dsn += "dbname=" + base + "; charset=" + charset;
         } else {
             dsn = 'none';
         }
@@ -112,9 +112,9 @@ $(document).ready(function () {
     $(document).on('click', '#db-switch, #log-switch, #lang-switch', function () {
         var id = '#' + $(this).attr('id').replace('switch', 'disabler');
         if ($(this).prop("checked")) {
-            $(id).hide();
+            $(id).fadeOut(500);
         } else {
-            $(id).show();
+            $(id).fadeIn(300);
         }
     });
 

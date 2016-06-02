@@ -39,13 +39,16 @@
             <?php if ($d['lang']['switch']) echo 'style="display:none;"'?>></div>
 
         <div class="cell-12">
-            <div class="take-left">Код основного языка: <strong>ru</strong>. Другие языки, через запятую</div>
+            <div class="take-left required-star">
+                Код основного языка: <strong>ru</strong>. Другие языки, через запятую
+            </div>
             <div class="input-wrapper"><input type="text" name="lang[other]"
                     value="<?= $d['lang']['other'] ?>"></div>
         </div>
 
         <div class="cell-12">
-            <label class="clear-float">Путь к js-скриптам приложения. В нем будет создан подкаталог [i18n/]</label>
+            <label class="clear-float">
+                Путь к js-скриптам приложения. В нем будет создан подкаталог [i18n/]</label>
             <div class="grayed take-left"><?= ROOT_PATH ?></div>
             <div class="input-wrapper">
                 <input type="text" name="lang[js_path]" id="js-path" value="<?= $d['lang']['js_path'] ?>">

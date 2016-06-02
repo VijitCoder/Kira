@@ -190,7 +190,7 @@ input[type='checkbox'] {
     vertical-align: bottom;
     position: relative;
     top: -1px;
-    *overflow: hidden;
+    *overflow: hidden; /* IE hack (the star-property hack) */
 }
 
 /*---- Конец Выровненный checkbox ----*/
@@ -275,4 +275,11 @@ input[type=submit] {
     top: 0;
     height: 100%;
     width: 100%;
+}
+
+.required-star:after {
+    color: red;
+    content: " *";
+    font-size: 140%;
+    vertical-align: bottom;
 }
