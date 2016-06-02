@@ -1,8 +1,4 @@
 <?php
-/**
- * Контроллер регистрации/подтверждения регистрации юзера
- */
-
 namespace app\controllers;
 
 use engine\App,
@@ -10,6 +6,9 @@ use engine\App,
     app\services\RegistrationService,
     engine\net\Session;
 
+/**
+ * Контроллер регистрации/подтверждения регистрации юзера
+ */
 class Registration extends \app\controllers\Front
 {
     protected $title = 'Регистрация нового пользователя';
@@ -23,7 +22,7 @@ class Registration extends \app\controllers\Front
             $this->redirect($this->urls['profile']);
         }
 
-        $vPass = App::conf('validators.password');
+        $vPass = App::conf('password');
         $params = [
             'minPass' => $vPass['min_len'],
             'minComb' => $vPass['min_comb'],

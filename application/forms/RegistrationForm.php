@@ -1,9 +1,11 @@
 <?php
+namespace app\forms;
+
+use engine\App;
+
 /**
  * Форма регистрации
  */
-namespace app\forms;
-
 class RegistrationForm extends \engine\web\Form
 {
     protected $contract = [
@@ -25,10 +27,7 @@ class RegistrationForm extends \engine\web\Form
             'validators' => [
                 'external' => [
                     'function' => ['\engine\utils\Validators', 'password'],
-                    'options'  => [
-                        'min_len'  => 5,
-                        'min_comb' => 3,
-                    ],
+                    // настройки задаются в конструкторе
                 ],
 
                 'required' => true,
@@ -111,6 +110,7 @@ class RegistrationForm extends \engine\web\Form
         $this->contract['mail']['validators']['external']['options'] = [
             'black_servers' => require APP_PATH . 'conf/black_servers.php'
         ];
+        $this->contract['password']['validators']['external']['options'] = App::conf('password');
         parent::__construct();
     }
 }

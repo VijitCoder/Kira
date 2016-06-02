@@ -217,7 +217,7 @@ class Form
      * Вернуть сырые данные. Весь массив или конкретный элемент. Обычно его используют шаблоны для заполнения формы
      * при ошибках валидации.
      *
-     * @param string $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
+     * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array | string
      */
     public function getRawData($key = null)
@@ -229,7 +229,7 @@ class Form
      * Вернуть результаты валидации. Весь массив или конкретный элемент. В каждом элементе либо строка
      * либо false (не прошло валидацию). Инфу о результе валидации в целом можно узнать по по флагу self::$isValid
      *
-     * @param string $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
+     * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array | string
      */
     public function getValues($key = null)
@@ -245,7 +245,7 @@ class Form
      *
      * @see Form::getErrorsAsString()
      *
-     * @param string $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
+     * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array [поле => массив ошибок]
      */
     public function getErrors($key = null)
@@ -270,5 +270,31 @@ class Form
         }
 
         return Arrays::getValue($data, $key);
+    }
+
+    /**
+     * Получение всех ошибок по каждому полю, склееных в строку.
+     *
+     * Если контракт - двумерный массив (простая форма), то на выходе получится простой ассоциативный массив
+     * [поле => ошибки]. Если контракт сложный, то ошибки склеиваются из всех подмассивов для каждого старшего ключа.
+     *
+     * TODO Это проще увидеть, чем описать. Нужно понятное описание в этом методе.
+     *
+     * @param null   $key  ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
+     * @param string $glue клей между соседними элементами одного массива
+     * @param string $eol  клей между соседними подмассивами
+     * @return array
+     */
+    public function getErrorsAsString($key = null, $glue = ' ', $eol = '')
+    {
+        $errors = $this->getErrors($key);
+
+        foreach ($errors as &$v) {
+            if (is_array($v)) {
+                $v = Arrays::implode_recursive($v, $glue, $eol);
+            }
+        }
+
+        return $errors;
     }
 }

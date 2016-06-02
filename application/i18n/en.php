@@ -41,7 +41,7 @@ return [
         'Image size not less than SIZE px on the narrow side, the weight of the file within the MIN Kb - MAX Mb.',
     'поле должно быть заполнено' => 'this is required field',
     'Логин уже занят. Пожалуйста выберите другой.' => 'Login already taken. Please choose another one.',
-    'Ящик уже есть в нашей базе. Пожалуйста укажите другой' => 'This email is already in our database. Please select another',
+    'Ящик уже есть в нашей базе. Пожалуйста укажите другой' => 'This email is already in our database.  Please choose another one.',
     'Недопустимые символы' => 'Unacceptable symbols',
     'Поле должно быть заполнено' => 'Field must be filled',
     'Пароль слишком короткий' => 'Password is too short',
@@ -53,7 +53,7 @@ return [
     'Слишком короткое значение, минимум M символов' => 'Too short value, minimum M symbols',
     'Слишком длинное значение, максимум M символов' => 'Too long value, maximum M symbols',
     'неверно указан пол' => 'wrong sex',
-    'При регистрации допущены ошибки' => 'There is some mistakes',
+    'При регистрации допущены ошибки' => 'There are some mistakes',
     'В произвольной форме. Например:' => 'In any form. For example:',
     'На указанный ящик отправлено письмо с ссылкой для подтверждения учетной записи. Пожалуйста, проверьте почту :)' =>
         'To your email sent a letter with a link to confirm your account. Please, check your mail :)',
