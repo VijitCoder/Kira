@@ -25,14 +25,14 @@ class Form
      * Данные с формы. По умолчанию массив заполнен ключами, но без данных.
      * @var array
      */
-    private $_rawData;
+    protected $rawData;
 
     /**
      * Данные после очередного валидатора. Имя переменной специально подобрано, кроме прочего переводится как "ценности".
      * По умолчанию массив заполнен ключами, но без данных.
      * @var array
      */
-    private $_values;
+    protected $values;
 
     /**
      * Ошибки валидации. По умолчанию массив заполнен ключами, но без данных. По любому полю ошибки хранятся в массиве,
@@ -40,7 +40,7 @@ class Form
      * массив.
      * @var array
      */
-    private $_errors;
+    protected $errors;
 
     /**
      * Конструктор.
@@ -53,9 +53,9 @@ class Form
             $this->contract = $contract;
         }
 
-        $this->_rawData =
-        $this->_errors =
-        $this->_values = $this->_initialArray($this->contract);
+        $this->rawData =
+        $this->errors =
+        $this->values = $this->initialArray($this->contract);
     }
 
     /**
@@ -67,7 +67,7 @@ class Form
      * @param array $arr
      * @return mixed
      */
-    private function _initialArray($arr)
+    private function initialArray($arr)
     {
         $result = [];
         foreach ($arr as $k => $v) {
@@ -75,7 +75,7 @@ class Form
                 continue;
             }
 
-            $result[$k] = is_array($v) ? $this->_initialArray($v) : null;
+            $result[$k] = is_array($v) ? $this->initialArray($v) : null;
         }
         return $result ?: null;
     }
@@ -93,7 +93,7 @@ class Form
      */
     public function load(&$data)
     {
-        $this->_rawData = Arrays::merge_recursive($this->_rawData, $data);
+        $this->rawData = Arrays::merge_recursive($this->rawData, $data);
 
         return $this;
     }
@@ -109,13 +109,13 @@ class Form
             $this->formValidator = new FormValidator;
         }
 
-        if (!$this->_rawData) {
+        if (!$this->rawData) {
             return false;
         }
 
         foreach ($this->contract as $key => &$contractPart) {
-            $data = isset($this->_rawData[$key]) ? $this->_rawData[$key] : null;
-            $this->formValidator->internalValidate($contractPart, $data, $this->_values[$key], $this->_errors[$key]);
+            $data = isset($this->rawData[$key]) ? $this->rawData[$key] : null;
+            $this->formValidator->internalValidate($contractPart, $data, $this->values[$key], $this->errors[$key]);
         }
 
         return $this->formValidator->isValid();
@@ -145,7 +145,7 @@ class Form
      */
     public function setValue($value)
     {
-        $this->_values = Arrays::merge_recursive($this->_values, $value);
+        $this->values = Arrays::merge_recursive($this->values, $value);
     }
 
     /**
@@ -159,14 +159,14 @@ class Form
      */
     public function hasErrors()
     {
-        return $this->_internalHasErrors($this->_errors);
+        return $this->internalHasErrors($this->errors);
     }
 
-    private function _internalHasErrors($errors)
+    private function internalHasErrors($errors)
     {
         foreach ($errors as $k => $v) {
             if (is_string($k) && is_array($v)) {
-                return $this->_internalHasErrors($v);
+                return $this->internalHasErrors($v);
             } else if ($v) {
                 return true;
             }
@@ -190,7 +190,7 @@ class Form
     public function addError($message)
     {
         $key = key($message);
-        $this->_internalAddError($this->_errors[$key], $message[$key]);
+        $this->internalAddError($this->errors[$key], $message[$key]);
     }
 
     /**
@@ -201,11 +201,11 @@ class Form
      * @param string|array $msg текст сообщения ИЛИ массив ключей и в итоге текст сообщения.
      * @return void
      */
-    private function _internalAddError(&$errors, &$msg)
+    private function internalAddError(&$errors, &$msg)
     {
         if (is_array($msg)) {
             $key = key($msg);
-            $this->_internalAddError($errors[$key], $msg[$key]);
+            $this->internalAddError($errors[$key], $msg[$key]);
         } else {
             $errors[] = $msg;
         }
@@ -220,7 +220,7 @@ class Form
      */
     public function getRawData($key = null)
     {
-        return $this->_getData($this->_rawData, $key);
+        return $this->getData($this->rawData, $key);
     }
 
     /**
@@ -232,7 +232,7 @@ class Form
      */
     public function getValues($key = null)
     {
-        return $this->_getData($this->_values, $key);
+        return $this->getData($this->values, $key);
     }
 
     /**
@@ -248,7 +248,7 @@ class Form
      */
     public function getErrors($key = null)
     {
-        return $this->_getData($this->_errors, $key);
+        return $this->getData($this->errors, $key);
     }
 
     /**
@@ -261,7 +261,7 @@ class Form
      * @param string $key   ключ в массиве данных. Возможно составной ключ.
      * @return array | string | null
      */
-    private function _getData(&$data, $key)
+    private function getData(&$data, $key)
     {
         if ($key === null) {
             return $data;

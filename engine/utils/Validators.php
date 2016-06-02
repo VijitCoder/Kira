@@ -12,7 +12,7 @@ use engine\App;
  * значение либо FALSE.
  *
  * Если валидатор расчитан на вызов через call_user_func(), тогда первый парамер - проверяемое значение, второй -
- * массив дополнительных параметров метода (необязательный). Такой метод всегда возвращает либо ['errors' => ...], либо
+ * массив дополнительных параметров метода (необязательный). Такой метод всегда возвращает либо ['error' => ...], либо
  * ['value' => ...].
  */
 class Validators
@@ -74,7 +74,7 @@ class Validators
             }
         }
 
-        return $errors ? ['errors' => $errors] : ['value' => $pass];
+        return $errors ? ['error' => $errors] : ['value' => $pass];
     }
 
     /**
@@ -104,13 +104,13 @@ class Validators
         $options = array_merge(['regexp' => '~.+@.+\..+~', 'black_servers' => null], $options);
 
         if (!preg_match($options['regexp'], $mail)) {
-            return ['errors' => App::t('неверный формат почтового адреса.')];
+            return ['error' => App::t('неверный формат почтового адреса.')];
         }
 
         if ($black = $options['black_servers']) {
             $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
             if (in_array($server, $black)) {
-                return ['errors' => App::t('Почтовый сервер вашего email в черном списке. '
+                return ['error' => App::t('Почтовый сервер вашего email в черном списке. '
                     .'Пожалуйста укажите другой адрес.')];
             }
         }
@@ -133,12 +133,12 @@ class Validators
     {
         if (!preg_match('~\d{2}\.\d{2}\.\d{4}~', $date)) {
             $msg = App::t('Неверный формат даты. Ожидается "FORMAT".', ['FORMAT' => 'dd.mm.yyyy']);
-            return ['errors' => $msg];
+            return ['error' => $msg];
         }
 
         list($d, $m, $y) = explode('.', $date);
         if (!checkdate($m, $d, $y)) {
-            return ['errors' => App::t('Нереальная дата')];
+            return ['error' => App::t('Нереальная дата')];
         }
 
         return ['value' => sprintf('%d-%d-%d', $y, $m, $d)];

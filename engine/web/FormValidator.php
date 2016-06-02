@@ -70,19 +70,19 @@ class FormValidator
         }
 
         $expectArray = isset($contractPart['expectArray']) && $contractPart['expectArray'] == true;
-        if (!$this->_checkDataType($data, $expectArray, $error)) {
+        if (!$this->checkDataType($data, $expectArray, $error)) {
             return;
         }
 
         $validators = &$contractPart['validators'];
-        $this->_popupRequired($validators);
+        $this->popupRequired($validators);
 
         if ($expectArray) {
             foreach ($data as $k => $d) {
-                $this->_fireValidators($validators, $d, $value[$k], $error[$k]);
+                $this->fireValidators($validators, $d, $value[$k], $error[$k]);
             }
         } else {
-            $this->_fireValidators($validators, $data, $value, $error);
+            $this->fireValidators($validators, $data, $value, $error);
         }
     }
 
@@ -94,7 +94,7 @@ class FormValidator
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    private function _checkDataType(&$data, $expectArray, &$error)
+    private function checkDataType(&$data, $expectArray, &$error)
     {
         $isArray = is_array($data);
         if ($expectArray && !$isArray) {
@@ -120,7 +120,7 @@ class FormValidator
      * @param array $validators
      * @return void
      */
-    private function _popupRequired(&$validators)
+    private function popupRequired(&$validators)
     {
         if (isset($validators['required'])) {
             if (key($validators) !== 'required') {
@@ -145,7 +145,7 @@ class FormValidator
      * @param mixed $error      куда писать ошибку
      * @return void
      */
-    private function _fireValidators(&$validators, &$data, &$value, &$error)
+    private function fireValidators(&$validators, &$data, &$value, &$error)
     {
         $newData = $data;
         foreach ($validators as $type => $description) {
@@ -250,8 +250,11 @@ class FormValidator
      *
      * Требования к внешнему валидатору:
      * <pre>
-     * function someValidator(mixed $value, [array $options]) : ['errors' => mixed] | ['value' => mixed]
+     * function someValidator(mixed $value, [array $options]) : ['error' => mixed] | ['value' => mixed]
      * </pre>
+     *
+     * Прим: стоило бы добавить проверку php::is_callable(). Не сделал в пользу скорости кода. На этапе разработки
+     * такая проблема будет понятна даже без моего исключения.
      *
      * @param array $desc  описание валидатора
      * @param mixed $data  проверяемые данные
@@ -259,6 +262,7 @@ class FormValidator
      * @param mixed $error куда писать ошибку
      * @return bool
      * @throws \LogicException
+     * @throws \UnexpectedValueException
      */
     protected function validatorExternal(&$desc, &$data, &$value, &$error)
     {
@@ -270,11 +274,11 @@ class FormValidator
 
         $result = call_user_func($function, $data, $options);
 
-        if (isset($result['errors'])) {
+        if (isset($result['error'])) {
             $this->isValid = false;
             $passed = false;
 
-            $message = isset($desc['message']) ? App::t($desc['message']) : $result['errors'];
+            $message = isset($desc['message']) ? App::t($desc['message']) : $result['error'];
             if (!is_array($message)) {
                 $message = [$message];
             }
@@ -287,7 +291,7 @@ class FormValidator
             if (is_array($function)) {
                 $function = implode('::', $function);
             }
-            throw new \LogicException("Внешний валидатор {$function}() вернул неопознанный ответ");
+            throw new \UnexpectedValueException("Внешний валидатор {$function}() вернул неопознанный ответ");
         }
 
         return $passed;
