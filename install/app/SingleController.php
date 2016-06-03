@@ -1,11 +1,13 @@
 <?php
+namespace install\app;
+
+use engine\net\Session;
+use engine\web\Controller;
+
 /**
  * Единственный контроллер мастера приложения
  */
-
-namespace install\app;
-
-class SingleController extends \engine\web\Controller
+class SingleController extends Controller
 {
     protected $title = 'Kira Engine. Создание нового приложения';
 
@@ -13,9 +15,9 @@ class SingleController extends \engine\web\Controller
      * Индесная страница: форма мастера.
      * POST. Обработка формы мастера.
      *
-     * От сервиса контроллер ожидает либо массив [d, errors] либо TRUE в случае создания приложения. Если в процессе
+     * От сервиса контроллер ожидает либо массив [d, errors] либо BOOL в случае создания приложения. Если в процессе
      * создания были ошибки, информация будет предоставлена на странице сводки. Этот метод работает только с формой
-     * и ее ошибками валидации.
+     * и ее ошибками валидации. Ошибки процесса - на другую страницу.
      */
     public function index()
     {
@@ -24,10 +26,11 @@ class SingleController extends \engine\web\Controller
         if (!$_POST) {
             $this->render('form', $svc->prepareViewData());
         } else {
-            if (true !== ($viewData = $svc->createApp())) {
-                $this->render('form', $viewData);
+            $result = $svc->createApp();
+            if (is_array($result)) {
+                $this->render('form', $result);
             } else {
-                $this->redirect('finish');
+                $this->redirect('/finish');
             }
         }
     }
@@ -37,6 +40,21 @@ class SingleController extends \engine\web\Controller
      */
     public function finish()
     {
-        $this->render('finish');
+        dd(Session::readFlash('brief')); exit; //DBG
+
+        $this->render('finish', ['brief' => Session::readFlash('brief')]);
+    }
+
+    /**
+     * Откат созданного приложения. Удаляем каталоги, файлы и таблицу логера.
+     */
+    public function rollback()
+    {
+        $svc = new MasterService;
+        $svc->rollback();
+
+        dd($svc->getBrief()); exit; //DBG
+
+        $this->render('finish', ['brief' => $svc->getBrief()]);
     }
 }

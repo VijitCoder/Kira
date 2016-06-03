@@ -11,6 +11,8 @@
 namespace install\app;
 
 use engine\utils\Arrays;
+use engine\utils\FS;
+use engine\net\Session;
 
 class MasterService
 {
@@ -33,13 +35,6 @@ class MasterService
     ];
 
     /**
-     * Флаг того, что процесс создания приложения все-таки неудался. Флаг не относится к валидации формы и последующим
-     * проверкам. Только к реальному форс-мажору.
-     * @var bool
-     */
-    private $processFailed = false;
-
-    /**
      * Сводка. Двумерный массив сообщений процесса: [type => info|warn|error, message => string]
      * @var array
      */
@@ -55,6 +50,14 @@ class MasterService
      * @var resource
      */
     private $rollbackHandler;
+
+    const RBACK_FILE_NAME = 'rollback.csv';
+
+    // типы целей для удаления
+    const
+        RBACK_PATH = 'path',
+        RBACK_FILE = 'file',
+        RBACK_TABLE = 'table';
 
     /**
      * MasterService constructor.
@@ -105,9 +108,142 @@ class MasterService
             return $this->prepareViewData($values, $this->errorBlocks);
         }
 
-        // TODO собственно процесс создания приложения
+        $values = $form->getValues();
 
-        return true;
+        if (!$this->rollbackHandler = fopen(APP_PATH . SELF::RBACK_FILE_NAME, 'w')) {
+            $this->addToBrief(self::BRIEF_ERROR, 'Не могу создать файл отката. Установка прервана.');
+            return $this->endProcess(false);
+        }
+
+        if (!$this->createPaths($values)) {
+            return $this->endProcess(false);
+        }
+
+        // DBG
+        echo 'DEBUG';
+        $this->endProcess(1);
+        dd($this->brief);
+        exit('Stop ' . __METHOD__);
+
+        return $this->endProcess(true);
+    }
+
+    /**
+     * Окончание/прерывание процесса создания приложения
+     * @param bool $isOk
+     * @return bool
+     */
+    private function endProcess($isOk)
+    {
+        if ($this->rollbackHandler) {
+            fclose($this->rollbackHandler);
+        }
+
+        if (!$isOk) {
+            $this->rollback();
+        } else {
+            $this->addToBrief(self::BRIEF_INFO, 'Создание приложения успешно завершено.');
+        }
+
+        Session::newFlash('brief', serialize($this->brief));
+
+        return $isOk;
+    }
+
+    /**
+     * Откат создания приложения.
+     * Удалить каталоги и файлы. Удалить таблицу логера.
+     * Прим: запрос может прийти не только из этого сервиса, но из контроллера тоже.
+     * @return void
+     */
+    public function rollback()
+    {
+        $this->addToBrief(self::BRIEF_INFO, 'Откатываю установку приложения.');
+
+        if (!$fh = fopen(APP_PATH . SELF::RBACK_FILE_NAME, 'r')) {
+            $this->addToBrief(self::BRIEF_ERROR, 'Не могу открыть файл отката.');
+            return;
+        }
+
+        while (($row = fgetcsv($fh)) !== false) {
+            $object = $row[1];
+            switch ($row[0]) {
+                case self::RBACK_PATH:
+                    $result = FS::removeDir($object, 2);
+                    $tgtInsert = 'каталога';
+                    break;
+                case self::RBACK_FILE:
+                    $result = FS::deleteFile($object);
+                    $tgtInsert = 'файла';
+                    break;
+                case self::RBACK_TABLE:
+                    // TODO
+                    $tgtInsert = 'таблицы';
+                    break;
+                default:;
+            }
+
+            if ($result !== true) {
+                $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}. $result");
+            }
+        }
+
+        fclose($fh);
+
+        $this->addToBrief(self::BRIEF_INFO, 'Откат закончен.');
+    }
+
+    /**
+     * Создание каталогов. Определение прав доступа.
+     *
+     * @param array $v проверенный массив данных
+     * @return void
+     */
+    private function createPaths(&$v)
+    {
+        $this->addToBrief(self::BRIEF_INFO, 'Создаем каталоги приложения');
+        $ok = true;
+
+        /**
+         * Создаем каталог. Пишем либо новую цель в файл отката либо полученную ошибку в сводку.
+         * @param $path
+         */
+        $functionCreate = function ($path) use ($ok) {
+            if (true === ($result = FS::makeDir($path))) {
+                fputcsv($this->rollbackHandler, [self::RBACK_PATH, $path]);
+            } else {
+                $ok = false;
+                $this->addToBrief(self::BRIEF_ERROR, "Ошибка создания каталога '{$path}': {$result}");
+            }
+        };
+
+        foreach ($v['path'] as &$path) {
+            $path = ROOT_PATH . $path;
+            $functionCreate($path);
+        }
+
+        $v['main_conf'] = ROOT_PATH . $v['main_conf'];
+        $functionCreate(dirname($v['main_conf']));
+
+        if ($v['log']['switch']) {
+            $path = &$v['log']['path'];
+            if (!$path) {
+                $path = $v['path']['temp'];
+                $this->addToBrief(self::BRIEF_INFO,
+                    'Каталог лога не задан. Логи будут складываться в temp-каталог приложения.');
+            } else {
+                $path = ROOT_PATH . $path;
+                $functionCreate($path);
+            }
+        }
+
+        if ($v['lang']['switch']) {
+            $path = &$v['lang']['js_path'];
+            $path = ROOT_PATH . $path . 'i18n/';
+            $functionCreate($path);
+        }
+
+        return $ok;
     }
 
     /**
@@ -154,5 +290,14 @@ class MasterService
     private function addToBrief($type, $message)
     {
         $this->brief[] = compact('type', 'message');
+    }
+
+    /**
+     * Получить текущую сводку. Геттер.
+     * @return array
+     */
+    public function getBrief()
+    {
+        return $this->brief;
     }
 }
