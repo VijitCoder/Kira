@@ -30,12 +30,9 @@ class FS
      *
      * Прим: не используем для вычисления родителя функцию php::dirname(), она привносит свои заморочки.
      *
-     * Перехватываем ошибки функций PHP и возвращаем как сообщение об ошибке из этого метода.
-     * @see http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
-     *
      * @param string $path путь к конечному каталогу
      * @param int    $mode права доступа, восьмеричное число
-     * @return bool|string
+     * @return true|string
      */
     public static function makeDir($path, $mode = 0777)
     {
@@ -60,9 +57,7 @@ class FS
             $cnt++;
         }
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
 
         try {
             if ($cnt) {
@@ -98,7 +93,7 @@ class FS
      *
      * @param string $path      каталог для удаления
      * @param int    $fuseLevel предохранитель: ожидаемый максимальный уровень вложенности каталогов.
-     * @return bool
+     * @return true|string
      * @throws \InvalidArgumentException
      */
     public static function removeDir($path, $fuseLevel = 1)
@@ -119,9 +114,7 @@ class FS
             return 'Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.';
         }
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
 
         try {
             self::internalRemoveDir($path);
@@ -136,6 +129,8 @@ class FS
     }
 
     /**
+     * Рекурсивное удаление содержимого каталога.
+     *
      * Прим: использование DirectoryIterator экономичнее по отношению к памяти, чем FileSystemIterator
      * @link http://php.net/manual/ru/class.filesystemiterator.php#114997
      *
@@ -152,24 +147,10 @@ class FS
             if ($obj->isDir()) {
                 self::internalRemoveDir($name);
             } else {
-                //echo "Файл $name <br>";
                 unlink($name);
             }
         }
-        //echo "Каталог $path <br>";
         rmdir($path);
-    }
-
-    /**
-     * Удаление файлов из каталога с заданными расширениеми.
-     * Если расширения не указаны, удаляем все файлы. Расширения пишем без точки, через разделитель "|".
-     * @param string $path каталог для очистки
-     * @param string $ext  расширения удаляемых файлов
-     * @return bool
-     */
-    public static function clearDir($path, $ext = '')
-    {
-        //TODO
     }
 
     /**
@@ -200,19 +181,44 @@ class FS
     }
 
     /**
-     * Просто обертка для php::unlink().
-     * Перехватываем ошибки и возвращаем как сообщение об ошибке из этого метода. Иначе будет E_WARNING.
-     * @param $fn
-     * @return bool|string
+     * Очистка каталога от файлов.
+     *
+     * Не работает с подкаталогами из соображений безопасности, очистка проводится только в текущем каталоге. Удаляем
+     * все файлы или подходящие под заданный фильтр (регулярное выражение). Символические ссылки тоже удаляются,
+     * оригиналы файлов при этом не будут затронуты.
+     *
+     * Прим: для очистки процессу нужен доступ на запись в целевой каталог. Доступ к файлам может вообще отсутствовать.
+     *
+     * @param string $path   каталог для очистки
+     * @param string $filter регулярка для фильтрации. Полностью, включая операторные скобки и модификаторы.
+     * @return true|string
+     * @throws \LogicException
+     * @throws \InvalidArgumentException
      */
-    public static function deleteFile($fn)
+    public static function clearDir($path, $filter = '')
     {
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        if (!file_exists($path)) {
+            throw new \LogicException("Каталог {$path} не существует.");
+        }
+
+        if (!is_dir($path)) {
+            throw new \InvalidArgumentException($path . ' должно быть каталогом');
+        }
+
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
 
         try {
-            unlink($fn);
+            $dirList = new \DirectoryIterator($path);
+            foreach ($dirList as $obj) {
+                if ($obj->isDot() || $obj->isDir()) {
+                    continue;
+                }
+
+                $name = $obj->getPathname();
+                if (!$filter || preg_match($filter, $name)) {
+                    unlink($name);
+                }
+            }
             $result = true;
         } catch (\ErrorException $e) {
             $result = $e->getMessage();
@@ -221,5 +227,66 @@ class FS
         restore_error_handler();
 
         return $result;
+    }
+
+    /**
+     * Переименование файла с перехватом ошибок. Просто обертка для php::rename()
+     *
+     * Прим: для переименования файла нужны только права на запись в каталоге. Сам файл может быть вообще без прав, даже
+     * с другим владельцем. ПРОВЕРЕНО. Так же проверено: целевой файл существует, никаких прав на него нет, владелец
+     * другой, но переписать его можно! Нужны только права на запись в каталоге.
+     *
+     * @param string $from путь/файл_источник
+     * @param string $to   путь/файл_назначение
+     * @return true|string
+     */
+    public static function renameFile($from, $to)
+    {
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
+
+        try {
+            rename($from, $to);
+            $result = true;
+        } catch (ErrorException $e) {
+            $result = $e->getMessage();
+        }
+
+        restore_error_handler();
+
+        return $result;
+    }
+
+    /**
+     * Удаление файла с перехватом ошибок. Просто обертка для php::unlink().
+     * Перехватываем ошибки и возвращаем как сообщение об ошибке из этого метода. Иначе будет E_WARNING.
+     * @param string $fn путь/файл для удаления
+     * @return true|string
+     */
+    public static function deleteFile($fn)
+    {
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        try {
+            unlink($fn);
+            $result = true;
+        } catch (\ErrorException $e) {
+            $result = $e->getMessage();
+        }
+        restore_error_handler();
+        return $result;
+    }
+
+    /**
+     * Перехватываем ошибки функций PHP и вместо них пробрасываем исключение. Его должны ловить методы этого класса.
+     * По мотивам {@link http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
+     * @param int    $errno
+     * @param string $errstr
+     * @param string $errfile
+     * @param int    $errline
+     * @return void
+     * @throws \ErrorException
+     */
+    public static function error_handler($errno, $errstr, $errfile, $errline)
+    {
+        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 }
