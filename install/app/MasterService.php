@@ -119,7 +119,7 @@ class MasterService
             return $this->endProcess(false);
         }
 
-        if (!$this->setupLogInDB($values)) {
+        if (!$this->createLogTable($values)) {
             return $this->endProcess(false);
         }
 
@@ -219,7 +219,9 @@ class MasterService
                     ;
             }
 
-            if ($result !== true) {
+            if ($result === true) {
+                $this->addToBrief(self::BRIEF_INFO, "Удаление {$tgtInsert}: $object");
+            } else {
                 $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}: $result");
             }
         }
@@ -290,12 +292,12 @@ class MasterService
      * Таблица для логирования в базу.
      *
      * Подключаемся к базе. Конфиг подключения сохраняем в сессии для будущего отката, если он будет запрошен кодером
-     * отдельно, через контроллер.
+     * отдельно, через контроллер. Создаем таблицу логера. Только здесь запоминаем имя таблицы, не раньше.
      *
      * @param array $values проверенный массив данных
      * @return bool
      */
-    private function setupLogInDB(&$values)
+    private function createLogTable(&$values)
     {
         $log = &$values['log'];
         if (!$log['switch'] || $log['store'] !== 'db') {

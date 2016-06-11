@@ -465,8 +465,7 @@ class MasterForm extends \engine\web\Form
         $conf['dsn'] = 'mysql:host=' . $conf['server'] . '; dbname=' . $conf['base']
             . ($conf['charset'] ? '; charset=' . $conf['charset'] : '');
 
-        $dbh = SingleModel::dbConnect($conf);
-        if (!$dbh) {
+        if (!SingleModel::dbConnect($conf)) {
             $this->errors['db'][] = 'Не удалось подключиться в базе: ' . SingleModel::getLastError();
         }
     }
