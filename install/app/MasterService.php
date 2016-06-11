@@ -119,6 +119,10 @@ class MasterService
             return $this->endProcess(false);
         }
 
+        if (!$this->setupLogInDB($values)) {
+            return $this->endProcess(false);
+        }
+
         // DBG
         echo 'DEBUG';
         $this->endProcess(1);
@@ -139,10 +143,10 @@ class MasterService
             fclose($this->rollbackHandler);
         }
 
-        if (!$isOk) {
-            $this->rollback();
-        } else {
+        if ($isOk) {
             $this->addToBrief(self::BRIEF_INFO, 'Создание приложения успешно завершено.');
+        } else {
+            $this->rollback();
         }
 
         Session::newFlash('brief', serialize($this->brief));
@@ -153,14 +157,22 @@ class MasterService
     /**
      * Откат создания приложения.
      * Удалить каталоги и файлы. Удалить таблицу логера.
-     * Прим: запрос может прийти не только из этого сервиса, но из контроллера тоже.
+     * Прим: запрос может прийти не только из этого сервиса, но из контроллера тоже. В этом случае нет подключения к БД,
+     * таблицу нужно будет удалять вручную. Не хочу придумывать, как бы мне организовать такое подключение.
      * @return void
      */
     public function rollback()
     {
+        $file = APP_PATH . SELF::RBACK_FILE_NAME;
+
+        if (!file_exists($file)) {
+            $this->addToBrief(self::BRIEF_ERROR, 'Не найден файл отката.');
+            return;
+        }
+
         $this->addToBrief(self::BRIEF_INFO, 'Откатываю установку приложения.');
 
-        if (!$fh = fopen(APP_PATH . SELF::RBACK_FILE_NAME, 'r')) {
+        if (!$fh = fopen($file, 'r')) {
             $this->addToBrief(self::BRIEF_ERROR, 'Не могу открыть файл отката.');
             return;
         }
@@ -177,18 +189,46 @@ class MasterService
                     $tgtInsert = 'файла';
                     break;
                 case self::RBACK_TABLE:
-                    // TODO
+                    $result = true;
                     $tgtInsert = 'таблицы';
+
+                    $dbh = SingleModel::getConnection();
+
+                    if (is_null($dbh)) {
+                        if ($conf = Session::read('db')) {
+                            Session::delete('db');
+                            $conf = unserialize($conf);
+                            $dbh = SingleModel::dbConnect($conf);
+                        } else {
+                            $this->addToBrief(self::BRIEF_WARN,
+                                "Нет конфига подключения к БД. Удалите вручную таблицу `$object`");
+                            break;
+                        }
+                    }
+
+                    if ($dbh) {
+                        if (!SingleModel::dropLogTable($object)) {
+                            $result = SingleModel::getLastError();
+                        }
+                    } else {
+                        $this->addToBrief(self::BRIEF_WARN,
+                            'Ошибка соединения. ' . SingleModel::getLastError() . " Удалите вручную таблицу `$object`");
+                    }
                     break;
-                default:;
+                default:
+                    ;
             }
 
             if ($result !== true) {
-                $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}. $result");
+                $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}: $result");
             }
         }
 
         fclose($fh);
+
+        if (true !== ($result = FS::deleteFile($file))) {
+            $this->addToBrief(self::BRIEF_ERROR, "Ошибка удаления файла отката. $result");
+        }
 
         $this->addToBrief(self::BRIEF_INFO, 'Откат закончен.');
     }
@@ -244,6 +284,45 @@ class MasterService
         }
 
         return $ok;
+    }
+
+    /**
+     * Таблица для логирования в базу.
+     *
+     * Подключаемся к базе. Конфиг подключения сохраняем в сессии для будущего отката, если он будет запрошен кодером
+     * отдельно, через контроллер.
+     *
+     * @param array $values проверенный массив данных
+     * @return bool
+     */
+    private function setupLogInDB(&$values)
+    {
+        $log = &$values['log'];
+        if (!$log['switch'] || $log['store'] !== 'db') {
+            return true;
+        }
+
+        $table = &$log['table'];
+        if (!$table) {
+            $table = MasterForm::LOG_TABLE;
+            $this->addToBrief(self::BRIEF_INFO, "Таблица лога явно не задана. Будет `$table`");
+        }
+
+        if (!SingleModel::dbConnect($values['db'])) {
+            $this->addToBrief(self::BRIEF_ERROR, 'Не удалось подключиться в базе: ' . SingleModel::getLastError());
+            return false;
+        };
+
+        Session::write('db', serialize($values['db']));
+
+        if ($result = SingleModel::createLogTable($table)) {
+            $this->addToBrief(self::BRIEF_INFO, "Создана таблица логера `$table` в базе, описанной в конфигурации БД");
+            fputcsv($this->rollbackHandler, [self::RBACK_TABLE, $table]);
+        } else {
+            $this->addToBrief(self::BRIEF_ERROR, 'Не удалось создать таблицу. ' . SingleModel::getLastError());
+        }
+
+        return $result;
     }
 
     /**

@@ -30,7 +30,7 @@ class SingleController extends Controller
             if (is_array($result)) {
                 $this->render('form', $result);
             } else {
-                $this->redirect('/finish');
+                $this->redirect('/install/finish');
             }
         }
     }
@@ -40,9 +40,10 @@ class SingleController extends Controller
      */
     public function finish()
     {
-        dd(Session::readFlash('brief')); exit; //DBG
+        $brief = unserialize(Session::readFlash('brief'));
+        dd($brief); exit(__METHOD__.'()'); //DBG
 
-        $this->render('finish', ['brief' => Session::readFlash('brief')]);
+        $this->render('finish', ['brief' => $brief]);
     }
 
     /**

@@ -14,12 +14,6 @@ class MasterForm extends \engine\web\Form
     const LOG_TABLE = 'kira_log';
 
     /**
-     * Подключение к базе данных. NULL - не быпо попытки подключения, FALSE - подключение неудалось.
-     * @var null|false|resource
-     */
-    private $dbh = null;
-
-    /**
      * @var array контракт на поля формы
      */
     protected $contract = [
@@ -309,10 +303,11 @@ class MasterForm extends \engine\web\Form
      * или "some/../../path/". Это недопустимо.
      *
      * Один параметр:
-     * $options = ['isFile' => bool] // не дописывать слеш в конце, проверяемое значение - путь к файлу.
+     * $options = ['isFile' => bool] // не дописывать слеш в конце, т.к. проверяемое значение - путь к файлу.
      *
-     * @param $path
-     * @return string|false
+     * @param string $path проверяемое значение
+     * @param array $options опции валидатора
+     * @return false|string
      */
     public static function normalizePath($path, $options)
     {
@@ -333,7 +328,7 @@ class MasterForm extends \engine\web\Form
     /**
      * Коды языков, валидатор для типа "filter_var".
      * Каждое имя в списке проверить регуляркой. Ожидаем [a-z\s,], каждый код 2-3 символа.
-     * @param $value
+     * @param string $value проверяемое значение
      * @return string|false
      */
     public static function langCodesValidator($value)
@@ -451,16 +446,11 @@ class MasterForm extends \engine\web\Form
      * сработать. Кроме необходимого минимума (сервер, имя базы) проверяем подключение. В случае успеха сохраняем его
      * для последующей проверки логера.
      *
-     * Прим: мы не можем использовать классы движка из engine\db\, потому что там параметры подключения читаются из
-     * конфига приложения, а у нас его еще нет.
-     *
-     * TODO не удалось проверить подключение на порт. Любое значение порта подходило. Почему так?
-     *
      * @return void
      */
     private function checkDbConfiguration()
     {
-        $conf = $this->values['db'];
+        $conf = &$this->values['db'];
 
         if (!$conf['switch']) {
             return;
@@ -475,15 +465,10 @@ class MasterForm extends \engine\web\Form
         $conf['dsn'] = 'mysql:host=' . $conf['server'] . '; dbname=' . $conf['base']
             . ($conf['charset'] ? '; charset=' . $conf['charset'] : '');
 
-        try {
-            $options = [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,];
-            $this->dbh = new \PDO($conf['dsn'], $conf['user'], $conf['password'], $options);
-        } catch (\PDOException $e) {
-            $this->errors['db'][] = 'Не удалось подключиться в базе: ' . $e->getMessage();
-            $this->dbh = false;
+        $dbh = SingleModel::dbConnect($conf);
+        if (!$dbh) {
+            $this->errors['db'][] = 'Не удалось подключиться в базе: ' . SingleModel::getLastError();
         }
-
-        return true;
     }
 
     /**
@@ -522,19 +507,20 @@ class MasterForm extends \engine\web\Form
 
             $errMsg = '';
 
-            if (is_null($this->dbh)) {
+            $dbh = SingleModel::getConnection();
+
+            if (is_null($dbh)) {
                 $errMsg = 'Нет конфига БД. Невозможно вести лог в базу.';
-            } elseif ($this->dbh === false) {
+            } elseif ($dbh === false) {
                 $errMsg = 'Подключение к базе не удалось. Не могу проверить отсутствие таблицы лога, а это обязательно';
             } else {
-                try {
-                    $sth = $this->dbh->prepare('SHOW TABLES LIKE ?');
-                    $sth->execute([$conf['table']]);
-                    if ($sth->fetch(\PDO::FETCH_NUM)) {
-                        $errMsg = 'Таблица уже существует. Нельзя использовать ее для записи логов.';
-                    }
-                } catch (\PDOException $e) {
-                    $errMsg = 'Проверка таблицы лога не удалась: ' . $e->getMessage();
+
+                $check = SingleModel::isTableExists($conf['table']);
+
+                if (is_null($check)) {
+                    $errMsg = 'Проверка таблицы лога не удалась: ' . SingleModel::getLastError();
+                } elseif ($check) {
+                    $errMsg = 'Таблица уже существует. Нельзя использовать ее для записи логов.';
                 }
             }
 
