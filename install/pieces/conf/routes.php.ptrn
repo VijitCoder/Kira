@@ -14,16 +14,8 @@
  * - 404 = справа несоблюдение регистра, например контроллер с маленькой буквы, а на деле - с большой.
  */
 return [
-    'app\controllers' => [
-        'registration' => 'Registration',
-        'sendconfirm'  => 'Registration/sendconfirm',
-        'confirm'      => 'Registration/confirm',
-        'login'   => 'Login',
-        'logout'  => 'Login/out',
-        'recover' => 'Login/recover',
-        'profile' => 'Profile',
-
-        'ajax/check' => 'Registration/check',
+    '{{ns_prefix}}\controllers' => [
+        'welcome' => 'WelcomeController/index',
 
         //Общие правила. Должны быть самыми последними вообще
         '<controller:[a-z]+>'                 => '<controller>',

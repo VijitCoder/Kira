@@ -1,0 +1,18 @@
+<?php
+/**
+ * Подключение скрипта конфига можно сделать более корректно, но будет сложнее. Сейчас подключается напрямую в App.php.
+ */
+$main = [
+    // FQN контроллера + метод для главной страницы сайта
+    'indexHandler' => '{{ns_prefix}}\controllers\WelcomeController',
+
+    // FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
+    // ошибками 401-404, 500
+    //'errorHandler' => '{{ns_prefix}}\controllers\ErrorController',
+
+    'routes'       => require 'routes.php',
+];
+
+$env = require 'env.php';
+
+return engine\utils\Arrays::merge_recursive($main, $env, true);

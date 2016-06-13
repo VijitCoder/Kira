@@ -13,13 +13,21 @@ namespace install\app;
 use engine\utils\Arrays;
 use engine\utils\FS;
 use engine\net\Session;
+use engine\html\Render;
 
 class MasterService
 {
     /**
+     * Экземпляр класса модели формы
      * @var object MasterForm
      */
     private $form;
+
+    /**
+     * Путь к шаблонам, из которых будет создано приложение
+     * @var string
+     */
+    private $piecesPath;
 
     /**
      * Ошибки, разобранные по блокам в соответствии блокам формы. Массив хранит ошибки валидации или ошибки
@@ -65,6 +73,7 @@ class MasterService
     public function __construct()
     {
         $this->form = new MasterForm();
+        $this->piecesPath = ROOT_PATH . 'install/pieces/';
     }
 
     /**
@@ -115,12 +124,11 @@ class MasterService
             return $this->endProcess(false);
         }
 
-        if (!$this->organizePaths($values)) {
-            return $this->endProcess(false);
-        }
-
-        if (!$this->organizeLogger($values)) {
-            return $this->endProcess(false);
+        if (!$this->organizePaths($values)
+            || !$this->organizeLogger($values)
+            || !$this->writeConfig($values)
+        ) {
+            //return $this->endProcess(false);   // Временно отключил
         }
 
         // DBG
@@ -183,7 +191,7 @@ class MasterService
         }
         $objects = array_reverse($objects, true);
 
-        foreach($objects as $v) {
+        foreach ($objects as $v) {
             list($type, $target) = $v;
             switch ($type) {
                 case self::RBACK_PATH:
@@ -347,6 +355,101 @@ class MasterService
         }
 
         return $result === true;
+    }
+
+    /**
+     * Пишем конфигурацию приложения
+     * @param array $v проверенный массив данных
+     * @return bool
+     */
+    private function writeConfig(&$v)
+    {
+        $this->addToBrief(self::BRIEF_INFO, 'Пишем конфигурацию приложения');
+
+        $confPath = dirname($v['main_conf']);
+
+        $d = ['ns_prefix' => $v['ns_prefix']];
+
+        # main.php
+
+        $text = Render::fetch($this->piecesPath . "conf/main.php.ptrn", $d);
+        if (!$this->writeToFile($v['main_conf'], $text)) {
+            return false;
+        }
+
+        # routes.php
+
+        $text = Render::fetch($this->piecesPath . "conf/routes.php.ptrn", $d);
+        if (!$this->writeToFile($confPath . '/routes.php',  $text)) {
+            return false;
+        }
+
+        # env.php
+
+        $d = [];
+
+        if ($v['db']['switch']) {
+            $d = $v['db'];
+        }
+
+        if ($v['log']['switch']) {
+            $d['log_store'] = '\engine\Log::' . ($v['log']['store'] == 'db' ? 'STORE_IN_DB' : 'STORE_IN_FILES');
+            if ($path = $v['log']['path']) {
+                $temp = $v['path']['temp'];
+                $cmp = strcmp($path, $temp);
+                if ($cmp == 0) {
+                    $path = 'TEMP_PATH,';
+                } else if ($cmp > 0) {
+                    $path = substr($path, mb_strlen($temp));
+                    $path = "TEMP_PATH . '$path',";
+                } else {
+                    $path = "'$path',";
+                }
+            } else {
+                $path = "'', // логирование в файлы отключено";
+            }
+            unset($cmp, $temp);
+
+            $d['log_path'] = $path;
+            $d['log_tz'] = $v['log']['timezone'];
+        }
+
+        $text = Render::fetch($this->piecesPath . "conf/env.php.ptrn", $d);
+
+        if ($v['db']['switch']) {
+            $text = str_replace(['__DB', 'DB__'], '', $text);
+        } else {
+            $text = preg_replace('~\n__DB.*DB__~s', '', $text);
+            $text = preg_replace("~'db_conf_key'.*\n\s{8}~", '', $text);
+        }
+
+        if ($v['log']['switch']) {
+            $text = str_replace(['__LOG', 'LOG__'], '', $text);
+        } else {
+            $text = preg_replace('~\n__LOG.*LOG__~s', '', $text);
+        }
+
+        if (!$this->writeToFile($confPath . '/env.php', $text)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Запись готового текста скрипта в конечный файл.
+     * @param string $file имя файла
+     * @param string $text текст для сохранения
+     * @return bool
+     */
+    private function writeToFile($file, $text)
+    {
+        if ($result = file_put_contents($file, $text)) {
+            fputcsv($this->rollbackHandler, [self::RBACK_FILE, $file]);
+        } else {
+            $this->addToBrief(self::BRIEF_ERROR, 'Ошибка создания файла ' . $file);
+        }
+        return (bool)$result;
     }
 
     /**

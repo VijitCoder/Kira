@@ -230,7 +230,31 @@ class FS
     }
 
     /**
-     * Переименование файла с перехватом ошибок. Просто обертка для php::rename()
+     * Копирование файла с перехватом ошибок. Просто обертка для php::copy()
+     *
+     * @param string   $from    путь/файл_источник
+     * @param string   $to      путь/файл_назначение
+     * @param resource $context корректный ресурс контекста, созданный функцией php::stream_context_create().
+     * @return string|true
+     */
+    public static function copyFile($from, $to, $context = null)
+    {
+        set_error_handler(['\engine\utils\FS', 'error_handler']);
+
+        try {
+            copy($from, $to, $context);
+            $result = true;
+        } catch (\ErrorException $e) {
+            $result = $e->getMessage();
+        }
+
+        restore_error_handler();
+
+        return $result;
+    }
+
+    /**
+     * Перемещение файла с перехватом ошибок. Просто обертка для php::rename()
      *
      * Прим: для переименования файла нужны только права на запись в каталоге. Сам файл может быть вообще без прав, даже
      * с другим владельцем. ПРОВЕРЕНО. Так же проверено: целевой файл существует, никаких прав на него нет, владелец
@@ -240,14 +264,14 @@ class FS
      * @param string $to   путь/файл_назначение
      * @return true|string
      */
-    public static function renameFile($from, $to)
+    public static function moveFile($from, $to)
     {
         set_error_handler(['\engine\utils\FS', 'error_handler']);
 
         try {
             rename($from, $to);
             $result = true;
-        } catch (ErrorException $e) {
+        } catch (\ErrorException $e) {
             $result = $e->getMessage();
         }
 
