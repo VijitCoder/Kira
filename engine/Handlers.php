@@ -41,9 +41,9 @@ class Handlers
         }
 
         if (DEBUG) {
-            echo Render::make('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
+            echo Render::fetch('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
         } else {
-            echo Render::make('exception_prod.htm', ['domain' => Env::domainName()]);
+            echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
             if ($ex->getPrevious() === null) {
                 App::log()->addTyped("Class: $class\nMessage: $message\nSource: $file:$line\n\nTrace: $trace",
                     Log::EXCEPTION);
@@ -153,7 +153,7 @@ class Handlers
                     header('Content-Type: text/html; charset=UTF-8');
                 }
                 $msg = nl2br(htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'));
-                echo Render::make('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
+                echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
             }
         } else {
             $log_data .= "\n$codeTxt error\n\n\t$msg\n\n";

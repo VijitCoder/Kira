@@ -16,18 +16,19 @@ class Render {
      *
      * Подстановки в шаблоне должны быть оформлены в {{...}}
      *
-     * Для удобства вызова путь не передаем, считая, что все шаблоны в этом же каталоге. Иначе прописываем относительный
-     * путь из каталога с этим скриптом.
-     *
-     * TODO нормальное название методу придумай. Сейчас фантазии не хватает, но вызовы типа Render::render() не улыбают.
+     * Для удобства вызова путь не передаем, если шаблон в этом же каталоге. Иначе прописываем полный путь к файлу.
      *
      * @param string $file файл шаблона
      * @param array  $vars ассоциативный массив данных для замены
      * @return string готовый текст шаблона
      */
-    public static function make($file, $vars = [])
+    public static function fetch($file, $vars = [])
     {
-        $pattern = file_get_contents(__DIR__ . '/' . $file);
+        if (strpos($file , '/') === false) {
+            $file = __DIR__ . '/' . $file;
+        }
+
+        $pattern = file_get_contents($file);
 
         preg_match_all('~\{\{(.*?)\}\}~', $pattern, $match, PREG_PATTERN_ORDER);
 
