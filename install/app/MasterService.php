@@ -110,16 +110,16 @@ class MasterService
 
         $values = $form->getValues();
 
-        if (!$this->rollbackHandler = fopen(APP_PATH . SELF::RBACK_FILE_NAME, 'w')) {
+        if (!$this->rollbackHandler = fopen(APP_PATH . self::RBACK_FILE_NAME, 'w')) {
             $this->addToBrief(self::BRIEF_ERROR, 'Не могу создать файл отката. Установка прервана.');
             return $this->endProcess(false);
         }
 
-        if (!$this->createPaths($values)) {
+        if (!$this->organizePaths($values)) {
             return $this->endProcess(false);
         }
 
-        if (!$this->createLogTable($values)) {
+        if (!$this->organizeLogger($values)) {
             return $this->endProcess(false);
         }
 
@@ -155,7 +155,7 @@ class MasterService
     }
 
     /**
-     * Откат создания приложения.
+     * Откат создания приложения. Выполняем его в обратном порядке. Это непринципиально, но в сводке выглядит логичнее.
      * Удалить каталоги и файлы. Удалить таблицу логера.
      * Прим: запрос может прийти не только из этого сервиса, но из контроллера тоже. В этом случае нет подключения к БД,
      * таблицу нужно будет удалять вручную. Не хочу придумывать, как бы мне организовать такое подключение.
@@ -163,7 +163,7 @@ class MasterService
      */
     public function rollback()
     {
-        $file = APP_PATH . SELF::RBACK_FILE_NAME;
+        $file = APP_PATH . self::RBACK_FILE_NAME;
 
         if (!file_exists($file)) {
             $this->addToBrief(self::BRIEF_ERROR, 'Не найден файл отката.');
@@ -177,15 +177,21 @@ class MasterService
             return;
         }
 
+        $objects = [];
         while (($row = fgetcsv($fh)) !== false) {
-            $object = $row[1];
-            switch ($row[0]) {
+            $objects[] = $row;
+        }
+        $objects = array_reverse($objects, true);
+
+        foreach($objects as $v) {
+            list($type, $target) = $v;
+            switch ($type) {
                 case self::RBACK_PATH:
-                    $result = FS::removeDir($object, 2);
+                    $result = FS::removeDir($target, 1);
                     $tgtInsert = 'каталога';
                     break;
                 case self::RBACK_FILE:
-                    $result = FS::deleteFile($object);
+                    $result = FS::deleteFile($target);
                     $tgtInsert = 'файла';
                     break;
                 case self::RBACK_TABLE:
@@ -201,28 +207,29 @@ class MasterService
                             $dbh = SingleModel::dbConnect($conf);
                         } else {
                             $this->addToBrief(self::BRIEF_WARN,
-                                "Нет конфига подключения к БД. Удалите вручную таблицу `$object`");
+                                "Нет конфига подключения к БД. Удалите вручную таблицу `$target`");
                             break;
                         }
                     }
 
                     if ($dbh) {
-                        if (!SingleModel::dropLogTable($object)) {
+                        if (!SingleModel::dropLogTable($target)) {
                             $result = SingleModel::getLastError();
                         }
                     } else {
                         $this->addToBrief(self::BRIEF_WARN,
-                            'Ошибка соединения. ' . SingleModel::getLastError() . " Удалите вручную таблицу `$object`");
+                            'Ошибка соединения. ' . SingleModel::getLastError() . " Удалите вручную таблицу `$target`");
                     }
                     break;
                 default:
-                    ;
+                    $tgtInsert = $type;
+                    $result = 'Неизвестный тип объекта удаления.';
             }
 
             if ($result === true) {
-                $this->addToBrief(self::BRIEF_INFO, "Удаление {$tgtInsert}: $object");
+                $this->addToBrief(self::BRIEF_INFO, "Удаление {$tgtInsert}: $target");
             } else {
-                $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}: $result");
+                $this->addToBrief(self::BRIEF_WARN, "Ошибка удаления {$tgtInsert}: $target. $result");
             }
         }
 
@@ -239,92 +246,107 @@ class MasterService
      * Создание каталогов. Определение прав доступа.
      *
      * @param array $v проверенный массив данных
-     * @return void
+     * @return bool
      */
-    private function createPaths(&$v)
+    private function organizePaths(&$v)
     {
         $this->addToBrief(self::BRIEF_INFO, 'Создаем каталоги приложения');
         $ok = true;
 
-        /**
-         * Создаем каталог. Пишем либо новую цель в файл отката либо полученную ошибку в сводку.
-         * @param $path
-         */
-        $functionCreate = function ($path) use ($ok) {
-            if (true === ($result = FS::makeDir($path))) {
-                fputcsv($this->rollbackHandler, [self::RBACK_PATH, $path]);
-            } else {
-                $ok = false;
-                $this->addToBrief(self::BRIEF_ERROR, "Ошибка создания каталога '{$path}': {$result}");
-            }
-        };
-
         foreach ($v['path'] as &$path) {
             $path = ROOT_PATH . $path;
-            $functionCreate($path);
+            if (!$this->createPath($path)) {
+                $ok = false;
+            }
         }
 
         $v['main_conf'] = ROOT_PATH . $v['main_conf'];
-        $functionCreate(dirname($v['main_conf']));
-
-        if ($v['log']['switch']) {
-            $path = &$v['log']['path'];
-            if (!$path) {
-                $path = $v['path']['temp'];
-                $this->addToBrief(self::BRIEF_INFO,
-                    'Каталог лога не задан. Логи будут складываться в temp-каталог приложения.');
-            } else {
-                $path = ROOT_PATH . $path;
-                $functionCreate($path);
-            }
+        if (!$this->createPath(dirname($v['main_conf']))) {
+            $ok = false;
         }
 
         if ($v['lang']['switch']) {
             $path = &$v['lang']['js_path'];
             $path = ROOT_PATH . $path . 'i18n/';
-            $functionCreate($path);
+            if (!$this->createPath($path)) {
+                $ok = false;
+            }
         }
 
         return $ok;
     }
 
     /**
-     * Таблица для логирования в базу.
+     * Организуем окружение логера. Метод построен с учетом всех возможностей конфигурации логера,
+     * см. соответсвующий док.
      *
-     * Подключаемся к базе. Конфиг подключения сохраняем в сессии для будущего отката, если он будет запрошен кодером
-     * отдельно, через контроллер. Создаем таблицу логера. Только здесь запоминаем имя таблицы, не раньше.
+     * Каталог. Просто создать. Валидатор уже обеспечил нужное значение.
+     *
+     * Таблица тоже определена и проверна валидаторомю. Подключаемся к базе. Конфиг подключения сохраняем в сессии
+     * для будущего отката, если он будет запрошен кодером отдельно, через контроллер. Создаем таблицу логера.
+     *
+     * Возможно, что будет задан и путь к файлам и таблица логера. Это нормально и нужно все организовать.
      *
      * @param array $values проверенный массив данных
      * @return bool
      */
-    private function createLogTable(&$values)
+    private function organizeLogger(&$values)
     {
         $log = &$values['log'];
-        if (!$log['switch'] || $log['store'] !== 'db') {
+
+        if (!$log['switch']) {
             return true;
         }
 
-        $table = &$log['table'];
-        if (!$table) {
-            $table = MasterForm::LOG_TABLE;
-            $this->addToBrief(self::BRIEF_INFO, "Таблица лога явно не задана. Будет `$table`");
+        $this->addToBrief(self::BRIEF_INFO, 'Создаем окружение логера');
+
+        $path = &$log['path'];
+        if ($path) {
+            $path = ROOT_PATH . $path;
+            if (($path !== $values['path']['temp']) && !$this->createPath($path)) {
+                return false;
+            }
         }
 
-        if (!SingleModel::dbConnect($values['db'])) {
-            $this->addToBrief(self::BRIEF_ERROR, 'Не удалось подключиться в базе: ' . SingleModel::getLastError());
-            return false;
-        };
+        if ('db' == $log['store']) {
+            if (!SingleModel::dbConnect($values['db'])) {
+                $this->addToBrief(self::BRIEF_ERROR, 'Не удалось подключиться в базе: ' . SingleModel::getLastError());
+                return false;
+            };
 
-        Session::write('db', serialize($values['db']));
+            Session::write('db', serialize($values['db']));
 
-        if ($result = SingleModel::createLogTable($table)) {
-            $this->addToBrief(self::BRIEF_INFO, "Создана таблица логера `$table` в базе, описанной в конфигурации БД");
-            fputcsv($this->rollbackHandler, [self::RBACK_TABLE, $table]);
+            $table = &$log['table'];
+            if ($result = SingleModel::createLogTable($table)) {
+                $this->addToBrief(
+                    self::BRIEF_INFO,
+                    "Создана таблица логера `$table` в базе, описанной в конфигурации БД"
+                );
+                fputcsv($this->rollbackHandler, [self::RBACK_TABLE, $table]);
+            } else {
+                $this->addToBrief(self::BRIEF_ERROR, 'Не удалось создать таблицу. ' . SingleModel::getLastError());
+            }
+
+            return $result;
+        }
+
+        return true;
+    }
+
+    /**
+     * Создаем каталог. Пишем либо новую цель в файл отката либо полученную ошибку в сводку.
+     * @param string $path
+     * @return bool
+     */
+    private function createPath($path)
+    {
+        if (true === ($result = FS::makeDir($path))) {
+            fputcsv($this->rollbackHandler, [self::RBACK_PATH, $path]);
         } else {
-            $this->addToBrief(self::BRIEF_ERROR, 'Не удалось создать таблицу. ' . SingleModel::getLastError());
+            $this->addToBrief(self::BRIEF_ERROR, "Ошибка создания каталога '{$path}': {$result}");
         }
 
-        return $result;
+        return $result === true;
     }
 
     /**

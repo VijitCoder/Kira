@@ -305,8 +305,8 @@ class MasterForm extends \engine\web\Form
      * Один параметр:
      * $options = ['isFile' => bool] // не дописывать слеш в конце, т.к. проверяемое значение - путь к файлу.
      *
-     * @param string $path проверяемое значение
-     * @param array $options опции валидатора
+     * @param string $path    проверяемое значение
+     * @param array  $options опции валидатора
      * @return false|string
      */
     public static function normalizePath($path, $options)
@@ -412,7 +412,7 @@ class MasterForm extends \engine\web\Form
         $e = &$this->errors;
 
         $map = [
-            'app' => 'приложения',
+            'app'  => 'приложения',
             'view' => 'шаблонов',
             'temp' => 'временных файлов',
         ];
@@ -473,7 +473,8 @@ class MasterForm extends \engine\web\Form
     /**
      * Проверка конфигурации логера.
      *
-     * Допускается работа логера без конфигурации. Поэтому ее проверка немного усложнена.
+     * Допускается работа логера без конфигурации. Поэтому ее проверка немного усложнена, принимаем пропущенные значения
+     * по умолчанию.
      *
      * Если включено логирование и выбран лог в базу, проверить отсутствие таблицы при логировании в базу. Следует
      * учесть, что перед этим была проверка подключения к БД в другом методе, и если она не удалась, тогда проверка
@@ -485,7 +486,7 @@ class MasterForm extends \engine\web\Form
      */
     private function checkLoggerConfiguration()
     {
-        $conf = $this->values['log'];
+        $conf = &$this->values['log'];
 
         if (!$conf['switch']) {
             return;
@@ -499,7 +500,15 @@ class MasterForm extends \engine\web\Form
             }
         }
 
-        if (isset($conf['store']) && $conf['store'] == 'db') {
+        if (!$conf['store']) {
+            $conf['store'] = 'files';
+        }
+
+        if ($conf['store'] == 'files') {
+            if (!$conf['path']) {
+                $conf['path'] = $this->values['path']['temp'];
+            }
+        } else {
             if (!$conf['table']) {
                 $conf['table'] = self::LOG_TABLE;
             }
