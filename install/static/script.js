@@ -14,37 +14,28 @@ $(document).ready(function () {
             tailSlash(this);
             var app = $(this).val();
 
-            var paths = {
-                '#view-path': 'views/',
-                '#temp-path': 'temp/',
-                '#log-path': 'temp/',
-                '#main-conf': 'conf/main.php'
-            };
+            var tag = $('#log-path');
+            var text = $(tag).val();
+            if (oldApp && text) {
+                var pattern = new RegExp('^' + oldApp.replace(/\//, '\\/'));
 
-            for (let inputID in paths) {
-                var tag = $(inputID);
-                var text = $(tag).val();
-                if (oldApp && text) {
-                    var pattern = new RegExp('^' + oldApp.replace(/\//, '\\/'));
-
-                    if (!app && pattern.test(text)) {
-                        $(tag).val('');
-                        continue;
-                    }
-
-                    text = text.replace(pattern, app);
-                } else if (!text) {
-                    text = app + paths[inputID];
+                if (!app && pattern.test(text)) {
+                    $(tag).val('');
+                    return;
                 }
-                $(tag).val(text);
+
+                text = text.replace(pattern, app);
+            } else if (!text) {
+                text = app + 'temp/logs/';
             }
+            $(tag).val(text);
         });
 
     /**
      * TODO как получить event.target и сразу указать обработчиком внешнюю функцию, а не использовать обертку из
      * анонимной функции?
      */
-    $(document).on('change', '#view-path, #temp-path, #log-path, #js-path', function () {
+    $(document).on('change', '#log-path, #js-path', function () {
         tailSlash(this);
     });
 

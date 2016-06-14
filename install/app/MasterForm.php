@@ -17,69 +17,19 @@ class MasterForm extends \engine\web\Form
      * @var array контракт на поля формы
      */
     protected $contract = [
-        'path' => [
-            'app' => [
-                'validators' => [
-                    'required' => ['message' => 'Не указан каталог приложения'],
-
-                    'external' => [
-                        'function' => ['\install\app\MasterForm', 'normalizePath'],
-                        'message'  => 'Каталог приложения должен быть в пределах сайта',
-                    ],
-
-                    'length' => [
-                        'max'     => 1000,
-                        'message' => 'Каталог приложения: очень длинный путь. Максимум 1000 символов',
-                    ],
-                ],
-            ],
-
-            'view' => [
-                'validators' => [
-                    'required' => ['message' => 'Не указан каталог шаблонов'],
-
-                    'external' => [
-                        'function' => ['\install\app\MasterForm', 'normalizePath'],
-                        'message'  => 'Каталог шаблонов должен быть в пределах сайта',
-                    ],
-
-                    'length' => [
-                        'max'     => 1000,
-                        'message' => 'Каталог шаблонов: очень длинный путь. Максимум 1000 символов',
-                    ],
-                ],
-            ],
-
-            'temp' => [
-                'validators' => [
-                    'required' => ['message' => 'Не указан temp-каталог приложения'],
-
-                    'external' => [
-                        'function' => ['\install\app\MasterForm', 'normalizePath'],
-                        'message'  => 'Temp-каталог приложения должен быть в пределах сайта',
-                    ],
-
-                    'length' => [
-                        'max'     => 1000,
-                        'message' => 'Temp-каталог приложения: очень длинный путь. Максимум 1000 символов',
-                    ],
-                ],
-            ],
-        ],
-
-        'main_conf' => [
+        'app_path' => [
             'validators' => [
-                'required' => ['message' => 'Не указан путь к конфигурации'],
+                'required' => ['message' => 'Не указан каталог приложения'],
 
-                'external' => [
-                    'function' => ['\install\app\MasterForm', 'normalizePath'],
-                    'options'  => ['isFile' => true],
-                    'message'  => 'Конфигурация приложения должна быть в пределах сайта',
+                'filter_var' => [
+                    'filter'  => FILTER_CALLBACK,
+                    'options' => ['\install\app\MasterForm', 'normalizePath'],
+                    'message' => 'Каталог должен быть в пределах сайта',
                 ],
 
                 'length' => [
                     'max'     => 1000,
-                    'message' => 'Конфигурация приложения: очень длинный путь. Максимум 1000 символов',
+                    'message' => 'Каталог приложения: очень длинный путь. Максимум 1000 символов',
                 ],
             ],
         ],
@@ -216,9 +166,10 @@ class MasterForm extends \engine\web\Form
 
             'path' => [
                 'validators' => [
-                    'external' => [
-                        'function' => ['\install\app\MasterForm', 'normalizePath'],
-                        'message'  => 'Каталог должен быть в пределах сайта',
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\install\app\MasterForm', 'normalizePath'],
+                        'message' => 'Каталог должен быть в пределах сайта',
                     ],
 
                     'length' => [
@@ -261,9 +212,10 @@ class MasterForm extends \engine\web\Form
 
             'js_path' => [
                 'validators' => [
-                    'external' => [
-                        'function' => ['\install\app\MasterForm', 'normalizePath'],
-                        'message'  => 'Каталог должен быть в пределах сайта',
+                    'filter_var' => [
+                        'filter'  => FILTER_CALLBACK,
+                        'options' => ['\install\app\MasterForm', 'normalizePath'],
+                        'message' => 'Каталог должен быть в пределах сайта',
                     ],
 
                     'length' => [
@@ -297,32 +249,25 @@ class MasterForm extends \engine\web\Form
     }
 
     /**
-     * Дезинфекция каталога. Валидатор для типа "external".
+     * Дезинфекция каталога. Валидатор для типа "filter_var".
      *
      * Заменяем слеши на прямые, в конце ставим слеш. Проверяем каталог на попытки переходов типа "../path/"
      * или "some/../../path/". Это недопустимо.
      *
-     * Один параметр:
-     * $options = ['isFile' => bool] // не дописывать слеш в конце, т.к. проверяемое значение - путь к файлу.
-     *
-     * @param string $path    проверяемое значение
-     * @param array  $options опции валидатора
+     * @param string $value проверяемое значение
      * @return false|string
      */
-    public static function normalizePath($path, $options)
+    public static function normalizePath($value)
     {
-        if ($path) {
-            $path = trim(str_replace('\\', '/', $path), '/');
-            if (!isset($options['isFile'])) {
-                $path .= '/';
-            }
+        if ($value) {
+            $value = trim(str_replace('\\', '/', $value), '/') . '/';
 
-            if (FS::hasDots($path)) {
-                return ['error' => 'Каталог должен быть в пределах сайта'];
+            if (FS::hasDots($value)) {
+                return false;
             }
         }
 
-        return ['value' => $path];
+        return $value;
     }
 
     /**
@@ -396,7 +341,7 @@ class MasterForm extends \engine\web\Form
     /**
      * Проверка каталогов.
      *
-     * Проверить существование каталогов приложения. Их не должно быть, иначе - ошибка. Суть в том, что при
+     * Проверить существование каталога приложения. Его не должно быть, иначе - ошибка. Суть в том, что при
      * существовании каталога нельзя гарантировать, что копируемые в него файлы приложения не перепишут там что-нибудь.
      *
      * Если включены блоки lang или log, проверить соответственно:
@@ -411,16 +356,9 @@ class MasterForm extends \engine\web\Form
         $v = &$this->values;
         $e = &$this->errors;
 
-        $map = [
-            'app'  => 'приложения',
-            'view' => 'шаблонов',
-            'temp' => 'временных файлов',
-        ];
-        foreach ($v['path'] as $key => $path) {
-            if (file_exists(ROOT_PATH . $path)) {
-                $e['path'][$key][] = "Каталог {$map[$key]} уже существует. "
-                    . 'Не могу с ним работать без риска переписать что-нибудь.';
-            }
+        if (file_exists(ROOT_PATH . $v['app_path'])) {
+            $e['app_path'][] = "Каталог приложения уже существует. "
+                . 'Не могу с ним работать без риска переписать что-нибудь.';
         }
 
         $path = ROOT_PATH . $v['log']['path'];
@@ -506,7 +444,7 @@ class MasterForm extends \engine\web\Form
 
         if ($conf['store'] == 'files') {
             if (!$conf['path']) {
-                $conf['path'] = $this->values['path']['temp'];
+                $conf['path'] = $this->values['app_path'] . 'temp/';
             }
         } else {
             if (!$conf['table']) {

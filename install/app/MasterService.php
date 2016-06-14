@@ -43,6 +43,18 @@ class MasterService
     ];
 
     /**
+     * Подкаталоги приложения.
+     * @var array
+     */
+    private $paths = [
+        'app'         => '',
+        'view'        => 'views/',
+        'temp'        => 'temp/',
+        'conf'        => 'conf/',
+        'controllers' => 'controllers/',
+    ];
+
+    /**
      * Сводка. Двумерный массив сообщений процесса: [type => info|warn|error, message => string]
      * @var array
      */
@@ -74,23 +86,6 @@ class MasterService
     {
         $this->form = new MasterForm();
         $this->piecesPath = ROOT_PATH . 'install/pieces/';
-    }
-
-    /**
-     * Данные для заполнения шаблона. Единый метод, определяющий формат ответа для шаблона формы.
-     * Используются для инициализации формы в GET-запросе и для ее заполнения при неудачном POST. При этом на форму
-     * выводятся ошибки валидации или доп.проверок.
-     *
-     * @param array $v      значения полей
-     * @param array $errors ошибки, собранные в блоки
-     * @return array
-     */
-    public function prepareViewData(&$v = null, &$errors = null)
-    {
-        return [
-            'd'      => $v ?: $this->form->getValues(),
-            'errors' => $errors ?: $this->errorBlocks,
-        ];
     }
 
     /**
@@ -127,6 +122,7 @@ class MasterService
         if (!$this->organizePaths($values)
             || !$this->organizeLogger($values)
             || !$this->writeConfig($values)
+            || !$this->writeIndex($values)
         ) {
             //return $this->endProcess(false);   // Временно отключил
         }
@@ -138,6 +134,23 @@ class MasterService
         exit('Stop ' . __METHOD__);
 
         return $this->endProcess(true);
+    }
+
+    /**
+     * Данные для заполнения шаблона. Единый метод, определяющий формат ответа для шаблона формы.
+     * Используются для инициализации формы в GET-запросе и для ее заполнения при неудачном POST. При этом на форму
+     * выводятся ошибки валидации или доп.проверок.
+     *
+     * @param array $v      значения полей
+     * @param array $errors ошибки, собранные в блоки
+     * @return array
+     */
+    public function prepareViewData(&$v = null, &$errors = null)
+    {
+        return [
+            'd'      => $v ?: $this->form->getValues(),
+            'errors' => $errors ?: $this->errorBlocks,
+        ];
     }
 
     /**
@@ -252,7 +265,8 @@ class MasterService
 
     /**
      * Создание каталогов. Определение прав доступа.
-     *
+     * Все каталоги находятся внутри каталога приложения. За исключением каталога словарей.
+     * Исходное значение "app_path" далее не используем, оно нужно только для индексного файла.
      * @param array $v проверенный массив данных
      * @return bool
      */
@@ -261,16 +275,20 @@ class MasterService
         $this->addToBrief(self::BRIEF_INFO, 'Создаем каталоги приложения');
         $ok = true;
 
-        foreach ($v['path'] as &$path) {
-            $path = ROOT_PATH . $path;
+        $v['path'] = [
+            'app'         => '',
+            'view'        => 'views/',
+            'temp'        => 'temp/',
+            'conf'        => 'conf/',
+            'controllers' => 'controllers/',
+        ];
+
+        foreach ($this->paths as $key => $path) {
+            $path = ROOT_PATH . $v['app_path'] . $path;
             if (!$this->createPath($path)) {
                 $ok = false;
             }
-        }
-
-        $v['main_conf'] = ROOT_PATH . $v['main_conf'];
-        if (!$this->createPath(dirname($v['main_conf']))) {
-            $ok = false;
+            $v['path'][$key] = $path;
         }
 
         if ($v['lang']['switch']) {
@@ -358,85 +376,6 @@ class MasterService
     }
 
     /**
-     * Пишем конфигурацию приложения
-     * @param array $v проверенный массив данных
-     * @return bool
-     */
-    private function writeConfig(&$v)
-    {
-        $this->addToBrief(self::BRIEF_INFO, 'Пишем конфигурацию приложения');
-
-        $confPath = dirname($v['main_conf']);
-
-        $d = ['ns_prefix' => $v['ns_prefix']];
-
-        # main.php
-
-        $text = Render::fetch($this->piecesPath . "conf/main.php.ptrn", $d);
-        if (!$this->writeToFile($v['main_conf'], $text)) {
-            return false;
-        }
-
-        # routes.php
-
-        $text = Render::fetch($this->piecesPath . "conf/routes.php.ptrn", $d);
-        if (!$this->writeToFile($confPath . '/routes.php',  $text)) {
-            return false;
-        }
-
-        # env.php
-
-        $d = [];
-
-        if ($v['db']['switch']) {
-            $d = $v['db'];
-        }
-
-        if ($v['log']['switch']) {
-            $d['log_store'] = '\engine\Log::' . ($v['log']['store'] == 'db' ? 'STORE_IN_DB' : 'STORE_IN_FILES');
-            if ($path = $v['log']['path']) {
-                $temp = $v['path']['temp'];
-                $cmp = strcmp($path, $temp);
-                if ($cmp == 0) {
-                    $path = 'TEMP_PATH,';
-                } else if ($cmp > 0) {
-                    $path = substr($path, mb_strlen($temp));
-                    $path = "TEMP_PATH . '$path',";
-                } else {
-                    $path = "'$path',";
-                }
-            } else {
-                $path = "'', // логирование в файлы отключено";
-            }
-            unset($cmp, $temp);
-
-            $d['log_path'] = $path;
-            $d['log_tz'] = $v['log']['timezone'];
-        }
-
-        $text = Render::fetch($this->piecesPath . "conf/env.php.ptrn", $d);
-
-        if ($v['db']['switch']) {
-            $text = str_replace(['__DB', 'DB__'], '', $text);
-        } else {
-            $text = preg_replace('~\n__DB.*DB__~s', '', $text);
-            $text = preg_replace("~'db_conf_key'.*\n\s{8}~", '', $text);
-        }
-
-        if ($v['log']['switch']) {
-            $text = str_replace(['__LOG', 'LOG__'], '', $text);
-        } else {
-            $text = preg_replace('~\n__LOG.*LOG__~s', '', $text);
-        }
-
-        if (!$this->writeToFile($confPath . '/env.php', $text)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Запись готового текста скрипта в конечный файл.
      * @param string $file имя файла
      * @param string $text текст для сохранения
@@ -453,6 +392,151 @@ class MasterService
     }
 
     /**
+     * Пишем конфигурацию приложения
+     * Заморочки в env.php: если нет БД, нужно выпилить лишнее (конфиг DB, часть конфига логера). Аналогично, если
+     * нет логера, нужно полностью убрать его конфигурацию из шаблона.
+     * @param array $v проверенный массив данных
+     * @return bool
+     */
+    private function writeConfig(&$v)
+    {
+        $this->addToBrief(self::BRIEF_INFO, 'Пишем конфигурацию приложения');
+
+        $confPath = $v['path']['conf'];
+
+        $d = ['ns_prefix' => $v['ns_prefix']];
+
+        # main.php
+
+        $text = Render::fetch($this->piecesPath . "conf/main.php.ptrn", $d);
+        if (!$this->writeToFile($confPath . 'main.php', $text)) {
+            return false;
+        }
+
+        # routes.php
+
+        $text = Render::fetch($this->piecesPath . "conf/routes.php.ptrn", $d);
+        if (!$this->writeToFile($confPath . 'routes.php', $text)) {
+            return false;
+        }
+
+        # env.php
+
+        $d = [];
+
+        if ($v['db']['switch']) {
+            $d = $v['db'];
+        }
+
+        if ($v['log']['switch']) {
+            if ($path = $v['log']['path']) {
+                $temp = $v['path']['temp'];
+                $tempLen = mb_strlen($temp);
+                $part = mb_substr($path, 0, $tempLen);
+
+                if ($part === $temp) {
+                    if (mb_strlen($part) == mb_strlen($path)) {
+                        $path = 'TEMP_PATH,';
+                    } else {
+                        $path = substr($path, $tempLen);
+                        $path = "TEMP_PATH . '$path',";
+                    }
+                } else {
+                    $path = "'$path',";
+                }
+            } else {
+                $path = "'', // логирование в файлы отключено";
+            }
+            unset($temp, $tempLen, $part);
+
+            $d['log_path'] = $path;
+            $d['log_store'] = '\engine\Log::' . ($v['log']['store'] == 'db' ? 'STORE_IN_DB' : 'STORE_IN_FILES');
+            $d['log_table'] = $v['log']['table'] ?: MasterForm::LOG_TABLE;
+            $d['log_tz'] = $v['log']['timezone'];
+        }
+
+        $text = Render::fetch($this->piecesPath . "conf/env.php.ptrn", $d);
+
+        if ($v['db']['switch']) {
+            $text = str_replace(['__DB', 'DB__'], '', $text);
+        } else {
+            $text = preg_replace('~\n__DB.*DB__~s', '', $text);
+            $text = preg_replace('~__L1.*L1__~s', '', $text);
+        }
+
+        if ($v['log']['switch']) {
+            $text = str_replace(['__LOG', 'LOG__'], '', $text);
+            $text = str_replace(['__L1', 'L1__'], '', $text);
+        } else {
+            $text = preg_replace('~\n__LOG.*LOG__~s', '', $text);
+        }
+
+        if (!$this->writeToFile($confPath . 'env.php', $text)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Пишем индексный файл приложения.
+     * Изначально, в корне сайта нет index.php и .htaccess. Создаем их. Если же они есть, дописываем преффикс приложения,
+     * кодеру выдадим предупреждение.
+     * @param $v
+     * @return bool
+     */
+    private function writeIndex(&$v)
+    {
+        $this->addToBrief(self::BRIEF_INFO, 'Пишем файлы корня сайта');
+
+        $file_prefix = preg_replace('~[^a-z]~i', '', $v['ns_prefix']);
+
+        $fn = ROOT_PATH . 'index.php';
+        if (file_exists($fn)) {
+            $this->addToBrief(self::BRIEF_WARN, "Файл $fn уже существует. Создаю отдельный индекс приложения.");
+            $fn = ROOT_PATH . $file_prefix . '_index.php';
+            if (file_exists($fn)) {
+                $this->addToBrief(self::BRIEF_ERROR, "Файл $fn тоже существует! Не знаю, что делать.");
+                return false;
+            }
+        }
+
+        $d = [
+            'timezone'  => date_default_timezone_get(),
+            'ns_prefix' => $v['ns_prefix'],
+            'app_path'  => $v['app_path'],
+        ];
+
+        $text = Render::fetch($this->piecesPath . 'index.php.ptrn', $d);
+
+        if (!$this->writeToFile($fn, $text)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Создаем пример приложения: контроллер, шаблон, макет.
+     * @param $v
+     * @return bool
+     */
+    private function createExample(&$v)
+    {
+        // TODO
+    }
+
+    /**
+     * Создаем пример мультиязычного приложения
+     * @param $v
+     * @return bool
+     */
+    private function createLangExample(&$v)
+    {
+        // TODO
+    }
+
+    /**
      * Пересобираем ошибки валидации в формат, необходимый форме.
      *
      * На входе - многомерный массив с ошибками. На выходе - одномерный массив, всего 4 элемента. Ошибки объеденены
@@ -466,7 +550,7 @@ class MasterService
         $errors = Arrays::array_filter_recursive($errors);
         $result = $this->errorBlocks;
 
-        foreach (['path', 'main_conf', 'ns_prefix', 'email',] as $key) {
+        foreach (['app_path', 'ns_prefix', 'email',] as $key) {
             if (isset($errors[$key])) {
                 $result['required'][] = $errors[$key];
             }
@@ -506,4 +590,39 @@ class MasterService
     {
         return $this->brief;
     }
+}
+
+/**
+ * Вспомогательный класс. Вынес в него мелкие функции.
+ * Class Auxiliary
+ * @package install\app
+ */
+class Auxiliary
+{
+    private $brief;
+
+    private $rollback;
+
+    public function __construct($brief, $rollback)
+    {
+        $this->brief = $brief;
+        $this->rollback = $rollback;
+    }
+
+    /**
+     * Запись готового текста скрипта в конечный файл.
+     * @param string $file имя файла
+     * @param string $text текст для сохранения
+     * @return bool
+     */
+    public function writeToFile($file, $text)
+    {
+        if ($result = file_put_contents($file, $text)) {
+            fputcsv($this->rollback, [self::RBACK_FILE, $file]);
+        } else {
+            $this->addToBrief(self::BRIEF_ERROR, 'Ошибка создания файла ' . $file);
+        }
+        return (bool)$result;
+    }
+
 }

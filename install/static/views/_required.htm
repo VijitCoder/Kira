@@ -22,30 +22,10 @@
     <label>Каталог приложения</label>
     <div class="grayed take-left"><?= ROOT_PATH ?></div>
     <div class="input-wrapper">
-        <input type="text" name="path[app]" id="app-path" value="<?= $d['path']['app'] ?>">
+        <input type="text" name="app_path" id="app-path" value="<?= $d['app_path'] ?>">
     </div>
 
-    <label class="clear-float">Каталог шаблонов</label>
-    <div class="grayed take-left"><?= ROOT_PATH ?></div>
-    <div class="input-wrapper">
-        <input type="text" name="path[view]" id="view-path" value="<?= $d['path']['view'] ?>">
-    </div>
-
-    <label class="clear-float">Каталог временных файлов</label>
-    <div class="grayed take-left"><?= ROOT_PATH ?></div>
-    <div class="input-wrapper">
-        <input type="text" name="path[temp]" id="temp-path" value="<?= $d['path']['temp'] ?>">
-    </div>
-
-    <label class="clear-float">Путь к основному файлу конфигурации приложения</label>
-    <div class="grayed take-left"><?= ROOT_PATH ?></div>
-    <div class="input-wrapper">
-        <input type="text" name="main_conf" id="main-conf" value="<?= $d['main_conf'] ?>">
-    </div>
-
-    <hr>
-
-    <div class="take-left cell-6">
+    <div class="clear-float take-left cell-6">
         Префикс пространства имен приложения (может отличаться от каталога приложения)
     </div>
     <div class="input-wrapper">
