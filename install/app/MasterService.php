@@ -66,6 +66,12 @@ class MasterService
         BRIEF_ERROR = 3;
 
     /**
+     * Максимальный уровень сообщений в сводке. Переменная нужна для финальной старницы, определяет текст на ней.
+     * @var int
+     */
+    private $briefMaxType = 0;
+
+    /**
      * Дескриптор csv-файла для отката установки.
      * @var resource
      */
@@ -155,7 +161,8 @@ class MasterService
     }
 
     /**
-     * Окончание/прерывание процесса создания приложения
+     * Окончание/прерывание процесса создания приложения.
+     * В массив сводки добавляем первым элементом итоговое состояние установки.
      * @param bool $isOk
      * @return bool
      */
@@ -171,6 +178,7 @@ class MasterService
             $this->rollback();
         }
 
+        array_unshift($this->brief, $this->briefMaxType);
         Session::newFlash('brief', serialize($this->brief));
 
         return $isOk;
@@ -502,8 +510,9 @@ class MasterService
         foreach ($targets as $fileFrom => $fileTo) {
             $fn = ROOT_PATH . $fileTo;
             if (file_exists($fn)) {
-                $this->addToBrief(self::BRIEF_WARN, "Файл $fn уже существует. Добавлю преффикс приложения в имя файла.");
-                $fn = ROOT_PATH . $file_prefix . '_' . $fileTo;
+                $fnNew = $file_prefix . '_' . $fileTo;
+                $this->addToBrief(self::BRIEF_WARN, "Файл $fn уже существует. Создаю <i>$fnNew</i>.");
+                $fn = ROOT_PATH . $fnNew;
                 if (file_exists($fn)) {
                     $this->addToBrief(self::BRIEF_ERROR, "Файл $fn тоже существует! Не знаю, что делать.");
                     return false;
@@ -599,7 +608,8 @@ class MasterService
     }
 
     /**
-     * Добавить запись в сводку
+     * Добавить запись в сводку.
+     * Запоминаем максимальный тип сообщения в сводке.
      * @param int    $type    см. константы self::BRIEF_*
      * @param string $message сообщение
      * @return void
@@ -607,6 +617,9 @@ class MasterService
     private function addToBrief($type, $message)
     {
         $this->brief[] = compact('type', 'message');
+        if ($type > $this->briefMaxType) {
+            $this->briefMaxType = $type;
+        }
     }
 
     /**

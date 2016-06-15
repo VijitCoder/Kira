@@ -2,8 +2,9 @@
 return [
     'router' => 'install\app\SingleRouter',
     'routes' => [
-        'install'        => 'SingleController/index',
-        'install/finish' => 'SingleController/finish',
+        'install'          => 'SingleController/index',
+        'install/success'  => 'SingleController/success',
+        'install/error'    => 'SingleController/error',
         'install/rollback' => 'SingleController/rollback',
     ],
 ];

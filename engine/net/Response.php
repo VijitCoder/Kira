@@ -147,11 +147,12 @@ class Response
      *
      * @param string $file полный путь + файл
      * @return void
+     * @throws \LogicException
      */
     public static function download($file)
     {
         if (headers_sent($file, $line)) {
-            throw new LogicException("Не могу отправить заголовки, уже идет передача ответа. Началась тут $file:$line");
+            throw new \LogicException("Не могу отправить заголовки, уже идет передача ответа. Началась тут $file:$line");
         }
 
         header('Content-Description: File Transfer');

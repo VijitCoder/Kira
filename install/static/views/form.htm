@@ -12,13 +12,13 @@ $params = compact('d', 'errors');
 
 <form method="POST">
 
-    <? $this->renderPartial('_required', $params); ?>
+    <?php $this->renderPartial('_required', $params); ?>
 
-    <? $this->renderPartial('_db', $params); ?>
+    <?php $this->renderPartial('_db', $params); ?>
 
-    <? $this->renderPartial('_log', $params); ?>
+    <?php $this->renderPartial('_log', $params); ?>
 
-    <? $this->renderPartial('_lang', $params); ?>
+    <?php $this->renderPartial('_lang', $params); ?>
 
     <input type="submit" value="СОЗДАТЬ">
 </form>

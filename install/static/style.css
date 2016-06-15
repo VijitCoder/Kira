@@ -74,13 +74,12 @@ body, input[type=text] {
 
 h3 {
     font-size: 170%;
-    margin: 10px 0;
+    padding: 10px 0;
 }
 
 h4 {
     font-size: 135%;
-    font-weight: bold;
-    margin: 10px 0;
+    padding: 10px 0;
 }
 
 abbr { border-bottom: 1px dotted; }
@@ -133,6 +132,29 @@ em, i { font-style: italic; }
 div.wrapper {
     max-width: 800px;
     margin: auto;
+}
+
+#base, #fempty, #footer {
+    max-width: 800px;
+}
+
+#base, #footer {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Прибиваем футер */
+html, body { height: 100%; }
+
+#base { min-height: 100%; }
+
+/* чтоб под футер ничего не залезло, внизу #base лежит эта пустая div-ка. Она же тянет вниз #base. */
+#fempty { height: 45px; clear: both; }
+
+#footer {
+    border-top: 1px solid black;
+    height: 40px;
+    margin-top: -41px; /* ширина + верхняя граница футера */
 }
 
 .note {
@@ -283,3 +305,21 @@ input[type=submit] {
     font-size: 140%;
     vertical-align: bottom;
 }
+
+table.brief {
+    table-layout: fixed;
+    width: 100%;
+    border: 0px;
+    border-collapse: collapse;
+}
+
+table.brief td {
+    padding: 0;
+    vertical-align: top;
+    text-align: left;
+}
+
+table.brief td.status {width: 55px;}
+
+table.brief tr.warning { background-color: rgba(255, 255, 19, 0.38); }
+table.brief tr.error { background-color: rgba(204, 12, 54, 0.15); }

@@ -29,33 +29,51 @@ class SingleController extends Controller
             $result = $svc->createApp();
             if (is_array($result)) {
                 $this->render('form', $result);
+            } elseif ($result === true) {
+                $this->redirect('/install/success');
             } else {
-                $this->redirect('/install/finish');
+                $this->redirect('/install/error');
             }
         }
     }
 
     /**
-     * Приложение создано. Выдаем сводку по процессу. Если были ошибки в процессе, тут их сообщаем.
+     * Приложение успешно создано. Выдаем сводку по процессу.
+     * Тут выясняем максимальный уровень сводки. Если не выше BRIEF_INFO, значит установка прошла вообще без проблем.
      */
-    public function finish()
+    public function success()
     {
-        $brief = unserialize(Session::readFlash('brief'));
-        dd($brief); exit(__METHOD__.'()'); //DBG
+        if (!$brief =Session::readFlash('brief')) {
+            $this->redirect('/install');
+        }
+        $brief = unserialize($brief);
+        $isOk = array_shift($brief);
+        $isOk = $isOk <= MasterService::BRIEF_INFO;
+        $this->render('success', compact('isOk', 'brief'));
+    }
 
-        $this->render('finish', ['brief' => $brief]);
+    /**
+     * Уже после валидации произошли ошибки при создании приложения. Выдаем сводку.
+     */
+    public function error()
+    {
+        if (!$brief =Session::readFlash('brief')) {
+            $this->redirect('/install');
+        }
+
+        $brief = unserialize($brief);
+        array_shift($brief);
+        $this->render('error', ['brief' => $brief]);
     }
 
     /**
      * Откат созданного приложения. Удаляем каталоги, файлы и таблицу логера.
+     * TODO два поведения: либо откат, либо удаление файла отката. GET[confirm] = yes|no, при нужно куда-то редиректить.
      */
     public function rollback()
     {
         $svc = new MasterService;
         $svc->rollback();
-
-        dd($svc->getBrief()); exit; //DBG
-
-        $this->render('finish', ['brief' => $svc->getBrief()]);
+        $this->render('_brief', ['brief' => $svc->getBrief()]);
     }
 }

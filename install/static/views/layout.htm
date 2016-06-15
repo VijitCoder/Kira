@@ -9,13 +9,14 @@
 </head>
 
 <body>
-    <div class="wrapper">
-        <?=$content;?>
-
-        <hr>
-
-        <div class="float-right"><?=engine\App::VERSION?> &copy; 7Lives</div>
+	<div id='base'>
+		<?=$content;?>
+	    <div id="fempty"></div>
     </div>
+
+    <div id='footer'>
+        <div class="float-right"><?=engine\App::VERSION?> &copy; 7Lives</div>
+	</div>
 </body>
 </html>
 
