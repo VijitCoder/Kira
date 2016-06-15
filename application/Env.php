@@ -5,8 +5,7 @@
 
 namespace app;
 
-use Exception,
-    engine\App;
+use engine\App;
 
 class Env extends \engine\Env
 {
@@ -17,7 +16,7 @@ class Env extends \engine\Env
      * определяем по имени домена, начинается с 'm.'.
      *
      * @return int
-     * @throws Exception
+     * @throws \Exception
      */
     public static function detectEnvironment()
     {
@@ -32,6 +31,6 @@ class Env extends \engine\Env
             default:;
         }
 
-        throw new Exception ('Не могу определить среду окружения (сервер).');
+        throw new \Exception ('Не могу определить среду окружения (сервер).');
     }
 }

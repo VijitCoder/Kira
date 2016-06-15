@@ -122,16 +122,17 @@ class MasterService
         if (!$this->organizePaths($values)
             || !$this->organizeLogger($values)
             || !$this->writeConfig($values)
-            || !$this->writeIndex($values)
+            || !$this->writeMainFiles($values)
+            || !$this->createExample($values)
         ) {
-            //return $this->endProcess(false);   // Временно отключил
+            return $this->endProcess(false);
         }
 
         // DBG
-        echo 'DEBUG';
-        $this->endProcess(1);
-        dd($this->brief);
-        exit('Stop ' . __METHOD__);
+        //echo 'DEBUG';
+        //$this->endProcess(1);
+        //dd($this->brief);
+        //exit('Stop ' . __METHOD__);
 
         return $this->endProcess(true);
     }
@@ -384,6 +385,7 @@ class MasterService
     private function writeToFile($file, $text)
     {
         if ($result = file_put_contents($file, $text)) {
+            chmod($file, 0666);
             fputcsv($this->rollbackHandler, [self::RBACK_FILE, $file]);
         } else {
             $this->addToBrief(self::BRIEF_ERROR, 'Ошибка создания файла ' . $file);
@@ -479,38 +481,45 @@ class MasterService
     }
 
     /**
-     * Пишем индексный файл приложения.
-     * Изначально, в корне сайта нет index.php и .htaccess. Создаем их. Если же они есть, дописываем преффикс приложения,
+     * Пишем индексный файл приложения и главный .htaccess.
+     * Изначально, в корне сайта этих файлов нет. Создаем их. Если что-то уже есть, дописываем преффикс приложения,
      * кодеру выдадим предупреждение.
-     * @param $v
+     * .htaccess просто копируем, в нем нет подстановок. Но для поддержания единого кода делаем вид, что они есть.
+     * @param array $v проверенный массив данных
      * @return bool
      */
-    private function writeIndex(&$v)
+    private function writeMainFiles(&$v)
     {
         $this->addToBrief(self::BRIEF_INFO, 'Пишем файлы корня сайта');
 
         $file_prefix = preg_replace('~[^a-z]~i', '', $v['app_namespace']);
 
-        $fn = ROOT_PATH . 'index.php';
-        if (file_exists($fn)) {
-            $this->addToBrief(self::BRIEF_WARN, "Файл $fn уже существует. Создаю отдельный индекс приложения.");
-            $fn = ROOT_PATH . $file_prefix . '_index.php';
-            if (file_exists($fn)) {
-                $this->addToBrief(self::BRIEF_ERROR, "Файл $fn тоже существует! Не знаю, что делать.");
-                return false;
-            }
-        }
-
-        $d = [
-            'timezone'  => date_default_timezone_get(),
-            'app_namespace' => $v['app_namespace'],
-            'app_path'  => $v['app_path'],
+        $targets = [
+            'index.php.ptrn' => 'index.php',
+            '.htaccess.ptrn' => '.htaccess',
         ];
 
-        $text = Render::fetch($this->piecesPath . 'index.php.ptrn', $d);
+        foreach ($targets as $fileFrom => $fileTo) {
+            $fn = ROOT_PATH . $fileTo;
+            if (file_exists($fn)) {
+                $this->addToBrief(self::BRIEF_WARN, "Файл $fn уже существует. Добавлю преффикс приложения в имя файла.");
+                $fn = ROOT_PATH . $file_prefix . '_' . $fileTo;
+                if (file_exists($fn)) {
+                    $this->addToBrief(self::BRIEF_ERROR, "Файл $fn тоже существует! Не знаю, что делать.");
+                    return false;
+                }
+            }
 
-        if (!$this->writeToFile($fn, $text)) {
-            return false;
+            $d = [
+                'timezone'      => date_default_timezone_get(),
+                'app_namespace' => $v['app_namespace'],
+                'app_path'      => $v['app_path'],
+            ];
+
+            $text = Render::fetch($this->piecesPath . $fileFrom, $d);
+            if (!$this->writeToFile($fn, $text)) {
+                return false;
+            }
         }
 
         return true;
@@ -518,12 +527,30 @@ class MasterService
 
     /**
      * Создаем пример приложения: контроллер, шаблон, макет.
-     * @param $v
+     * @param array $v проверенный массив данных
      * @return bool
      */
     private function createExample(&$v)
     {
-        // TODO
+        $this->addToBrief(self::BRIEF_INFO, 'Создаем пример приложения');
+
+        $targets = [
+            'controllers/WelcomeController.php.ptrn' => $v['path']['controllers'] . 'WelcomeController.php',
+
+            'Env.php.ptrn'      => $v['path']['app'] . 'Env.php',
+            'views/layout.htm'  => $v['path']['view'] . 'layout.htm',
+            'views/welcome.htm' => $v['path']['view'] . 'welcome.htm',
+        ];
+
+        foreach ($targets as $fileFrom => $fileTo) {
+            $d = ['app_namespace' => $v['app_namespace']];
+            $text = Render::fetch($this->piecesPath . $fileFrom, $d);
+            if (!$this->writeToFile($fileTo, $text)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

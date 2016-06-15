@@ -1,0 +1,14 @@
+<FilesMatch "^\.ht">
+    deny from all
+</FilesMatch>
+
+DefaultLanguage ru
+
+RewriteEngine On
+RewriteBase /
+
+# Если запрос не совпадает с перечисленным - отправлять его в index.php
+# Это быстрее, чем классическая проверка "не файл|не каталог". К тому же запретит прямое обращение к скриптам.
+# TODO допишите сюда ваш каталог статики
+RewriteCond %{REQUEST_URI} !^/(index\.php|robots\.txt|sitemap\.xml|install/.*)
+RewriteRule .* index.php [L,QSA]

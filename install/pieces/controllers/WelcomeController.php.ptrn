@@ -3,11 +3,11 @@
  * Контроллер приветствия.
  */
 
-namespace {{NX_PREFIX}}\controllers;
+namespace {{app_namespace}}\controllers;
 
-use engine\App;
+use {{app_namespace}}\Env;
 
-class Welcome extends  \engine\web\Controller
+class WelcomeController extends \engine\web\Controller
 {
     protected $title = 'Добро пожаловать';
 
