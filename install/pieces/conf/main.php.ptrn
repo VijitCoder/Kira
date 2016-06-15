@@ -4,11 +4,11 @@
  */
 $main = [
     // FQN контроллера + метод для главной страницы сайта
-    'indexHandler' => '{{ns_prefix}}\controllers\WelcomeController',
+    'indexHandler' => '{{app_namespace}}\controllers\WelcomeController',
 
     // FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
     // ошибками 401-404, 500
-    //'errorHandler' => '{{ns_prefix}}\controllers\ErrorController',
+    //'errorHandler' => '{{app_namespace}}\controllers\ErrorController',
 
     'routes'       => require 'routes.php',
 ];

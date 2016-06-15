@@ -24,7 +24,7 @@ class SingleRouter implements \engine\IRouter
         }
 
         $route = explode('/', $route);
-        $controller = APP_NS_PREFIX . 'app\\' . $route[0];
+        $controller = APP_NAMESPACE . 'app\\' . $route[0];
         $action = $route[1];
 
         (new $controller)->$action();

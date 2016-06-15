@@ -404,7 +404,7 @@ class MasterService
 
         $confPath = $v['path']['conf'];
 
-        $d = ['ns_prefix' => $v['ns_prefix']];
+        $d = ['app_namespace' => $v['app_namespace']];
 
         # main.php
 
@@ -489,7 +489,7 @@ class MasterService
     {
         $this->addToBrief(self::BRIEF_INFO, 'Пишем файлы корня сайта');
 
-        $file_prefix = preg_replace('~[^a-z]~i', '', $v['ns_prefix']);
+        $file_prefix = preg_replace('~[^a-z]~i', '', $v['app_namespace']);
 
         $fn = ROOT_PATH . 'index.php';
         if (file_exists($fn)) {
@@ -503,7 +503,7 @@ class MasterService
 
         $d = [
             'timezone'  => date_default_timezone_get(),
-            'ns_prefix' => $v['ns_prefix'],
+            'app_namespace' => $v['app_namespace'],
             'app_path'  => $v['app_path'],
         ];
 
@@ -550,7 +550,7 @@ class MasterService
         $errors = Arrays::array_filter_recursive($errors);
         $result = $this->errorBlocks;
 
-        foreach (['app_path', 'ns_prefix', 'email',] as $key) {
+        foreach (['app_path', 'app_namespace', 'email',] as $key) {
             if (isset($errors[$key])) {
                 $result['required'][] = $errors[$key];
             }
@@ -590,39 +590,4 @@ class MasterService
     {
         return $this->brief;
     }
-}
-
-/**
- * Вспомогательный класс. Вынес в него мелкие функции.
- * Class Auxiliary
- * @package install\app
- */
-class Auxiliary
-{
-    private $brief;
-
-    private $rollback;
-
-    public function __construct($brief, $rollback)
-    {
-        $this->brief = $brief;
-        $this->rollback = $rollback;
-    }
-
-    /**
-     * Запись готового текста скрипта в конечный файл.
-     * @param string $file имя файла
-     * @param string $text текст для сохранения
-     * @return bool
-     */
-    public function writeToFile($file, $text)
-    {
-        if ($result = file_put_contents($file, $text)) {
-            fputcsv($this->rollback, [self::RBACK_FILE, $file]);
-        } else {
-            $this->addToBrief(self::BRIEF_ERROR, 'Ошибка создания файла ' . $file);
-        }
-        return (bool)$result;
-    }
-
 }

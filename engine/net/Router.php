@@ -154,7 +154,7 @@ class Router implements \engine\IRouter
      */
     private function _createController($ctrl)
     {
-        $pattern = '~^' . str_replace('\\', '/', APP_NS_PREFIX) . '~';
+        $pattern = '~^' . str_replace('\\', '/', APP_NAMESPACE) . '~';
         $str = str_replace('\\', '/', $ctrl);
         $file = preg_replace($pattern, APP_PATH, $str, 1) . '.php';
 

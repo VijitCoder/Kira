@@ -21,7 +21,7 @@ require 'Interfaces.php';
  */
 function PSR4_loader($class)
 {
-    $prefix = APP_NS_PREFIX;
+    $prefix = APP_NAMESPACE;
     $len = strlen($prefix);
     if (strncmp($class, $prefix, $len) === 0) {
         $class = substr($class, $len);
