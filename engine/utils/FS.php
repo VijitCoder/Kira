@@ -242,7 +242,11 @@ class FS
         set_error_handler(['\engine\utils\FS', 'error_handler']);
 
         try {
-            copy($from, $to, $context);
+            if ($context) {
+                copy($from, $to, $context);
+            } else {
+                copy($from, $to);
+            }
             $result = true;
         } catch (\ErrorException $e) {
             $result = $e->getMessage();
@@ -288,6 +292,10 @@ class FS
      */
     public static function deleteFile($fn)
     {
+        if (!file_exists($fn)) {
+            return true;
+        }
+
         set_error_handler(['\engine\utils\FS', 'error_handler']);
         try {
             unlink($fn);
