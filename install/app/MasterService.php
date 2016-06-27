@@ -43,18 +43,6 @@ class MasterService
     ];
 
     /**
-     * Подкаталоги приложения.
-     * @var array
-     */
-    private $paths = [
-        'app'         => '',
-        'view'        => 'views/',
-        'temp'        => 'temp/',
-        'conf'        => 'conf/',
-        'controllers' => 'controllers/',
-    ];
-
-    /**
      * Сводка. Двумерный массив сообщений процесса: [type => info|warn|error, message => string]
      * @var array
      */
@@ -125,14 +113,17 @@ class MasterService
             return $this->endProcess(false);
         }
 
+        $exampleMethod = $values['lang']['switch'] ? 'createLangExample' : 'createExample';
+
         if (!$this->organizePaths($values)
             || !$this->organizeLogger($values)
             || !$this->writeConfig($values)
             || !$this->writeMainFiles($values)
-            || !$this->createExample($values)
+            || !$this->$exampleMethod($values)
         ) {
             return $this->endProcess(false);
         }
+
 
         // DBG
         //echo 'DEBUG';
@@ -274,7 +265,7 @@ class MasterService
 
     /**
      * Создание каталогов. Определение прав доступа.
-     * Все каталоги находятся внутри каталога приложения. За исключением каталога словарей.
+     * Все каталоги находятся внутри каталога приложения. За исключением каталога js-словарей.
      * Исходное значение "app_path" далее не используем, оно нужно только для индексного файла.
      * @param array $v проверенный массив данных
      * @return bool
@@ -283,6 +274,7 @@ class MasterService
     {
         $this->addToBrief(self::BRIEF_INFO, 'Создаем каталоги приложения');
         $ok = true;
+        $multiLang = $v['lang']['switch'];
 
         $v['path'] = [
             'app'         => '',
@@ -292,15 +284,18 @@ class MasterService
             'controllers' => 'controllers/',
         ];
 
-        foreach ($this->paths as $key => $path) {
+        if ($multiLang) {
+            $v['path']['i18n'] = 'i18n/';
+        }
+
+        foreach ($v['path'] as $key => &$path) {
             $path = ROOT_PATH . $v['app_path'] . $path;
             if (!$this->createPath($path)) {
                 $ok = false;
             }
-            $v['path'][$key] = $path;
         }
 
-        if ($v['lang']['switch']) {
+        if ($multiLang) {
             $path = &$v['lang']['js_path'];
             $path = ROOT_PATH . $path . 'i18n/';
             if (!$this->createPath($path)) {
@@ -504,7 +499,7 @@ class MasterService
 
         $targets = [
             'index.php.ptrn' => 'index.php',
-            '.htaccess.ptrn' => '.htaccess',
+            '.htaccess'      => '.htaccess',
         ];
 
         foreach ($targets as $fileFrom => $fileTo) {
@@ -563,13 +558,49 @@ class MasterService
     }
 
     /**
-     * Создаем пример мультиязычного приложения
-     * @param $v
+     * Создаем пример мультиязычного приложения: контроллер, шаблон, макет, словари.
+     * @param array $v проверенный массив данных
      * @return bool
      */
     private function createLangExample(&$v)
     {
-        // TODO
+        $this->addToBrief(self::BRIEF_INFO, 'Создаем пример мультиязычного приложения');
+
+        $targets = [
+            'controllers/WelcomeController.php.ptrn' => $v['path']['controllers'] . 'WelcomeController.php',
+
+            'Env.php.ptrn'                => $v['path']['app'] . 'Env.php',
+            'views/layout.htm'            => $v['path']['view'] . 'layout.htm',
+            'views/lang_welcome.htm.ptrn' => $v['path']['view'] . 'welcome.htm',
+
+            'i18n/en.php' => $v['path']['i18n'] . 'en.php',
+            'i18n/en.js'  => $v['lang']['js_path'] . 'en.js',
+            'i18n/ru.js'  => $v['lang']['js_path'] . 'ru.js',
+        ];
+
+        $langs = explode(',', $v['lang']['other']);
+        $langs = array_diff($langs, ['en', 'ru']);
+
+        foreach ($langs as $lang) {
+            $targets['i18n/dummy.php'] = $v['path']['i18n'] . "{$lang}.php";
+            $targets['i18n/dummy.js'] = $v['lang']['js_path'] . "{$lang}.js";
+        }
+
+        $url = mb_substr($v['lang']['js_path'], mb_strlen(ROOT_PATH) - 1); // -1, чтоб с ведущим слешем
+        $d = [
+            'app_namespace' => $v['app_namespace'],
+            'js_url'        => $url,
+        ];
+        foreach ($targets as $fileFrom => $fileTo) {
+            $text = substr($fileFrom, -5) == '.ptrn'
+                ? Render::fetch($this->piecesPath . $fileFrom, $d)
+                : file_get_contents($this->piecesPath . $fileFrom);
+            if (!$this->writeToFile($fileTo, $text)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

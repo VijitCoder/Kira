@@ -1,0 +1,11 @@
+<FilesMatch "^\.ht">
+    deny from all
+</FilesMatch>
+
+DefaultLanguage ru
+
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [L,QSA]
