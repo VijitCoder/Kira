@@ -10,7 +10,7 @@ use Exception;
 class App
 {
     /** Название и версия движка. Ссылка на оф.сайт движка */
-    const VERSION = 'Kira 1.1';
+    const VERSION = 'Kira 1.2';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /** @var array конфигурация приложения */
