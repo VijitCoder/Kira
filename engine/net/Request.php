@@ -85,7 +85,7 @@ class Request
      * Если вызов неправильный, кидаем исключение. Если значение в массиве не найдено (или регулярке не отвечает) - NULL
      *
      * @param string $method имя метода
-     * @param array $params  параметры метода
+     * @param array  $params параметры метода
      * @return mixed
      * @throws \RuntimeException
      * @throws \LogicException
@@ -102,17 +102,26 @@ class Request
         // Прим.: нельзя использовать переменные переменных в данном случае. Поэтому - через условие.
         // {@see http://php.net/manual/ru/language.variables.variable.php}, внизу варнинг.
         switch ($verb) {
-            case 'get':     $arr = &$_GET; break;
-            case 'post':    $arr = &$_POST; break;
-            case 'cookie':  $arr = &$_COOKIE; break;
-            case 'request': $arr = &$_REQUEST; break;
+            case 'get':
+                $arr = &$_GET;
+                break;
+            case 'post':
+                $arr = &$_POST;
+                break;
+            case 'cookie':
+                $arr = &$_COOKIE;
+                break;
+            case 'request':
+                $arr = &$_REQUEST;
+                break;
         }
 
         if (!$params) {
             if ($type) {
                 $secondParam = $type == 'Regexp' ? ', $pattern' : ($type == 'Enum' ? ', $expect' : '');
-                throw new \RuntimeException("Пропущен обязательный параметр функции: имя ключа в массиве \$_{$verb}"
-                    . "\nСигнатура вызова: {$method}(\$key{$secondParam})");
+                throw new \RuntimeException(
+                    "Пропущен обязательный параметр функции: имя ключа в массиве \$_{$verb}" . PHP_EOL
+                    . "Сигнатура вызова: {$method}(\$key{$secondParam})");
             }
             return $arr;
         }
@@ -138,14 +147,16 @@ class Request
                     : (preg_match('~^false|0|off|no|unchecked$~i', $val) ? false : null);
             case 'Regexp':
                 if (!isset($params[1])) {
-                    throw new \RuntimeException("Пропущен обязательный параметр функции: шаблон регулярного выражения.\n"
+                    throw new \RuntimeException(
+                        'Пропущен обязательный параметр функции: шаблон регулярного выражения.' . PHP_EOL
                         . "Сигнатура вызова: {$verb}AsRegexp(\$key, \$pattern)");
                 }
                 $pattern = &$params[1];
                 return preg_match($pattern, $val) ? $val : null;
             case 'Enum':
                 if (!isset($params[1])) {
-                    throw new \RuntimeException("Пропущен обязательный параметр функции: массив допустимых значений.\n"
+                    throw new \RuntimeException(
+                        'Пропущен обязательный параметр функции: массив допустимых значений.' . PHP_EOL
                         . "Сигнатура вызова: {$verb}AsEnum(\$key, \$expect)");
                 }
                 return in_array($val, $params[1]) ? $val : null;
@@ -246,7 +257,7 @@ class Request
     public static function isAjax()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
-            && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+        && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
     }
 
     /**

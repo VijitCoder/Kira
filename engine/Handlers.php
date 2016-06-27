@@ -45,8 +45,13 @@ class Handlers
         } else {
             echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
             if ($ex->getPrevious() === null) {
-                App::log()->addTyped("Class: $class\nMessage: $message\nSource: $file:$line\n\nTrace: $trace",
-                    Log::EXCEPTION);
+                App::log()->addTyped(
+                    "Class: $class" . PHP_EOL .
+                    "Message: $message" . PHP_EOL .
+                    "Source: $file:$line" . PHP_EOL . PHP_EOL .
+                    "Trace: $trace",
+                    Log::EXCEPTION
+                );
             }
         }
     }
@@ -132,8 +137,8 @@ class Handlers
                     $args = '';
                 }
 
-                $stack_output .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>\n";
-                $log_data .= "$where > $func($args)\n";
+                $stack_output .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>" . PHP_EOL;
+                $log_data .= "$where > $func($args)" . PHP_EOL;
             }
 
             $stack_output = "
@@ -156,8 +161,9 @@ class Handlers
                 echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
             }
         } else {
-            $log_data .= "\n$codeTxt error\n\n\t$msg\n\n";
-            $log_data .= 'at ' . date('Y.m.d. H:i:s') . "\n---\n\n";
+            $rn = PHP_EOL;
+            $log_data .= "$rn{$codeTxt}$rn$rn\t{$msg}$rn$rn";
+            $log_data .= 'at ' . date('Y.m.d. H:i:s') . "$rn---$rn$rn";
             file_put_contents(TEMP_PATH . 'kira_php_error.log', $log_data, FILE_APPEND);
             return false;
         }

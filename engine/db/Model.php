@@ -158,7 +158,7 @@ class Model
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[1])) {
-                $msg .= "\nЗапрос отправлен из " . str_replace(ROOT_PATH, '', $trace[1]['file'])
+                $msg .= PHP_EOL . 'Запрос отправлен из ' . str_replace(ROOT_PATH, '', $trace[1]['file'])
                     . '(' . $trace[1]['line'] . ') ';
             }
 

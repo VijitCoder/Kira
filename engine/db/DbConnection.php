@@ -69,7 +69,7 @@ class DbConnection
                 $sql = 'SET time_zone = ?';
                 $tz = &$conf['mysql_timezone'];
                 if (false === $dbh->prepare($sql)->execute([$tz])) {
-                    throw new \PDOException("Ошибка установки часового пояса MySQL-сессии.\n"
+                    throw new \PDOException('Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
                         . 'Запрос: ' . str_replace('?', "'$tz'", $sql));
                 }
             }
@@ -83,7 +83,7 @@ class DbConnection
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[2])) {
-                $msg .= "\nИнициатор подключения " . str_replace(ROOT_PATH, '', $trace[2]['file'])
+                $msg .= PHP_EOL . 'Инициатор подключения ' . str_replace(ROOT_PATH, '', $trace[2]['file'])
                     . '(' . $trace[1]['line'] . ') ';
             }
 

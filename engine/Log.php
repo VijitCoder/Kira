@@ -45,19 +45,19 @@ class Log
 {
     // Типы логов
     const
-        ENGINE     = 'engine',
+        ENGINE = 'engine',
         DB_CONNECT = 'DB connection',
-        DB_QUERY   = 'DB query',
-        EXCEPTION  = 'exception',
+        DB_QUERY = 'DB query',
+        EXCEPTION = 'exception',
         HTTP_ERROR = 'HTTP error', // например, 404, 403 можно логировать
-        INFO       = 'information',
-        UNTYPED    = 'untyped';
+        INFO = 'information',
+        UNTYPED = 'untyped';
 
     // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
     const
-        STORE_ERROR    = 0,
+        STORE_ERROR = 0,
         STORE_IN_FILES = 1,
-        STORE_IN_DB    = 2;
+        STORE_IN_DB = 2;
 
     /** @var array конфигурация логера */
     private $_conf;
@@ -98,13 +98,13 @@ class Log
         $conf['_mail'] = App::conf('admin_mail', false);
 
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
-            throw new \LogicException("Ошибка конфигурации логера: указан 'db_conf_key' к несуществующей настройке.\n"
-                . 'Лог в БД невозможен');
+            throw new \LogicException('Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке.'
+                . PHP_EOL . 'Лог в БД невозможен');
         }
 
         if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
-            throw new \LogicException("Ошибка конфигурации логера: не задан каталог ('log_path') для лог-файлов.\n"
-                . 'Логирование в файлы невозможно.');
+            throw new \LogicException('Ошибка конфигурации логера: не задан каталог ("log_path") для лог-файлов.'
+                . PHP_EOL . 'Логирование в файлы невозможно.');
         }
 
         $this->_conf = $conf;
@@ -219,7 +219,7 @@ class Log
     {
         $ts = $this->_conf['php_timezone']
             ? new \DateTime(null, new \DateTimeZone($this->_conf['php_timezone']))
-            :  new \DateTime();
+            : new \DateTime();
 
         $this->_logIt = [
             'type'     => $data['type'],
@@ -293,8 +293,8 @@ class Log
 
             $result = (bool)(new Model($this->_conf['db_conf_key']))->query(compact('sql', 'params'));
         } catch (\Exception $e) {
-            $logIt['message'] .= "\n\nДополнительно. Не удалось записать это сообщение в лог БД, причина: "
-                . $e->getMessage();
+            $logIt['message'] .= PHP_EOL . PHP_EOL
+                . 'Дополнительно. Не удалось записать это сообщение в лог БД, причина: ' . $e->getMessage();
             $result = false;
         }
 
@@ -350,8 +350,8 @@ class Log
                 $result = false;
             }
         } catch (\ErrorException $e) {
-            $logIt['message'] .= "\n\nДополнительно. Не удалось записать это сообщение в файл лога, причина: "
-                . $e->getMessage();
+            $logIt['message'] .= PHP_EOL . PHP_EOL
+                . 'Дополнительно. Не удалось записать это сообщение в файл лога, причина: ' . $e->getMessage();
             $result = false;
         }
 
@@ -379,9 +379,19 @@ class Log
         $domain = Env::domainName();
         $date = $logIt['ts']->format('Y/m/d H:i:s P');
 
-        $letters['txt'] = "Сообщение от логера\n\n{$logIt['message']}"
-            . "\n\nТип: {$logIt['type']}\nИсточник: {$logIt['source']}"
-            . "\n\nURL запроса:{$logIt['request']}\nIP юзера: {$logIt['userIP']}\n\n$date (c) $domain";
+        $rn = PHP_EOL;
+        $letters['text'] =
+            'Сообщение от логера' . $rn
+            . $rn
+            . $logIt['message'] . $rn
+            . $rn
+            . "Тип: {$logIt['type']}$rn"
+            . "Источник: {$logIt['source']}" . $rn
+            . $rn
+            . "URL запроса:{$logIt['request']}" . $rn
+            . "IP юзера: {$logIt['userIP']}" . $rn
+            . $rn
+            . "$date (c) $domain";
 
         $vars = [
             'message' => nl2br($logIt['message']),
