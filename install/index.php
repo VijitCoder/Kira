@@ -13,7 +13,7 @@ define('ROOT_PATH', $dir . '/');
 define('APP_NAMESPACE', 'install\\');
 define('APP_PATH', ROOT_PATH . 'install/');
 define('TEMP_PATH', APP_PATH);
-define('VIEWS_PATH', APP_PATH . 'static/views/');
+define('VIEWS_PATH', APP_PATH . 'views/');
 define('MAIN_CONFIG', APP_PATH . 'app/config.php');
 
 define('DEBUG', true);
