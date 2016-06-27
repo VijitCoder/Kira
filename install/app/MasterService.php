@@ -124,13 +124,6 @@ class MasterService
             return $this->endProcess(false);
         }
 
-
-        // DBG
-        //echo 'DEBUG';
-        //$this->endProcess(1);
-        //dd($this->brief);
-        //exit('Stop ' . __METHOD__);
-
         return $this->endProcess(true);
     }
 
@@ -261,6 +254,15 @@ class MasterService
         }
 
         $this->addToBrief(self::BRIEF_INFO, 'Откат закончен.');
+    }
+
+    /**
+     * Удаляем файл отката, тем исключая возможность откатить установку.
+     * @return string|true
+     */
+    public static function eliminateRollback()
+    {
+        return FS::deleteFile(APP_PATH . self::RBACK_FILE_NAME);
     }
 
     /**
@@ -559,6 +561,8 @@ class MasterService
 
     /**
      * Создаем пример мультиязычного приложения: контроллер, шаблон, макет, словари.
+     * В примере создаем английскую версию сайта, поэтому для нее словари создаются особым способом. Для других языков
+     * генерация из болванок.
      * @param array $v проверенный массив данных
      * @return bool
      */

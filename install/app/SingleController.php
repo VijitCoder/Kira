@@ -1,6 +1,7 @@
 <?php
 namespace install\app;
 
+use engine\net\Request;
 use engine\net\Session;
 use engine\web\Controller;
 
@@ -68,12 +69,17 @@ class SingleController extends Controller
 
     /**
      * Откат созданного приложения. Удаляем каталоги, файлы и таблицу логера.
-     * TODO два поведения: либо откат, либо удаление файла отката. GET[confirm] = yes|no, при нужно куда-то редиректить.
+     * Два поведения: либо откат, либо удаление файла отката. GET[confirm] = yes|любое-другое-значение.
      */
     public function rollback()
     {
-        $svc = new MasterService;
-        $svc->rollback();
-        $this->render('_brief', ['brief' => $svc->getBrief()]);
+        $confirm = Request::get('confirm');
+        if ($confirm == 'yes') {
+            $svc = new MasterService;
+            $svc->rollback();
+            $this->render('_brief', ['brief' => $svc->getBrief()]);
+        } else {
+            $this->render('eliminateRollback', ['result' => MasterService::eliminateRollback()]);
+        }
     }
 }
