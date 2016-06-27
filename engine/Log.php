@@ -60,14 +60,14 @@ class Log
         STORE_IN_DB = 2;
 
     /** @var array конфигурация логера */
-    private $_conf;
+    private $conf;
 
     /**
      * Внутреннее представление данных для логирования. Чтобы между функциями не передавать этот массив, оформил в поле
      * класса.
      * @var array
      */
-    private $_logIt;
+    private $logIt;
 
     /**
      * Конструктор.
@@ -107,7 +107,7 @@ class Log
                 . PHP_EOL . 'Логирование в файлы невозможно.');
         }
 
-        $this->_conf = $conf;
+        $this->conf = $conf;
     }
 
     /**
@@ -146,7 +146,7 @@ class Log
      */
     public function add($data)
     {
-        $conf = $this->_conf;
+        $conf = $this->conf;
 
         if (!$conf['switch_on'] || $conf['store'] == self::STORE_ERROR) {
             return;
@@ -171,16 +171,16 @@ class Log
             throw new \LogicException('Нет сообщения для записи в лог.');
         }
 
-        $this->_prepareLogData($data);
+        $this->prepareLogData($data);
 
         // Заранее готовимся к сбою. Так избежим циклических вызовов, когда классы DB попытаются логировать свои ошибки
         // в базу, которая уже лежит.
-        $store = $this->_conf['store'];
+        $store = $this->conf['store'];
         $result = false;
         if (!$data['file_force'] && $store == self::STORE_IN_DB) {
-            $this->_conf['store'] = self::STORE_IN_FILES;
+            $this->conf['store'] = self::STORE_IN_FILES;
             if ($result = $this->_writeToDb()) {
-                $this->_conf['store'] = $store;
+                $this->conf['store'] = $store;
             }
         }
 
@@ -193,16 +193,16 @@ class Log
         //if (!$result && $store == self::STORE_IN_FILES) {
 
         if (!$result) {
-            $this->_conf['store'] = self::STORE_ERROR;
-            if ($this->_writeToFile()) {
-                $this->_conf['store'] = $store;
+            $this->conf['store'] = self::STORE_ERROR;
+            if ($this->writeToFile()) {
+                $this->conf['store'] = $store;
             } else {
                 $data['notify'] = true;
             }
         }
 
         if ($data['notify']) {
-            $this->_mailToAdmin();
+            $this->mailToAdmin();
         }
     }
 
@@ -215,13 +215,13 @@ class Log
      * @param array $data исходные данные
      * @return void
      */
-    private function _prepareLogData(&$data)
+    private function prepareLogData(&$data)
     {
-        $ts = $this->_conf['php_timezone']
-            ? new \DateTime(null, new \DateTimeZone($this->_conf['php_timezone']))
+        $ts = $this->conf['php_timezone']
+            ? new \DateTime(null, new \DateTimeZone($this->conf['php_timezone']))
             : new \DateTime();
 
-        $this->_logIt = [
+        $this->logIt = [
             'type'     => $data['type'],
             'ts'       => $ts,
             'timezone' => $ts->format('\G\M\T P'),
@@ -264,9 +264,9 @@ class Log
      */
     private function _writeToDb()
     {
-        $logIt = $this->_logIt;
+        $logIt = $this->logIt;
         try {
-            $table = $this->_conf['table_name'];
+            $table = $this->conf['table_name'];
             $sql =
                 "INSERT INTO `{$table}` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
                 VALUES (?,?,?,?,?,?,?)";
@@ -291,7 +291,7 @@ class Log
                 $source,
             ];
 
-            $result = (bool)(new Model($this->_conf['db_conf_key']))->query(compact('sql', 'params'));
+            $result = (bool)(new Model($this->conf['db_conf_key']))->query(compact('sql', 'params'));
         } catch (\Exception $e) {
             $logIt['message'] .= PHP_EOL . PHP_EOL
                 . 'Дополнительно. Не удалось записать это сообщение в лог БД, причина: ' . $e->getMessage();
@@ -314,9 +314,9 @@ class Log
      * @return bool
      * @throws \LogicException
      */
-    private function _writeToFile()
+    private function writeToFile()
     {
-        $logIt = $this->_logIt;
+        $logIt = $this->logIt;
 
         if ($customHandler = (error_reporting() == 0)) {
             set_error_handler(function ($errno, $errstr, $errfile, $errline) {
@@ -325,7 +325,7 @@ class Log
         }
 
         try {
-            if (!$logPath = $this->_conf['log_path']) {
+            if (!$logPath = $this->conf['log_path']) {
                 throw new \ErrorException('Не задан каталог (\'log_path\') для лог-файлов.');
             }
 
@@ -367,11 +367,11 @@ class Log
      *
      * @return void
      */
-    private function _mailToAdmin()
+    private function mailToAdmin()
     {
-        $logIt = $this->_logIt;
+        $logIt = $this->logIt;
 
-        if (!$mailTo = $this->_conf['_mail']) {
+        if (!$mailTo = $this->conf['_mail']) {
             $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', self::ENGINE);
             return;
         }
@@ -424,6 +424,6 @@ class Log
      */
     public function getLogData()
     {
-        return $this->_logIt;
+        return $this->logIt;
     }
 }

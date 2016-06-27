@@ -58,7 +58,7 @@ class Dumper
         self::$_output = '';
         self::$_objects = array();
         self::$_depth = $depth;
-        self::_dumpInternal($var, 0);
+        self::dumpInternal($var, 0);
         if ($highlight) {
             $result = highlight_string("<?php\n" . self::$_output . "\n", true);
             self::$_output = preg_replace('/&lt;\\?php<br \\/>/', '', $result, 1);
@@ -72,7 +72,7 @@ class Dumper
      * @param mixed   $var   переменная для дампа
      * @param integer $level глубина вложений
      */
-    private static function _dumpInternal($var, $level)
+    private static function dumpInternal($var, $level)
     {
         switch (gettype($var)) {
             case 'boolean':
@@ -104,9 +104,9 @@ class Dumper
                     self::$_output .= "array\n" . $spaces . '(';
                     foreach ($keys as $key) {
                         self::$_output .= "\n" . $spaces . '    ';
-                        self::_dumpInternal($key, 0);
+                        self::dumpInternal($key, 0);
                         self::$_output .= ' => ';
-                        self::_dumpInternal($var[$key], $level + 1);
+                        self::dumpInternal($var[$key], $level + 1);
                     }
                     self::$_output .= "\n" . $spaces . ')';
                 }
@@ -125,7 +125,7 @@ class Dumper
                     foreach ($members as $key => $value) {
                         $keyDisplay = strtr(trim($key), array("\0" => ':'));
                         self::$_output .= "\n" . $spaces . "    [$keyDisplay] => ";
-                        self::$_output .= self::_dumpInternal($value, $level + 1);
+                        self::$_output .= self::dumpInternal($value, $level + 1);
                     }
                     self::$_output .= "\n" . $spaces . ')';
                 }

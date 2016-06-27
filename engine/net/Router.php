@@ -25,11 +25,11 @@ class Router implements \engine\IRouter
 
 //        if (in_array($code, [401, 403, 404, 500])) {
         if ($code >= 400) {
-            return $this->_notFound($code);
+            return $this->notFound($code);
         }
 
         if (!isset($_SERVER['REQUEST_URI'])) {
-            return $this->_notFound();
+            return $this->notFound();
         }
 
         $url = explode('?', $_SERVER['REQUEST_URI'])[0];
@@ -37,25 +37,25 @@ class Router implements \engine\IRouter
 
         if (!$url) {
             $handler = App::conf('indexHandler');
-            list($controller, $action) = $this->_parseHandler($handler);
+            list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
             return;
         }
 
         $tmp = rtrim($url, '/');
         if ($tmp !== $url) {
-            $this->_redirect($tmp);
+            $this->redirect($tmp);
         }
 
-        if (!$set = $this->_findRouteFor($url)) {
-            return $this->_notFound();
+        if (!$set = $this->findRouteFor($url)) {
+            return $this->notFound();
         }
 
         list($ctrlName, $action, $params) = $set;
 //dd($set);//DBG
 
-        if (!$controller = $this->_createController($ctrlName)) {
-            return $this->_notFound();
+        if (!$controller = $this->createController($ctrlName)) {
+            return $this->notFound();
         }
 
         if (!$action) {
@@ -77,7 +77,7 @@ class Router implements \engine\IRouter
                 $controller->$action();
             }
         } else {
-            return $this->_notFound();
+            return $this->notFound();
         }
     }
 
@@ -104,7 +104,7 @@ class Router implements \engine\IRouter
      * @param string $url запрос к серверу, без ведущего слеша и без GET-параметров.
      * @return array
      */
-    private function _findRouteFor($url)
+    private function findRouteFor($url)
     {
 //echo $url;
         foreach (App::conf('routes') as $namespace => $routes) {
@@ -152,7 +152,7 @@ class Router implements \engine\IRouter
      * @param $ctrl
      * @return Controller|null
      */
-    private function _createController($ctrl)
+    private function createController($ctrl)
     {
         $pattern = '~^' . str_replace('\\', '/', APP_NAMESPACE) . '~';
         $str = str_replace('\\', '/', $ctrl);
@@ -171,11 +171,11 @@ class Router implements \engine\IRouter
      * @param int $code код HTTP-статуса
      * @throws \Exception
      */
-    private function _notFound($code = 404)
+    private function notFound($code = 404)
     {
         http_response_code($code);
         if ($handler = App::conf('errorHandler', false)) {
-            list($controller, $action) = $this->_parseHandler($handler);
+            list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
         }
     }
@@ -188,7 +188,7 @@ class Router implements \engine\IRouter
      * @param $handler
      * @return array
      */
-    private function _parseHandler($handler)
+    private function parseHandler($handler)
     {
         $handler = explode('->', $handler);
         $controller = (new $handler[0]);
@@ -204,7 +204,7 @@ class Router implements \engine\IRouter
      *
      * @param string $url новый относительный адрес. Всегда без слеша слева, таков тут мой код.
      */
-    private function _redirect($url)
+    private function redirect($url)
     {
         if ($_SERVER['QUERY_STRING']) {
             $url .= '?' . $_SERVER['QUERY_STRING'];
