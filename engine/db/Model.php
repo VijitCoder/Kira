@@ -14,19 +14,19 @@ use \engine\App;
 class Model
 {
     /** @var PDO дескриптор соединения с БД */
-    private $_dbh;
+    private $dbh;
 
     /**
      * @var string тест запроса, с плейсходерами. Только для отладки.
      */
-    private $_sql = '';
+    private $sql = '';
 
     /**
      * Связываемые параметры. Как раз те значения, что будут подставляться в запрос. Только для отладки.
      *
      * @var array
      */
-    protected $_binds = [];
+    protected $binds = [];
 
     /**
      * Имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model"
@@ -57,7 +57,7 @@ class Model
             $this->table = '`' . preg_replace('~Model$~i', '', $name) . '`';
         }
 
-        $this->_dbh = DbConnection::connect($confKey);
+        $this->dbh = DbConnection::connect($confKey);
     }
 
     /**
@@ -67,7 +67,7 @@ class Model
      */
     public function getConnection()
     {
-        return $this->_dbh;
+        return $this->dbh;
     }
 
     /**
@@ -79,7 +79,7 @@ class Model
     public function switchConnection($confKey)
     {
         $this->_confKey = $confKey;
-        $this->_dbh = DbConnection::connect($confKey);
+        $this->dbh = DbConnection::connect($confKey);
         return $this;
     }
 
@@ -141,11 +141,11 @@ class Model
         }
 
         if (DEBUG) {
-            $this->_sql = $sql;
-            $this->_binds = $params;
+            $this->sql = $sql;
+            $this->binds = $params;
         }
 
-        $sth = $this->_dbh->prepare($sql);
+        $sth = $this->dbh->prepare($sql);
         //$sth->debugDumpParams(); exit;//DBG
 
         try {
@@ -221,7 +221,7 @@ class Model
                 }
 
                 if (is_string(current($value))) {
-                    $value = array_map([$this->_dbh, 'quote'], $value);
+                    $value = array_map([$this->dbh, 'quote'], $value);
                 }
 
                 $replaces[$name] = implode(',', $value);
@@ -311,17 +311,17 @@ class Model
             return 'Заполненный текст запроса доступен только в DEBUG-режиме.';
         }
 
-        if (!$sql = &$this->_sql) {
+        if (!$sql = &$this->sql) {
             return 'Модель еще не выполнила ни одного запроса. Нечего показать.';
         }
 
-        if ($binds = &$this->_binds) {
+        if ($binds = &$this->binds) {
             $replaces = [];
             foreach ($binds as $placeholder => $value) {
                 if (is_null($value)) {
                     $value = 'NULL';
                 } else if (is_string($value)) {
-                    $value = $this->_dbh->quote($value);
+                    $value = $this->dbh->quote($value);
                 }
 
                 if (is_int($placeholder)) {

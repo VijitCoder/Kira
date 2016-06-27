@@ -35,13 +35,13 @@ class Mailer
      */
     public static function simple($from, $to, $subject, &$text)
     {
-        $d = self::_encodeHeaders(compact('from', 'to', 'subject'));
+        $d = self::encodeHeaders(compact('from', 'to', 'subject'));
 
-        $headers = self::_commonHeaders($d['from']);
+        $headers = self::commonHeaders($d['from']);
         $headers .= "Content-type: text/plain; charset=utf-8\r\n";
         $headers .= "Content-Transfer-Encoding: base64\r\n";
 
-        $text = self::_encodeAndChunk($text);
+        $text = self::encodeAndChunk($text);
 
         return mail($d['to'], $d['subject'], $text, $headers);
     }
@@ -105,7 +105,7 @@ class Mailer
         $letter = '';
         $rn = "\r\n";
 
-        self::_analyseFileArray($files);
+        self::analyseFileArray($files);
 
         if (isset($files[self::ATTACH])) {
             $boundaryMixed = '---MIXED=' . uniqid(time());
@@ -147,12 +147,12 @@ class Mailer
                 );
 
             $letter .= 'Content-Transfer-Encoding: base64' . $rn;
-            $letter .= $rn . self::_encodeAndChunk($text);
+            $letter .= $rn . self::encodeAndChunk($text);
 
             if ($boundaryRel) {
                 foreach ($files[self::RELATED] as $fn => $mime) {
                     $letter .= $boundaryRel . $rn;
-                    self::_attachFile($letter, $fn, self::RELATED, $mime);
+                    self::attachFile($letter, $fn, self::RELATED, $mime);
                 }
                 $letter .= "$boundaryRel--$rn";
             }
@@ -165,13 +165,13 @@ class Mailer
         if ($boundaryMixed) {
             foreach ($files[self::ATTACH] as $fn) {
                 $letter .= $boundaryMixed . $rn;
-                self::_attachFile($letter, $fn, self::ATTACH);
+                self::attachFile($letter, $fn, self::ATTACH);
             }
             $letter .= "$boundaryMixed--";
         }
 
-        $d = self::_encodeHeaders(compact('from', 'to', 'subject'));
-        $headers = self::_commonHeaders($d['from']);
+        $d = self::encodeHeaders(compact('from', 'to', 'subject'));
+        $headers = self::commonHeaders($d['from']);
 
         /*
         Костыли в логику mail(). Итоговое письмо собирается из $headers + ПУСТАЯ СТРОКА + $letter. Эта строка ломает
@@ -194,7 +194,7 @@ class Mailer
      * @param array $files
      * @return void
      */
-    private static function _analyseFileArray(&$files)
+    private static function analyseFileArray(&$files)
     {
         if (!$files) {
             return;
@@ -225,12 +225,12 @@ class Mailer
      * @param string $mime    MIME-тип
      * @return void
      */
-    private static function _attachFile(&$letter, $fn, $purpose, $mime = 'application/octet-stream')
+    private static function attachFile(&$letter, $fn, $purpose, $mime = 'application/octet-stream')
     {
         $rn = "\r\n";
         $fileContent = file_get_contents($fn);
         $fn = basename($fn);
-        $encFn = self::_encodeHeaders($fn);
+        $encFn = self::encodeHeaders($fn);
 
         $letter .= "Content-Type: $mime; name=\"$encFn\"$rn";
         if ($purpose == self::RELATED) {
@@ -240,7 +240,7 @@ class Mailer
             $letter .= "Content-Disposition: attachment; filename=\"$encFn\"$rn";
         }
         $letter .= "Content-Transfer-Encoding: base64$rn";
-        $letter .= $rn . self::_encodeAndChunk($fileContent);
+        $letter .= $rn . self::encodeAndChunk($fileContent);
     }
 
     /**
@@ -251,7 +251,7 @@ class Mailer
      * @param string $from от кого
      * @return string
      */
-    private static function _commonHeaders($from)
+    private static function commonHeaders($from)
     {
         $headers = [
             'From: ' . $from,
@@ -278,7 +278,7 @@ class Mailer
      * @param array|string $data ассоциативный массив заголовков ИЛИ один заголовок
      * @return void
      */
-    private static function _encodeHeaders($data)
+    private static function encodeHeaders($data)
     {
         /*
         TODO Тесты на локалке приводят к багу. В конце кодированного значения From, To и Reply-To добавляется имя
@@ -307,7 +307,7 @@ class Mailer
      * @param string $str
      * @return string
      */
-    private static function _encodeAndChunk($str)
+    private static function encodeAndChunk($str)
     {
         return chunk_split(base64_encode($str), 70);
     }

@@ -35,7 +35,7 @@ class Controller
      */
     protected function render($view, $data = array(), $output = true)
     {
-        $content = $this->_renderFile($view, $data);
+        $content = $this->renderFile($view, $data);
 
         ob_start();
         require VIEWS_PATH . $this->layout . $this->viewExt;
@@ -59,7 +59,7 @@ class Controller
      */
     protected function renderPartial($view, $data = array(), $output = true)
     {
-        $result = $this->_renderFile($view, $data);
+        $result = $this->renderFile($view, $data);
         if ($output) {
             echo $result;
         } else {
@@ -76,7 +76,7 @@ class Controller
      * @return string
      * @throws \Exception
      */
-    private function _renderFile($_view123, $data)
+    private function renderFile($_view123, $data)
     {
         if (isset($data['_view123'])) {
             throw new \Exception ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);

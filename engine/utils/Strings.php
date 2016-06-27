@@ -41,7 +41,7 @@ class Strings
      */
     public static function rus2eng($str)
     {
-        return strtr($str, self::_dictionary('rus'));
+        return strtr($str, self::dictionary('rus'));
     }
 
     /**
@@ -55,7 +55,7 @@ class Strings
      */
     public static function eng2rus($str)
     {
-        return strtr($str, self::_dictionary('eng'));
+        return strtr($str, self::dictionary('eng'));
     }
 
     /**
@@ -64,7 +64,7 @@ class Strings
      * @param string $keys rus|eng ключи массива
      * @return array
      */
-    private static function _dictionary($keys)
+    private static function dictionary($keys)
     {
         return $keys == 'eng'
             ? [ //удалены 'ь', 'ъ'

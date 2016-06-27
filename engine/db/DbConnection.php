@@ -34,7 +34,7 @@ use PDO,
 class DbConnection
 {
     /** @var PDO объекты подключения к БД. Одна БД + юзер = один объект */
-    private static $_cons = [];
+    private static $cons = [];
 
     /**
      * Соединяемся с базой или получаем дескриптор подключения.
@@ -56,8 +56,8 @@ class DbConnection
      */
     public static function connect($confKey)
     {
-        if (isset(self::$_cons[$confKey])) {
-            return self::$_cons[$confKey];
+        if (isset(self::$cons[$confKey])) {
+            return self::$cons[$confKey];
         }
 
         $conf = array_merge(['options' => null, 'mysql_timezone' => '+00:00'], App::conf($confKey));
@@ -74,7 +74,7 @@ class DbConnection
                 }
             }
 
-            self::$_cons[$confKey] = $dbh;
+            self::$cons[$confKey] = $dbh;
         } catch (\PDOException $e) {
             if (DEBUG) {
                 throw $e;
@@ -96,7 +96,7 @@ class DbConnection
             throw new \Exception($e->getMessage(), 0, $e);
         }
 
-        return self::$_cons[$confKey];
+        return self::$cons[$confKey];
     }
 
     /**
@@ -111,7 +111,7 @@ class DbConnection
      */
     public static function disconnect($confKey)
     {
-        unset(self::$_cons[$confKey]);
+        unset(self::$cons[$confKey]);
     }
 
     /**
