@@ -2,7 +2,7 @@ $(function () {
     /**
      * Переключалка языка интерфейса
      */
-    $('#cmbLang').change(function() {
+    $('#cmbLang').change(function () {
         var lang = this.value;
         if (lang == 'ru') {
             $.removeCookie('lang');
@@ -15,7 +15,7 @@ $(function () {
     /**
      * Валидируем логин
      */
-    $('#fmReg input[name="login"]').focusout(function(ev) {
+    $('#fmReg input[name="login"]').focusout(function (ev) {
         var err = $(this).siblings('span.error');
 
         if (/^[a-z0-9_-]+$/.test(this.value)) {
@@ -26,23 +26,25 @@ $(function () {
         }
     });
 
-   /**
+    /**
      * Проверяем на доступность логин или мыло
      */
-    $('#fmReg input[name="login"], #fmReg input[name="mail"]').focusout(function() {
+    $('#fmReg input[name="login"], #fmReg input[name="mail"]').focusout(function () {
         if (!this.value) return;
         var err = $(this).siblings('span.error');
         var gif = $(this).siblings('img').css('visibility', 'visible');
-        $.get('/ajax/check', {p:this.value},
-            function(data, status) {
+        $.get('/ajax/check', {p: this.value},
+            function (data, status) {
                 if (status == 'success' && data) {
                     $(err).html(data);
                 } else {
                     $(err).html('');
                 }
             }
-        )
-        .always(function() { $(gif).css('visibility', 'hidden'); });
+            )
+            .always(function () {
+                $(gif).css('visibility', 'hidden');
+            });
     });
 
     /**
@@ -50,16 +52,16 @@ $(function () {
      * Есть косячок: \w == [a-z9-0-_]. В то время, как на PHP этот спец.символ принимает буквы
      * любых языков (с модификатором "u"). Вообщем допускаем, что пароль только на русском/английском может быть.
      */
-    $('#fmReg input[name="password"]').focusout(function() {
+    $('#fmReg input[name="password"]').focusout(function () {
         var err = [];
         var pass = this.value;
 
         if (!/^[\wа-яё!@#$%^&`\~]+$/i.test(pass)) {
-          err.push('Hедопустимые символы'.t());
+            err.push('Hедопустимые символы'.t());
         }
 
         if (pass.length < $('#js-pwd').data('pass')) {
-          err.push('Пароль слишком короткий'.t());
+            err.push('Пароль слишком короткий'.t());
         }
 
         var cnt = 0;
@@ -82,8 +84,8 @@ $(function () {
     /**
      * Валидируем Имя Фамилию
      */
-    $('#fmReg input[name="firstname"], #fmReg input[name="secondname"]').focusout(function() {
-         $(this).siblings('span.error').html(/^[\sa-zа-яё-]*$/i.test(this.value) ? '' : 'Hедопустимые символы'.t());
+    $('#fmReg input[name="firstname"], #fmReg input[name="secondname"]').focusout(function () {
+        $(this).siblings('span.error').html(/^[\sa-zа-яё-]*$/i.test(this.value) ? '' : 'Hедопустимые символы'.t());
     });
 
     //@link https://jqueryui.com/datepicker/
@@ -98,7 +100,7 @@ $(function () {
                 firstDay: 1,
                 nextText: '>>',
                 prevText: '<<',
-             }
+            }
         )
     );
 });
