@@ -52,6 +52,7 @@ class DbConnection
      *
      * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
      * @return PDO объект подключения к БД
+     * @throws \PDOException
      * @throws \Exception
      */
     public static function connect($confKey)
