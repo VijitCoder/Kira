@@ -1,20 +1,30 @@
 <?php
+namespace engine\db;
+
+use \engine\App;
+
 /**
  * Супер-класс моделей. Подключение и методы работы с БД.
+ *
+ * Обертки методов PDO не поддерживают доп.параметры, которые могут быть в исходных методах. Если требуется точное
+ * использование какого-то PDO-метода, в классе есть два геттера для получения объектов PDO и PDOStatement.
  *
  * По вопросам PDO {@link http://phpfaq.ru/pdo} Очень полезная статья.
  *
  * Одна из проблем PDO: поддержка IN()-выражений. Реализацию см. в self::prepareIN()
  */
-
-namespace engine\db;
-
-use \engine\App;
-
-class Model
+class DbModel
 {
-    /** @var PDO дескриптор соединения с БД */
+    /**
+     * @var \PDO дескриптор соединения с БД
+     */
     private $dbh;
+
+    /**
+     * Объект хранит результирующий набор, соответствующий выполненному запросу.
+     * @var \PDOStatement
+     */
+    private $sth = null;
 
     /**
      * @var string тест запроса, с плейсходерами. Только для отладки.
@@ -61,13 +71,29 @@ class Model
     }
 
     /**
-     * Возвращает дескриптор соединения с БД. Он нужен, например, для запуска транзакции.
-     *
-     * @return PDO
+     * Возвращает дескриптор соединения с БД
+     * @return \PDO
+     * @throws \Exception
      */
     public function getConnection()
     {
+        if (!$this->dbh) {
+            throw new \Exception ('Нет соединения с БД');
+        }
         return $this->dbh;
+    }
+
+    /**
+     * Возвращает объект \PDOStatement для непосредственного обращения к методам класса
+     * @return \PDOStatement
+     * @throws \LogicException
+     */
+    public function getStatement()
+    {
+        if (!$this->sth) {
+            throw new \LogicException ('Сначала нужно выполнить запрос, см. метод DBModel::query()');
+        }
+        return $this->sth;
     }
 
     /**
@@ -84,6 +110,184 @@ class Model
     }
 
     /**
+     * Отправляем запрос в БД.
+     * Подготовка запроса и его выполнение. Перехват ошибок, сбор информации для отладки.
+     *
+     * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
+     *
+     * @param string $sql    текст запроса
+     * @param array  $params значения для подстановки в запрос
+     * @return $this
+     * @throws \LogicException
+     * @throws \PDOException
+     * @throws \Exception
+     */
+    public function query($sql, $params = [])
+    {
+        if (!$sql) {
+            throw new \LogicException('Не указан текст запроса');
+        }
+
+        if (DEBUG) {
+            $this->sql = $sql;
+            $this->binds = $params;
+        }
+
+        $this->sth = $this->dbh->prepare($sql);
+        //$this->sth->debugDumpParams(); exit;//DBG
+
+        try {
+            $this->sth->execute($params);
+        } catch (\PDOException $e) {
+            if (DEBUG) {
+                throw $e;
+            }
+
+            $msg = $e->getMessage();
+            $trace = $e->getTrace();
+            if (isset($trace[1])) {
+                $msg .= PHP_EOL . 'Запрос отправлен из ' . str_replace(ROOT_PATH, '', $trace[1]['file'])
+                    . '(' . $trace[1]['line'] . ') ';
+            }
+
+            if (isset($trace[2])) {
+                $msg .= $trace[2]['function'] . '(...)';
+            }
+
+            App::log()->addTyped($msg, \engine\Log::DB_QUERY);
+
+            throw new \Exception($e->getMessage(), 0, $e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Получить один ряд из результата запроса. Обертка для \PDOStatement::fetch(), но с меньшими возможностями.
+     * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     * @param int $style в каком стиле выдать результат
+     * @return mixed
+     * @throws \LogicException
+     */
+    public function fetch($style = \PDO::FETCH_ASSOC)
+    {
+        return $this->getStatement()->fetch($style);
+    }
+
+    /**
+     * Получить весь результат запроса. Обертка для \PDOStatement::fetchAll(), но с меньшими возможностями.
+     * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     * @param int $style в каком стиле выдать результат
+     * @return mixed
+     * @throws \LogicException
+     */
+    public function fetchAll($style = \PDO::FETCH_ASSOC)
+    {
+        return $this->getStatement()->fetchAll($style);
+    }
+
+    /**
+     * Получить итератор для обхода результата запроса.
+     * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     * @param int $style в каком стиле выдать результат
+     * @return RowIterator
+     * @throws \LogicException
+     */
+    public function getIterator($style = \PDO::FETCH_ASSOC)
+    {
+        return new RowIterator($this->getStatement(), $style);
+    }
+
+    /**
+     * Возвращает количество строк, модифицированных последним SQL запросом
+     * @return int
+     */
+    public function count()
+    {
+        return $this->getStatement()->rowCount();
+    }
+
+    /**
+     * Поиск записи по заданному полю.
+     *
+     * Например, найти юзера по id или логину.. или мылу :)
+     *
+     * Доп. параметры, передаваемые в $ops, описываются массивом:
+     * <pre>
+     * [
+     *   'select'  => string | '*',  поля для выбора. Без экранирования, просто через запятую.
+     *   'one_row' => bool | true,   ожидаем одну запись?
+     *   'cond'    => string | '',   доп.условия. Прям так и писать, 'AND|OR ...'.
+     * ]
+     * </pre>
+     *
+     * @param string $field по какому полю искать
+     * @param string $value значение поля для подстановки в запрос
+     * @param array  $ops   доп.параметры
+     * @return array
+     */
+    public function findByField($field, $value, $ops = [])
+    {
+        $default = [
+            'select'  => '*',
+            'one_row' => true,
+            'cond'    => '',
+        ];
+        $ops = array_merge($default, $ops);
+        extract($ops);
+        if ($select !== '*') {
+            $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
+        }
+
+        $cond = "`{$field}` = ? " . $cond;
+
+        $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
+        $params = [$value]; //параметры подстановки должны быть в массиве
+
+        $result = $this->query($sql, $params);
+        return $one_row ? $result->fetch() : $result->fetchAll();
+    }
+
+    /**
+     * Возвращает ID последней вставленной строки.
+     *
+     * Имеет смысл только в MySQL. С другими СУБД результат не гарантирован.
+     *
+     * Прим.: если используете транзакцию, вызов этого метода должен быть до коммита, иначе получите 0.
+     * Источник {@link http://php.net/manual/ru/pdo.lastinsertid.php#107622}
+     *
+     * @return int
+     * @throws \Exception
+     */
+    public function getLastId()
+    {
+        return $this->getConnection()->lastInsertId();
+    }
+
+    public function beginTransaction()
+    {
+        $this->getConnection()->beginTransaction();
+    }
+
+    public function inTransaction()
+    {
+        return $this->getConnection()->inTransaction();
+    }
+
+    public function commit()
+    {
+        $this->getConnection()->commit();
+    }
+
+    public function rollBack()
+    {
+        $this->getConnection()->rollBack();
+    }
+
+
+    /**
+     * @DEPRECATED
+     *
      * Выполняем запрос.
      *
      * Это основная функция моделей, для запросов прямым текстом (с подстановками). Все действия в одном месте:
@@ -117,9 +321,8 @@ class Model
      * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
      * @return array | int
      * @throws \Exception
-     * @throws \LogicException
      */
-    public function query($ops)
+    public function queryOld($ops)
     {
         $default = [
             'sql'     => null,
@@ -210,6 +413,7 @@ class Model
      * @param &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
      * @return $this
      * @throws \LogicException
+     * @throws \Exception из getConnection()
      */
     public function prepareIN(&$sql, &$params)
     {
@@ -221,7 +425,8 @@ class Model
                 }
 
                 if (is_string(current($value))) {
-                    $value = array_map([$this->dbh, 'quote'], $value);
+                    $dbh = $this->getConnection();
+                    $value = array_map([$dbh, 'quote'], $value);
                 }
 
                 $replaces[$name] = implode(',', $value);
@@ -254,45 +459,6 @@ class Model
             $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
         }
         return $values;
-    }
-
-    /**
-     * Поиск записи по заданному полю.
-     *
-     * Например, найти юзера по id или логину.. или мылу :)
-     *
-     * Доп. параметры, передаваемые в $ops, описываются массивом:
-     * <pre>
-     * [
-     *   'select'  => string | '*',  поля для выбора. Без экранирования, просто через запятую.
-     *   'one_row' => bool | true,   ожидаем одну запись?
-     *   'cond'    => string | '',   доп.условия. Прям так и писать, 'AND|OR ...'.
-     * ]
-     * </pre>
-     *
-     * @param string $field  по какому полю искать
-     * @param string $value  значение поля для подстановки в запрос
-     * @param array  $ops    доп.параметры
-     * @return array
-     */
-    public function findByField($field, $value, $ops = [])
-    {
-        $default = [
-            'select'  => '*',
-            'one_row' => true,
-            'cond'    => '',
-        ];
-        $ops = array_merge($default, $ops);
-        extract($ops);
-        if ($select !== '*') {
-            $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
-        }
-
-        $cond = "`{$field}` = ? " . $cond;
-
-        $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
-        $params = [$value]; //параметры подстановки должны быть в массиве
-        return $this->query(compact('sql', 'params', 'one_row'));
     }
 
     /**
