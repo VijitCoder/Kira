@@ -1,11 +1,20 @@
 <?php
-
 namespace install\app;
 
+/**
+ * Роутер мастера приложения.
+ *
+ * Примеры мартшрутов:
+ *  'routes' => [
+ *     'install'          => 'SingleController/index',
+ *     'install/success'  => 'SingleController/success',
+ *  ]
+ */
 class SingleRouter implements \engine\IRouter
 {
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
+     * Учитывая, что контроллер всего один, путь к нему частично забит хардкодом.
      * @return void
      */
     public function callAction()

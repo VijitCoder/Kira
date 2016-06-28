@@ -4,6 +4,7 @@
  */
 
 mb_internal_encoding('UTF-8');
+//date_default_timezone_set('Asia/Novosibirsk');
 
 // Особое вычисление корневого каталога. ROOT_PATH будет реальным корнем сайта, т.е. на каталог выше текущего.
 $dir = rtrim(__DIR__, '/');
