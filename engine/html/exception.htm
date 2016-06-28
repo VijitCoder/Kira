@@ -1,10 +1,18 @@
 <!-- engine\Handlers::exceptionHandler() -->
 <style>
     div.exception * {font-family: Arial, Helvetica, sans-serif; font-size:14px;}
-    div.exception {margin: 10px; padding: 0 10px; border: 1px solid black;}
-    div.exception h4 {font-size: 16px; border-bottom:1px solid black;}
+    div.exception {
+        margin: 10px;
+        padding: 0 10px;
+        border: 1px solid black;
+        border-radius: 5px;
+        background-color: rgb(235, 245, 255);
+    }
+    div.exception h4 {font-size: 16px; color:#b81900; border-bottom:1px solid black;}
     div.exception table td {padding-bottom: 7px; padding-right: 7px;}
+    div.exception pre {padding: 5px; background-color: rgba(200, 255, 200, 0.55);}
 </style>
+
 <div class="exception">
     <h4>{{class}}</h4>
 
