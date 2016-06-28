@@ -4,5 +4,6 @@
 .idea/
 sandbox/
 application/temp/
+application/conf/env*.php
 public/files/avatar/
 install/rollback.csv

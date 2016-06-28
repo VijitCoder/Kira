@@ -202,7 +202,7 @@ class DbModel
      * Возвращает количество строк, модифицированных последним SQL запросом
      * @return int
      */
-    public function count()
+    public function effect()
     {
         return $this->getStatement()->rowCount();
     }
@@ -282,109 +282,6 @@ class DbModel
     public function rollBack()
     {
         $this->getConnection()->rollBack();
-    }
-
-
-    /**
-     * @DEPRECATED
-     *
-     * Выполняем запрос.
-     *
-     * Это основная функция моделей, для запросов прямым текстом (с подстановками). Все действия в одном месте:
-     * соединились, подготовили запрос, выполнили. Результат вернули.
-     *
-     * Параметрами метода может быть строка или ассоциативный массив. В первом случае ожидаем только текст запроса, без
-     * подстановок. Полный массив параметров такой:
-     * <pre>
-     * [
-     *   'sql'     => string
-     *   'params'  => array | [],
-     *   'style'   => const | \PDO::FETCH_ASSOC,
-     *   'one_row' => bool | FALSE,
-     *   'read'    => bool | NULL,
-     * ]
-     * </pre>
-     *
-     * <ul>
-     * <li>sql - текст запроса, прямым текстом с плейсхолдерами, если нужно.</li>
-     * <li>params - массив параметров для PDOStatement</li>
-     * <li>style - в каком стиле выдать результат SELECT, см. константы тут
-     * {@see http://php.net/manual/ru/pdostatement.fetch.php}</li>
-     * <li>one_row - если ожидаем только один ряд, ставим TRUE. В результате будет меньшая вложенность массива.</li>
-     * <li>read - bool - тип запроса в нотации CRUD. Запрос либо на чтение - TRUE, либо на изменение - FALSE. Если
-     * параметр не задан, определим по первому глаголу (наугад). По факту функция вернет выборку или количество рядов.
-     * Fallback-ситация: вернет количество рядов.</li>
-     * </ul>
-     *
-     * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
-     *
-     * @param string|array $ops текст запроса ИЛИ детальные настройки предстоящего запроса
-     * @return array | int
-     * @throws \Exception
-     */
-    public function queryOld($ops)
-    {
-        $default = [
-            'sql'     => null,
-            'params'  => [],
-            'style'   => \PDO::FETCH_ASSOC,
-            'one_row' => false,
-            'read'    => null,
-        ];
-
-        if (is_string($ops)) {
-            $ops = ['sql' => $ops];
-        }
-
-        $ops = array_merge($default, $ops);
-        extract($ops);
-
-        if (!$sql) {
-            throw new \Exception('Не указан текст запроса');
-        }
-
-        if (DEBUG) {
-            $this->sql = $sql;
-            $this->binds = $params;
-        }
-
-        $sth = $this->dbh->prepare($sql);
-        //$sth->debugDumpParams(); exit;//DBG
-
-        try {
-            $sth->execute($params);
-        } catch (\PDOException $e) {
-            if (DEBUG) {
-                throw $e;
-            }
-
-            $msg = $e->getMessage();
-            $trace = $e->getTrace();
-            if (isset($trace[1])) {
-                $msg .= PHP_EOL . 'Запрос отправлен из ' . str_replace(ROOT_PATH, '', $trace[1]['file'])
-                    . '(' . $trace[1]['line'] . ') ';
-            }
-
-            if (isset($trace[2])) {
-                $msg .= $trace[2]['function'] . '(...)';
-            }
-
-            App::log()->addTyped($msg, \engine\Log::DB_QUERY);
-
-            throw new \Exception($e->getMessage(), 0, $e);
-        }
-
-        if (is_null($read)) {
-            if (preg_match('~select|update|insert|delete~i', $sql, $m)) {
-                $read = strtolower($m[0]) == 'select';
-            } else {
-                $read = false;
-            }
-        }
-
-        return $read
-            ? ($one_row ? $sth->fetch($style) : $sth->fetchAll($style))
-            : $sth->rowCount();
     }
 
     /**
