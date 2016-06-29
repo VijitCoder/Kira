@@ -33,7 +33,7 @@ class Env implements IDetectEnvironment
      */
     public static function domainName()
     {
-        return isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : App::conf('domain', false);
+        return isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (App::conf('domain', false) ? : '');
     }
 
     /**

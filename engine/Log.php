@@ -241,6 +241,7 @@ class Log
      *
      * @param string $message текст сообщения
      * @param string $type    тип лога, см. константы этого класса
+     * @return void
      */
     public function addTyped($message, $type)
     {

@@ -224,7 +224,7 @@ class DbModel
      * @param string $field по какому полю искать
      * @param string $value значение поля для подстановки в запрос
      * @param array  $ops   доп.параметры
-     * @return array
+     * @return mixed
      */
     public function findByField($field, $value, $ops = [])
     {
