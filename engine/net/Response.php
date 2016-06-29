@@ -170,8 +170,8 @@ class Response
 
     /**
      * Установка печеньки с параметрами, принятыми по умолчанию. Теоретически сократит количество копипасты.
-     * ttl - год, 60*60*24*365.
-     * Доступ - весь сайт, включая поддомены.
+     * ttl - год
+     * Доступ - весь сайт
      * Безопасную передачу отключить
      * Отдавать только по http-протоколу
      *
@@ -180,7 +180,7 @@ class Response
      */
     public static function setDefaultCookie($name, $value)
     {
-        setcookie($name, $value, time() + 31536000, '/', '.' . Env::domainName(), false, true);
+        setcookie($name, $value, strtotime('+1 year'), '/', '', false, true);
     }
 
     /**

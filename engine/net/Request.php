@@ -175,7 +175,7 @@ class Request
      */
     public static function method()
     {
-        return isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null;
+        return isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : null;
     }
 
     /**
@@ -276,5 +276,48 @@ class Request
                     substr($_SERVER['HTTP_USER_AGENT'], 0, 4))
             )
             : false;
+    }
+
+    /**
+     * Создание токена для защиты от CSRF-атаки
+     * Генерируем случайное значение, пишем его в печеньку. Именно в cookie, а в не сессию. Тогда через javascript
+     * ее можно без костылей прочитать, что выгодно при отправке формы ajax-ом.
+     *
+     * Время жизни - до конца сессии
+     * Видимость - по всему сайту
+     * Отключить передачу "только по HTTPS"
+     * Разрешить доступ из скриптов клиента (javascript, например).
+     *
+     * @param bool $force обновить токен, даже если он уже существует
+     * @return string
+     */
+    public static function createCsrfToken($force = true)
+    {
+        $name = 'CSRF_TOKEN';
+        $value = self::cookie($name);
+        if ($force || !$value) {
+            $value = crypt(uniqid('', true), mt_rand());
+            setcookie($name, $value, 0, '/', '', false, false);
+        }
+        return $value;
+    }
+
+    /**
+     * Получение токена защиты от CSRF-атаки
+     * Новый токен будет создан, только если его еще не существует. Иначе получим текущий.
+     * @return string
+     */
+    public static function getCsrfToken()
+    {
+        return self::createCsrfToken(false);
+    }
+
+    /**
+     * Проверка токена защиты от CSRF-атаки
+     * @return bool
+     */
+    public static function validateCsrfToken($token)
+    {
+        return $token === self::getCsrfToken();
     }
 }

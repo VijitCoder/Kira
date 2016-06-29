@@ -2,6 +2,7 @@
 namespace engine\web;
 
 use engine\utils\Arrays;
+use engine\net\Request;
 
 /**
  * Супер-класс моделей форм (валидации форм).
@@ -20,6 +21,17 @@ class Form
      * @var FormValidator
      */
     protected $formValidator;
+
+    /**
+     * Защита от CSRF атак.
+     *
+     * Если задано имя поля, то форма должна передать CSRF-токен в соответствующем параметре. Чтобы получить токен,
+     * используйте методы Request::getCsrfToken() или Request::createCsrfToken().
+     *
+     * Не нужно объявлять это поле в контракте полей. Тем не менее проверка токена выполняется по требованию валидации
+     * формы. Если токен не пройдет проверку, будет проброшено исключение.
+     */
+    protected $csrfField = '';
 
     /**
      * Данные с формы. По умолчанию массив заполнен ключами, но без данных.
@@ -102,9 +114,14 @@ class Form
      * Валидация. Рекурсивный обход контракта.
      * Прим.: любой из валидаторов внутри рекурсии может установить флаг $_isValid = FALSE в случае ошибок.
      * @return bool
+     * @throws \LogicException из checkСsrfToken()
      */
     public function validate()
     {
+        if (!$this->checkСsrfToken()) {
+            return false;
+        }
+
         if (!$this->formValidator) {
             $this->formValidator = new FormValidator;
         }
@@ -119,6 +136,35 @@ class Form
         }
 
         return $this->formValidator->isValid();
+    }
+
+    /**
+     * Проверка CSRF-токена
+     * Если поле с токеном не задано, не выполнять проверку. Если не пройдет проверку, пробрасываем исключение.
+     * @return true
+     * @throws \LogicException
+     * @throws \RuntimeException с кодом 400, если токен неверный.
+     */
+    private function checkСsrfToken()
+    {
+        if (!$this->csrfField) {
+            return true;
+        }
+
+        $method = Request::method();
+        if (!in_array($method, ['GET', 'POST'])) {
+            throw new \LogicException('Проверка CSRF токена возможна только при передаче формы методами GET или POST'
+                . PHP_EOL . 'Текущий метод определен, как ' . $method);
+        }
+        $method = strtolower($method);
+
+        $token = Request::$method($this->csrfField);
+
+        if (!Request::validateCsrfToken($token)) {
+            throw new \RuntimeException('Неверный CSRF токен', 400);
+        }
+
+        return true;
     }
 
     /**
