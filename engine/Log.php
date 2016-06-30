@@ -2,7 +2,7 @@
 namespace engine;
 
 use engine\net\Request,
-    engine\db\Model,
+    engine\db\DbModel,
     engine\utils\Mailer,
     engine\html\Render;
 
@@ -291,7 +291,10 @@ class Log
                 $source,
             ];
 
-            $result = (bool)(new Model($this->conf['db_conf_key']))->query(compact('sql', 'params'));
+            $result = (bool)(new DbModel($this->conf['db_conf_key']))
+                ->query($sql, $params)
+                ->effect();
+
         } catch (\Exception $e) {
             $logIt['message'] .= PHP_EOL . PHP_EOL
                 . 'Дополнительно. Не удалось записать это сообщение в лог БД, причина: ' . $e->getMessage();
