@@ -12,27 +12,22 @@ class Router implements \engine\IRouter
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      *
-     * @TODO это хреновое решение, нужно придумать лучше.
-     * Если "HTTP status code" в списке тех кодов ошибок, на которые веб-сервер может навешать хендлер, то сразу
-     * передаем управление в него. Например, для Apache это "ErrorDocument". Для других веб-серверов тоже есть
-     * подобная возможность.
-     * При этом, чтобы там ни было прописано у сервера, запрос получит тот контроллер, который указан в конфиге
-     * 'errorHandler'. И это - тоже слабая часть решения, т.к. эта настройка - необязательна.
+     * Когда сервер Apache передает ошибки >=401 (см. Apache::ErrorDocument), он добавляет свой заголовок REDIRECT_URL.
+     * Там указан адрес, назначенный сервером для обработки таких ошибок. В таком случае обрабатываем именно этот адрес,
+     * а не REQUEST_URI.
      */
     public function callAction()
     {
-        $code = http_response_code();
-
-//        if (in_array($code, [401, 403, 404, 500])) {
-        if ($code >= 400) {
-            return $this->notFound($code);
-        }
-
         if (!isset($_SERVER['REQUEST_URI'])) {
             return $this->notFound();
         }
 
-        $url = explode('?', $_SERVER['REQUEST_URI'])[0];
+        if (http_response_code() > 400 && isset($_SERVER['REDIRECT_URL'])) {
+            $url = $_SERVER['REDIRECT_URL'];
+        } else {
+            $url = explode('?', $_SERVER['REQUEST_URI'])[0];
+        }
+
         $url = urldecode(ltrim($url, '/'));
 
         if (!$url) {
@@ -165,18 +160,34 @@ class Router implements \engine\IRouter
     /**
      * Контроллер не найден, нужно ответить юзеру страницей 404.
      *
-     * В конфиге должен быть прописан контроллер, который будет обрабатывать 404 ошибку. Если он не задан (пустая строка),
-     * просто возвращаем заголовок.
+     * В конфиге должен быть прописан контроллер, который будет обрабатывать 404 ошибку. Если он не задан (пустая
+     * строка), возвращаем 404-й заголовок и простой текст.
      *
-     * @param int $code код HTTP-статуса
+     * Предохранитель для кодера: допустим, веб-сервер Apache и задан ErrorDocument. Но указанный адрес роутеру
+     * неизвестен. Тогда роутер попытается ответить 404 (т.е. сюда попадет). А мы при этом реальный ответ веб-сервера
+     * не подменяем и возвращаем текст по его коду.
+     *
      * @throws \Exception
      */
-    private function notFound($code = 404)
+    private function notFound()
     {
-        http_response_code($code);
+        // Предохранитель
+        $code = http_response_code();
+        if ($code > 400) {
+            $msg = $code . ': ' . Response::textOf($code);
+            if (isset($_SERVER['REDIRECT_URL'])) {
+                $msg .= '<br>URL: ' . $_SERVER['REDIRECT_URL'];
+            }
+            return Response::send($msg);
+        }
+
+        http_response_code(404);
+
         if ($handler = App::conf('errorHandler', false)) {
             list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
+        } else {
+            Response::send('Неизвестный URL');
         }
     }
 

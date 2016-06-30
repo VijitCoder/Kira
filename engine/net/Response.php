@@ -111,9 +111,9 @@ class Response
     {
         $url = Env::domainUrl() . $url;
 
-        if (!headers_sent())
+        if (!headers_sent()) {
             header('location:' . $url, true, $code);
-        else {
+        } else {
             echo "
                 <script type='text/javascript'>
                     window.location.href='$url'
@@ -202,12 +202,26 @@ class Response
      * @param int   $depth   максимальная глубина вложения
      * @return void
      */
-    static public function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
+    public static function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
     {
         header('Content-Type: application/json');
         if (DEBUG) {
             $options = $options | JSON_PRETTY_PRINT;
         }
         echo json_encode($data, $options, $depth);
+    }
+
+    /**
+     * Отвечаем браузеру текстом с заголовком кодировки.
+     * Для ситуаций, когда нет ни каких шаблонов или других способов уточнить кодировку.
+     * @param string $message
+     * @return void
+     */
+    public static function send($message)
+    {
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+        }
+        echo $message;
     }
 }
