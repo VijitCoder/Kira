@@ -31,10 +31,6 @@ $(document).ready(function () {
             $(tag).val(text);
         });
 
-    /**
-     * TODO как получить event.target и сразу указать обработчиком внешнюю функцию, а не использовать обертку из
-     * анонимной функции?
-     */
     $(document).on('change', '#log-path, #js-path', function () {
         tailSlash(this);
     });
