@@ -1,10 +1,9 @@
 <?php
+namespace engine;
+
 /**
  * Среда окружения сайта.
  */
-
-namespace engine;
-
 class Env implements IDetectEnvironment
 {
     /**

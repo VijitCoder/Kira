@@ -1,12 +1,11 @@
 <?php
-/**
- * Ответ клиенту.
- */
-
 namespace engine\net;
 
 use engine\Env;
 
+/**
+ * Ответ клиенту.
+ */
 class Response
 {
     /** @var array тексты кодов HTTP-статусов */

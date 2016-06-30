@@ -1,4 +1,11 @@
 <?php
+namespace engine;
+
+use engine\net\Request,
+    engine\db\Model,
+    engine\utils\Mailer,
+    engine\html\Render;
+
 /**
  * Логирование.
  *
@@ -33,14 +40,6 @@
  * попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу. Если не задан даже
  * админский email, тогда всё - /dev/nul.
  */
-
-namespace engine;
-
-use engine\net\Request,
-    engine\db\Model,
-    engine\utils\Mailer,
-    engine\html\Render;
-
 class Log
 {
     // Типы логов

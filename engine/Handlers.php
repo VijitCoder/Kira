@@ -1,15 +1,14 @@
-<?
+<?php
+namespace engine;
+
+use engine\html\Render;
+
 /**
  * Перехватчик исключений, обработчики ошибок.
  *
  * Как правило, они назначены в autoloader.php, вызываются внутренним механизмом PHP и не ожидают прямого обращения
  * из кода приложения.
  */
-
-namespace engine;
-
-use engine\html\Render;
-
 class Handlers
 {
     private static $_trace;

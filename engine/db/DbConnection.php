@@ -1,4 +1,9 @@
 <?php
+namespace engine\db;
+
+use PDO;
+use engine\App;
+
 /**
  * Подключение к базе.
  *
@@ -25,12 +30,6 @@
  *
  * Больше класс ничего не делает, только хранит подключения к базам.
  */
-
-namespace engine\db;
-
-use PDO,
-    engine\App;
-
 class DbConnection
 {
     /** @var PDO объекты подключения к БД. Одна БД + юзер = один объект */

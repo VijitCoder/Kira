@@ -1,4 +1,9 @@
 <?php
+namespace engine\net;
+
+use engine\Env;
+use engine\utils;
+
 /**
  * Запрос клиента.
  *
@@ -7,15 +12,6 @@
  *
  * Прим.: в PECL есть расширение с похожим назначением {@see http://php.net/manual/en/class.httprequest.php}.
  * Но допустим, нам так много ненужно :)
- */
-
-namespace engine\net;
-
-use engine\Env;
-use engine\utils;
-
-/**
- * Class Request
  *
  * Серия методов для работы с суперглобальными переменными $_GET, $_POST, $_COOKIE и $_REQUEST. Логика у них одинаковая,
  * реализация оформлена в магическом методе. Удобство этих методов том, что в клиентском коде не придется проверять

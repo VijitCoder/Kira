@@ -1,12 +1,11 @@
 <?php
-/**
- * Базовый класс контроллеров
- */
-
 namespace engine\web;
 
 use engine\net\Response;
 
+/**
+ * Базовый класс контроллеров
+ */
 class Controller
 {
     /** @var string Действие контроллера по умолчанию */

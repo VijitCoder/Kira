@@ -1,4 +1,6 @@
 <?php
+namespace engine\utils;
+
 /**
  * Дампер позаимствован из Yii 1.x, класс CVarDumper. Авторские реквизиты:
  * @author    Qiang Xue <qiang.xue@gmail.com>
@@ -6,9 +8,6 @@
  * @copyright 2008-2013 Yii Software LLC
  * @license   http://www.yiiframework.com/license/
  */
-
-namespace engine\utils;
-
 class Dumper
 {
     private static $_objects;
