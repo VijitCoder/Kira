@@ -15,6 +15,8 @@ class Router implements \engine\IRouter
      * Когда сервер Apache передает ошибки >=401 (см. Apache::ErrorDocument), он добавляет свой заголовок REDIRECT_URL.
      * Там указан адрес, назначенный сервером для обработки таких ошибок. В таком случае обрабатываем именно этот адрес,
      * а не REQUEST_URI.
+     *
+     * @return void
      */
     public function callAction()
     {
@@ -102,7 +104,8 @@ class Router implements \engine\IRouter
     private function findRouteFor($url)
     {
 //echo $url;
-        foreach (App::conf('routes') as $namespace => $routes) {
+        $matches = null;
+        foreach (App::conf('router.routes') as $namespace => $routes) {
             foreach ($routes as $left => $right) {
                 $left = ltrim($left, '/');
                 $pattern = preg_replace('~(<([a-z0-9_]+):(.*)>)~Ui', '(?P<$2>$3)', $left);
@@ -167,6 +170,7 @@ class Router implements \engine\IRouter
      * неизвестен. Тогда роутер попытается ответить 404 (т.е. сюда попадет). А мы при этом реальный ответ веб-сервера
      * не подменяем и возвращаем текст по его коду.
      *
+     * @return void
      * @throws \Exception
      */
     private function notFound()
@@ -183,7 +187,7 @@ class Router implements \engine\IRouter
 
         http_response_code(404);
 
-        if ($handler = App::conf('errorHandler', false)) {
+        if ($handler = App::conf('router.404_handler', false)) {
             list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
         } else {
@@ -193,9 +197,7 @@ class Router implements \engine\IRouter
 
     /**
      * Разбираем контроллер и метод, прописанные в конфиге.
-     *
-     * @TODO нужен контроль ошибки, если в конфиге фигня записана.
-     *
+     * Ожидаем FQN имя класса + действие. Или будет выбрано действие, заданное в контроллер по умолчанию.
      * @param $handler
      * @return array
      */
@@ -209,16 +211,18 @@ class Router implements \engine\IRouter
 
     /**
      * Редирект. Только для нужд роутера.
-     *
-     * @TODO Можно добавить логирование таких редиректов для анализа ошибок, неправильных URL-в на страницах
-     * сайта и т.п. И это должно быть опционально. Подумать, как сделать и где именно.
-     *
+     * Если задана настройка "router.log_redirects", логируем такие редиректы.
      * @param string $url новый относительный адрес. Всегда без слеша слева, таков тут мой код.
+     * @return void
      */
     private function redirect($url)
     {
         if ($_SERVER['QUERY_STRING']) {
             $url .= '?' . $_SERVER['QUERY_STRING'];
+        }
+
+        if (App::conf('router.log_redirects', false)) {
+            App::log()->addTyped('pедирект на /' . $url, 'router redirect');
         }
 
         Response::redirect('/' . $url, 301);
@@ -243,18 +247,19 @@ class Router implements \engine\IRouter
      * @param mixed $route  массив 2-х элементов ["пространство имен", "правая часть из описания роута"]
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
-     * @throw \RangeException
+     * @throws \RangeException
      */
     public function url($route, array $params = [])
     {
         list($ns, $ctrl) = $route;
         $ctrl = trim($ctrl, '/');
 
-        $routes = App::conf('routes');
+        $routes = App::conf('router.routes');
         if (!isset($routes[$ns])) {
             throw new \RangeException("Нет карты роутов для пространства имен '$ns'");
         }
 
+        $match = null;
         foreach ($routes[$ns] as $left => $right) {
             $left = ltrim($left, '/');
             $right = ltrim($right, '/');

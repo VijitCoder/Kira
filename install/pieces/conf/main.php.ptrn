@@ -6,11 +6,19 @@ $main = [
     // FQN контроллера + метод для главной страницы сайта
     'indexHandler' => '{{app_namespace}}\controllers\WelcomeController',
 
-    // FQN контроллера + метод, отвечающий при 404 от роутера. Туда же можно направить web-сервер с его
-    // ошибками 401-404, 500
-    //'errorHandler' => '{{app_namespace}}\controllers\ErrorController',
+    'router' => [
+        //'class' => '', // Для назначения своего роутера
 
-    'routes'       => require 'routes.php',
+        // Настройки для роутера движка. Для иной реализации роутера они могут отличаться.
+
+        // FQN контроллера + метод, отвечающий при 404 от роутера.
+        //'404_handler' => '{{app_namespace}}\controllers\ErrorController',
+
+        // логировать редиректы роутера
+        'log_redirects' => false,
+
+        'routes' => require 'routes.php',
+    ],
 ];
 
 $env = require 'env.php';

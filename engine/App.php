@@ -134,7 +134,7 @@ class App
     public static function router()
     {
         if (!isset(self::$_instances['router'])) {
-            $router = self::conf('router', false) ?: 'engine\net\Router';
+            $router = self::conf('router.class', false) ?: 'engine\net\Router';
             self::$_instances['router'] = new $router;
         }
         return self::$_instances['router'];

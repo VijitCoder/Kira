@@ -25,7 +25,7 @@ class SingleRouter implements \engine\IRouter
 
         $url = explode('?', $_SERVER['REQUEST_URI'])[0];
         $url = trim($url, '/');
-        $routes = \engine\App::conf('routes');
+        $routes = \engine\App::conf('router.routes');
         $routes = array_flip($routes);
 
         if (!$route = array_search($url, $routes)) {
