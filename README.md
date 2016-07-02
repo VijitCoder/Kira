@@ -1,7 +1,7 @@
 # Kira Engine
 *Since 20/09/2015*
 
-(PHP 5 >= 5.4.0)
+![PHP 5.4.0] (https://img.shields.io/badge/PHP%205-%3E%3D5.4.0-blue.svg)
 
 Мое представление об удобном web-движке.
 

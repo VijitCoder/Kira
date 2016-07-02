@@ -462,6 +462,8 @@ class MasterService
             $d['log_tz'] = $v['log']['timezone'];
         }
 
+        $d['email'] = $v['email'];
+
         $text = Render::fetch($this->piecesPath . "conf/env.php.ptrn", $d);
 
         if ($v['db']['switch']) {
@@ -540,23 +542,11 @@ class MasterService
     {
         $this->addToBrief(self::BRIEF_INFO, 'Создаем пример приложения');
 
-        $targets = [
-            'controllers/WelcomeController.php.ptrn' => $v['path']['controllers'] . 'WelcomeController.php',
-
-            'Env.php.ptrn'      => $v['path']['app'] . 'Env.php',
-            'views/layout.htm'  => $v['path']['view'] . 'layout.htm',
+        $addTargets = [
             'views/welcome.htm' => $v['path']['view'] . 'welcome.htm',
         ];
 
-        foreach ($targets as $fileFrom => $fileTo) {
-            $d = ['app_namespace' => $v['app_namespace']];
-            $text = Render::fetch($this->piecesPath . $fileFrom, $d);
-            if (!$this->writeToFile($fileTo, $text)) {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->internalCreateExample($v, $addTargets);
     }
 
     /**
@@ -570,11 +560,7 @@ class MasterService
     {
         $this->addToBrief(self::BRIEF_INFO, 'Создаем пример мультиязычного приложения');
 
-        $targets = [
-            'controllers/WelcomeController.php.ptrn' => $v['path']['controllers'] . 'WelcomeController.php',
-
-            'Env.php.ptrn'                => $v['path']['app'] . 'Env.php',
-            'views/layout.htm'            => $v['path']['view'] . 'layout.htm',
+        $addTargets = [
             'views/lang_welcome.htm.ptrn' => $v['path']['view'] . 'welcome.htm',
 
             'i18n/en.php' => $v['path']['i18n'] . 'en.php',
@@ -586,18 +572,44 @@ class MasterService
         $langs = array_diff($langs, ['en', 'ru']);
 
         foreach ($langs as $lang) {
-            $targets['i18n/dummy.php'] = $v['path']['i18n'] . "{$lang}.php";
-            $targets['i18n/dummy.js'] = $v['lang']['js_path'] . "{$lang}.js";
+            $addTargets['i18n/dummy.php'] = $v['path']['i18n'] . "{$lang}.php";
+            $addTargets['i18n/dummy.js'] = $v['lang']['js_path'] . "{$lang}.js";
         }
 
         $url = mb_substr($v['lang']['js_path'], mb_strlen(ROOT_PATH) - 1); // -1, чтоб с ведущим слешем
-        $d = [
-            'app_namespace' => $v['app_namespace'],
-            'js_url'        => $url,
+        $addData = [
+            'js_url' => $url,
         ];
+
+        return $this->internalCreateExample($v, $addTargets, $addData);
+    }
+
+    /**
+     * Создаем пример приложения: контроллер, шаблон, макет, другие файлы.
+     * "Цели" это файлы для копирования. Если файл заканчивается на .ptrn, значит это шаблон и он требует "отрисовку"
+     * перед копированием. Создаваемый пример может быть для мультиязычного или простого приложения. Список целей
+     * и данные для вставки у них отличается.
+     * @param array $v          проверенный массив данных
+     * @param array $addTargets дополнительные цели
+     * @param array $addData    дополнительные данные для вставки в шаблоны
+     * @return bool
+     */
+    private function internalCreateExample(&$v, &$addTargets, &$addData = [])
+    {
+        $targets = [
+            'controllers/WelcomeController.php.ptrn' => $v['path']['controllers'] . 'WelcomeController.php',
+
+            'Env.php.ptrn'       => $v['path']['app'] . 'Env.php',
+            '.htaccess_for_temp' => $v['path']['temp'] . '.htaccess',
+            'views/layout.htm'   => $v['path']['view'] . 'layout.htm',
+        ];
+        $targets = array_merge($targets, $addTargets);
+
+        $data = array_merge(['app_namespace' => $v['app_namespace']], $addData);
+
         foreach ($targets as $fileFrom => $fileTo) {
             $text = substr($fileFrom, -5) == '.ptrn'
-                ? Render::fetch($this->piecesPath . $fileFrom, $d)
+                ? Render::fetch($this->piecesPath . $fileFrom, $data)
                 : file_get_contents($this->piecesPath . $fileFrom);
             if (!$this->writeToFile($fileTo, $text)) {
                 return false;
