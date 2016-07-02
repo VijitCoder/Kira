@@ -34,11 +34,15 @@ class Controller
      */
     protected function render($view, $data = array(), $output = true)
     {
+        $this->beforeRender();
+
         $content = $this->renderFile($view, $data);
 
         ob_start();
         require VIEWS_PATH . $this->layout . $this->viewExt;
         $result = ob_get_clean();
+
+        $this->afterRender();
 
         if ($output) {
             echo $result;
@@ -58,7 +62,9 @@ class Controller
      */
     protected function renderPartial($view, $data = array(), $output = true)
     {
+        $this->beforeRenderPartial();
         $result = $this->renderFile($view, $data);
+        $this->afterRenderPartial();
         if ($output) {
             echo $result;
         } else {
@@ -101,5 +107,33 @@ class Controller
     public function redirect($url, $code = 302)
     {
         Response::redirect($url, $code);
+    }
+
+    /**
+     * Действие непосредственно перед отрисовкой шаблона с макетом.
+     */
+    public function beforeRender()
+    {
+    }
+
+    /**
+     * Действие сразу после отрисовки шаблона с макетом.
+     */
+    public function afterRender()
+    {
+    }
+
+    /**
+     * Действие непосредственно перед отрисовкой шаблона без макета.
+     */
+    public function beforeRenderPartial()
+    {
+    }
+
+    /**
+     * Действие сразу после отрисовки шаблона без макета.
+     */
+    public function afterRenderPartial()
+    {
     }
 }
