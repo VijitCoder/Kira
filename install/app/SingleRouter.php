@@ -40,17 +40,6 @@ class SingleRouter implements \engine\IRouter
     }
 
     /**
-     * Построение URL по описанию.
-     * В этом приложении нет такой необходимости. Поэтому нет реализации.
-     * @param mixed $route
-     * @param array $params
-     * @return string
-     */
-    public function url($route, array $params = [])
-    {
-    }
-
-    /**
      * Не нашли роут. Отвечаем сообщением об ошибке.
      * @param $msg
      */
@@ -60,5 +49,36 @@ class SingleRouter implements \engine\IRouter
             header('Content-Type: text/html; charset=UTF-8');
         }
         exit($msg);
+    }
+
+    /**
+     * Заглушка.В этом приложении нет такой необходимости. Поэтому нет реализации.
+     * Построение URL по описанию.
+     * @param mixed $route
+     * @param array $params
+     * @return string
+     */
+    public function url($route, array $params = [])
+    {
+    }
+
+    /**
+     * Заглушка
+     * Названия контроллера, к которому обратился роутер после парсинга запроса
+     * @return string
+     */
+    public function getController()
+    {
+        return '';
+    }
+
+    /**
+     * Заглушка
+     * Названия метода-действия, которое вызвал роутер после парсинга запроса
+     * @return string
+     */
+    public function getAction()
+    {
+        return '';
     }
 }

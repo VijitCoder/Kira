@@ -22,6 +22,18 @@ interface IRouter
      * @return string готовый <b>относительный</b> URL
      */
     public function url($route, array $params = []);
+
+    /**
+     * Названия контроллера, к которому обратился роутер после парсинга запроса
+     * @return string
+     */
+    public function getController();
+
+    /**
+     * Названия метода-действия, которое вызвал роутер после парсинга запроса
+     * @return string
+     */
+    public function getAction();
 }
 
 interface IDetectEnvironment

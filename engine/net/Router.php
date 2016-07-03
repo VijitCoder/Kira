@@ -10,6 +10,14 @@ use engine\App;
 class Router implements \engine\IRouter
 {
     /**
+     * Названия контроллера и метода-действия, которые вызвал роутер после парсинга запроса
+     * @var string
+     * @var string
+     */
+    private $controller = '';
+    private $action = '';
+
+    /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      *
      * Когда сервер Apache передает ошибки >=401 (см. Apache::ErrorDocument), он добавляет свой заголовок REDIRECT_URL.
@@ -60,6 +68,8 @@ class Router implements \engine\IRouter
         }
 
         if (method_exists($controller, $action)) {
+            $this->controller = $controller;
+            $this->action = $action;
             if ($params) {
                 $ref_method = new \ReflectionMethod("$ctrlName::$action");
                 $funcParams = [];
@@ -324,5 +334,23 @@ class Router implements \engine\IRouter
             $strParams = count($strParams) ? 'параметры [' . implode(', ', $strParams) . ']' : 'без параметров';
             throw new \RangeException("не могу построить URL по заданным значениям: ['$ns', '$ctrl'], $strParams");
         }
+    }
+
+    /**
+     * Названия контроллера, к которому обратился роутер после парсинга запроса
+     * @return string
+     */
+    public function getController()
+    {
+        return $this->controller;
+    }
+
+    /**
+     * Названия метода-действия, которое вызвал роутер после парсинга запроса
+     * @return string
+     */
+    public function getAction()
+    {
+        return $this->action;
     }
 }
