@@ -19,10 +19,10 @@ use engine\utils;
  *
  * Получение одного значения из массива GET|POST|REQUEST. Если ключ в массиве не существует, вернем NULL:
  *
- * @method string|null get(string $key)
- * @method string|null post(string $key)
- * @method string|null cookie(string $key)
- * @method string|null request(string $key)
+ * @method static string|null get(string $key)
+ * @method static string|null post(string $key)
+ * @method static string|null cookie(string $key)
+ * @method static string|null request(string $key)
  *
  * Прим: если ключ не указан, возвращаем весь массив, что ничем не отличается от прямого обращения к суперглобальной
  * переменной. Такой вызов поддерживаются для полноты картины.

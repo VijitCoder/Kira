@@ -92,9 +92,9 @@ class Mailer
      * Прим: связи с картинками (multipart/related) оформляются только для версии письма, отмеченной "html". Как такие
      * связи будут работать с другими версиями - я не знаю, официально не поддерживается.
      *
-     * @param              $from    от кого
-     * @param              $to      кому
-     * @param              $subject тема письма
+     * @param string       $from    от кого
+     * @param string       $to      кому
+     * @param string       $subject тема письма
      * @param array|string &$body   текст письма. Если массив, тогда [text|html|MIME-type => тест письма].
      * @param array        $files   вложения. Смешанный массив. НЕ передавай этот массив по ссылке. Так выгоднее.
      * @return bool
