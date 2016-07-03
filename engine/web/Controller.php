@@ -24,7 +24,8 @@ class Controller
      * Очень простой шаблонизатор.
      * Заполняем шаблон, отдаем результат в ответ браузеру или возвращаем, как результат функции.
      *
-     * Зарезервированная переменная: $content. В ней текст отрисованного шаблона для вставки в макет.
+     * Зарезервированная переменная: $CONTENT. В ней текст отрисованного шаблона для вставки в макет. Верхний регистр
+     * применен умышленно во избежание случайных совпадений, не принято писать переменные большими буквами.
      *
      * @param string $view   шаблон для отрисовки
      * @param array  $data   параметры в шаблон
@@ -32,17 +33,17 @@ class Controller
      * @return string
      * @throws \Exception
      */
-    protected function render($view, $data = array(), $output = true)
+    protected function render($view, $data = [], $output = true)
     {
-        $this->beforeRender();
+        $this->beforeRender($view, $data);
 
-        $content = $this->renderFile($view, $data);
+        $CONTENT = $this->renderFile($view, $data);
 
         ob_start();
         require VIEWS_PATH . $this->layout . $this->viewExt;
         $result = ob_get_clean();
 
-        $this->afterRender();
+        $this->afterRender($view);
 
         if ($output) {
             echo $result;
@@ -60,11 +61,9 @@ class Controller
      * @return string
      * @throws \Exception
      */
-    protected function renderPartial($view, $data = array(), $output = true)
+    protected function renderPartial($view, $data = [], $output = true)
     {
-        $this->beforeRenderPartial();
         $result = $this->renderFile($view, $data);
-        $this->afterRenderPartial();
         if ($output) {
             echo $result;
         } else {
@@ -111,29 +110,20 @@ class Controller
 
     /**
      * Действие непосредственно перед отрисовкой шаблона с макетом.
+     * @param string $view шаблон для отрисовки
+     * @param array  $data параметры в шаблон
+     * @return void
      */
-    public function beforeRender()
+    public function beforeRender($view, &$data = [])
     {
     }
 
     /**
      * Действие сразу после отрисовки шаблона с макетом.
+     * @param string $view шаблон для отрисовки
+     * @return void
      */
-    public function afterRender()
-    {
-    }
-
-    /**
-     * Действие непосредственно перед отрисовкой шаблона без макета.
-     */
-    public function beforeRenderPartial()
-    {
-    }
-
-    /**
-     * Действие сразу после отрисовки шаблона без макета.
-     */
-    public function afterRenderPartial()
+    public function afterRender($view = '')
     {
     }
 }
