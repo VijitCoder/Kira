@@ -11,8 +11,6 @@ use engine\html\Render;
  */
 class Handlers
 {
-    private static $_trace;
-
     /**
      * Перехватчик исключений.
      *

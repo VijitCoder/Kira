@@ -16,13 +16,13 @@ class App
     private static $config;
 
     /** @var array словарь локализации */
-    private static $_lexicon;
+    private static $lexicon;
 
     /** @var string заданный файл локализации. Инфа для проброса исключения */
-    private static $_lang;
+    private static $lang;
 
     /** @var array объекты классов, инстанциированных через App: роутер, логер */
-    private static $_instances = [];
+    private static $instances = [];
 
     /**
      * Чтение конкретной настройки конфига.
@@ -64,7 +64,7 @@ class App
      */
     public static function detectLang()
     {
-        if (!self::$_lang) {
+        if (!self::$lang) {
             $langPath = APP_PATH . 'i18n/';
             $lang = 'ru';
             if (isset($_COOKIE['lang'])) {
@@ -73,10 +73,10 @@ class App
                     $lang = $try;
                 }
             }
-            self::$_lang = $lang;
+            self::$lang = $lang;
         }
 
-        return self::$_lang;
+        return self::$lang;
     }
 
     /**
@@ -95,13 +95,13 @@ class App
      */
     public static function t($key, $ins = array())
     {
-        if (!self::$_lexicon) {
+        if (!self::$lexicon) {
             $langPath = APP_PATH . 'i18n/';
             $lang = self::detectLang();
-            self::$_lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
+            self::$lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
         }
 
-        $str = (self::$_lang == 'ru' || !isset(self::$_lexicon[$key])) ? $key : self::$_lexicon[$key];
+        $str = (self::$lang == 'ru' || !isset(self::$lexicon[$key])) ? $key : self::$lexicon[$key];
         if ($ins) {
             $str = str_replace(array_keys($ins), $ins, $str);
         }
@@ -133,11 +133,11 @@ class App
      */
     public static function router()
     {
-        if (!isset(self::$_instances['router'])) {
+        if (!isset(self::$instances['router'])) {
             $router = self::conf('router.class', false) ?: 'engine\net\Router';
-            self::$_instances['router'] = new $router;
+            self::$instances['router'] = new $router;
         }
-        return self::$_instances['router'];
+        return self::$instances['router'];
     }
 
     /**
@@ -151,9 +151,9 @@ class App
      */
     public static function log()
     {
-        if (!isset(self::$_instances['log'])) {
-            self::$_instances['log'] = new \engine\Log;
+        if (!isset(self::$instances['log'])) {
+            self::$instances['log'] = new \engine\Log;
         }
-        return self::$_instances['log'];
+        return self::$instances['log'];
     }
 }
