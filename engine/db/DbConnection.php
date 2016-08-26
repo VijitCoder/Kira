@@ -65,9 +65,8 @@ class DbConnection
         try {
             $dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
 
-            if ($conf['mysql_timezone']) {
+            if ($tz = $conf['mysql_timezone']) {
                 $sql = 'SET time_zone = ?';
-                $tz = &$conf['mysql_timezone'];
                 if (false === $dbh->prepare($sql)->execute([$tz])) {
                     throw new \PDOException('Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
                         . 'Запрос: ' . str_replace('?', "'$tz'", $sql));
