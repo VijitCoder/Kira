@@ -290,12 +290,13 @@ class DbModel
      * Функция в роли модификатора, меняет текст запроса и параметры по ссылкам. Возможен вызов по цепочке. Пример
      * использования:
      *
-     * $sql = 'SELECT * FROM table1 WHERE id IN(:ids) AND someType = :type';
-     * $params = [':ids' => [id1, id2, ... idN], ':type' => 'First'];
-     * $rows = (new Model)->prepareIN($sql, $params)->query(compact('sql', 'params'));
+     * $sql = 'SELECT * FROM users WHERE id IN(:ids) AND status IN (:statuses) AND role = :role';
+     * $params = [':ids' => [1, 4, 56], ':statuses' => ['active', 'new'], ':role' => 'user'];
+     * $query = (new UserModel)->prepareIN($sql, $params)->query(compact('sql', 'params'));
      *
      * Суть: экранируем строковые значения, объединяем все через запятую и заменяем плейсхолдер прям в sql-запросе на
-     * полученный результат. Убираем из параметров задействованные подстановки.
+     * полученный результат. Убираем из параметров задействованные подстановки. Один вызов метода готовит сразу все
+     * IN-подстановки.
      *
      * Подстановка возможна только для именованного плейсходлера, т.к. заменить какой-то из кучи безымянных (помеченных
      * знаком вопроса) - нетривиальная задача. Проще тогда написать свой парсер целиком.
@@ -306,8 +307,8 @@ class DbModel
      * Для экранирования строк используется PDO::quote() {@see http://php.net/manual/en/pdo.quote.php}
      * У него тоже есть ограничения, но это лучше, чем ничего.
      *
-     * @param &$sql    текст запроса с плейсходерами
-     * @param &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
+     * @param string &$sql    текст запроса с плейсходерами
+     * @param array  &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
      * @return $this
      * @throws \LogicException
      * @throws \Exception из getConnection()
@@ -315,6 +316,7 @@ class DbModel
     public function prepareIN(&$sql, &$params)
     {
         $replaces = [];
+
         foreach ($params as $name => $value) {
             if (is_array($value)) {
                 if (is_int($name)) {
