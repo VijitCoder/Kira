@@ -4,5 +4,7 @@
 #AuthName "Restricted area. Who are you?"
 #require user admin
 
+RewriteEngine On
+RewriteBase /install/
 RewriteCond %{REQUEST_URI} !^/install/static/.*
 RewriteRule .* index.php [L,QSA]

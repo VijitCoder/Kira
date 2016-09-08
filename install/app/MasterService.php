@@ -108,8 +108,10 @@ class MasterService
 
         $values = $form->getValues();
 
-        if (!$this->rollbackHandler = fopen(APP_PATH . self::RBACK_FILE_NAME, 'w')) {
-            $this->addToBrief(self::BRIEF_ERROR, 'Не могу создать файл отката. Установка прервана.');
+        $rollbackFile = APP_PATH . self::RBACK_FILE_NAME;
+        if (!$this->rollbackHandler = fopen($rollbackFile, 'w')) {
+            $this->addToBrief(self::BRIEF_ERROR, "Не могу создать файл отката <b>{$rollbackFile}</b>.<br>"
+                . 'Проверьте доступ в каталог, права на запись этого файла. Установка прервана.');
             return $this->endProcess(false);
         }
 
@@ -519,7 +521,6 @@ class MasterService
             }
 
             $d = [
-                'timezone'      => date_default_timezone_get(),
                 'app_namespace' => $v['app_namespace'],
                 'app_path'      => $v['app_path'],
             ];
