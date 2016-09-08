@@ -6,9 +6,6 @@
 // В случае мультибайтной кодировки сайта. Для кодировки типа 'windows-1251' это можно удалить.
 mb_internal_encoding('UTF-8');
 
-// Часовой пояс для PHP-функций времени. Можно задать через php.ini. Так или иначе часовой пояс должен быть определен.
-date_default_timezone_set('{{timezone}}');
-
 // Корень пространства имен приложения. Все классы приложения, должны быть в его подпространстве.
 define('APP_NAMESPACE', '{{app_namespace}}');
 
@@ -35,5 +32,8 @@ ini_set('display_startup_errors', (int)DEBUG);
 error_reporting(DEBUG ? E_ALL : 0);
 
 require 'engine/autoloader.php';
+
+// Часовой пояс для PHP-функций времени. Можно задать через php.ini. Так или иначе часовой пояс должен быть определен.
+date_default_timezone_set(engine\App::conf('timezone', false) ? : 'UTC');
 
 engine\App::router()->callAction();

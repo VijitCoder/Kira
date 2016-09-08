@@ -413,7 +413,10 @@ class MasterService
 
         $confPath = $v['path']['conf'];
 
-        $d = ['app_namespace' => $v['app_namespace']];
+        $d = [
+            'timezone'      => date_default_timezone_get(),
+            'app_namespace' => $v['app_namespace']
+        ];
 
         # main.php
 

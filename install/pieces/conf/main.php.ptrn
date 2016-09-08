@@ -19,6 +19,8 @@ $main = [
 
         'routes' => require 'routes.php',
     ],
+
+    'timezone' => '{{timezone}}',
 ];
 
 $env = require 'env.php';
