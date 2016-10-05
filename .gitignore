@@ -2,12 +2,5 @@
 .buildpath
 .settings/
 .idea/
+
 sandbox/
-install/rollback.csv
-
-public/files/
-*/temp/
-*/conf/env*.php
-
-yandex_*.txt
-.passfile
