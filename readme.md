@@ -27,23 +27,10 @@
 
 ##### Ручное создание приложения
 
-Движок поддерживает *Composer*. Конфиг Composer для приложения должен содержать следующее (корневой composer.json)
-
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/VijitCoder/Kira"
-    }
-],
-"require": {
-    "vijitcoder/kira": "*"
-}
-```
-
-После чего выполните
+Движок поддерживает *Composer*. Выполните
 
 ```sh
+composer require vijitcoder/kira
 composer install
 ```
 
