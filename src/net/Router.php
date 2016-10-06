@@ -1,12 +1,11 @@
 <?php
-/**
- * Маршрутизатор запросов
- */
-
 namespace engine\net;
 
 use engine\App;
 
+/**
+ * Маршрутизатор запросов
+ */
 class Router implements \engine\IRouter
 {
     /**
@@ -24,6 +23,7 @@ class Router implements \engine\IRouter
      * Там указан адрес, назначенный сервером для обработки таких ошибок. В таком случае обрабатываем именно этот адрес,
      * а не REQUEST_URI.
      *
+     * @internal
      * @return void
      */
     public function callAction()

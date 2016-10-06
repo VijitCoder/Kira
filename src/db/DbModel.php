@@ -27,13 +27,13 @@ class DbModel
     private $sth = null;
 
     /**
-     * @var string тест запроса, с плейсходерами. Только для отладки.
+     * Тест запроса, с плейсходерами. Только для отладки.
+     * @var string
      */
     private $sql = '';
 
     /**
      * Связываемые параметры. Как раз те значения, что будут подставляться в запрос. Только для отладки.
-     *
      * @var array
      */
     protected $binds = [];
@@ -46,8 +46,8 @@ class DbModel
     protected $table;
 
     /**
-     * @var string|array первичный ключ. Составной описывать, как массив. Или строкой? Пока не знаю.
-     * По умолчанию - 'id'
+     * Первичный ключ. Составной описывать, как массив. Или строкой? Пока не знаю.
+     * @var string|array
      */
     protected $pk = 'id';
 
@@ -111,6 +111,7 @@ class DbModel
 
     /**
      * Отправляем запрос в БД.
+     *
      * Подготовка запроса и его выполнение. Перехват ошибок, сбор информации для отладки.
      *
      * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
@@ -163,8 +164,12 @@ class DbModel
     }
 
     /**
-     * Получить один ряд из результата запроса. Обертка для \PDOStatement::fetch(), но с меньшими возможностями.
+     * Получить один ряд из результата запроса.
+     *
+     * Обертка для \PDOStatement::fetch(), но с меньшими возможностями.
+     *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     *
      * @param int $style в каком стиле выдать результат
      * @return mixed
      * @throws \LogicException
@@ -175,8 +180,12 @@ class DbModel
     }
 
     /**
-     * Получить весь результат запроса. Обертка для \PDOStatement::fetchAll(), но с меньшими возможностями.
+     * Получить весь результат запроса.
+     *
+     * Обертка для \PDOStatement::fetchAll(), но с меньшими возможностями.
+     *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     *
      * @param int $style в каком стиле выдать результат
      * @return mixed
      * @throws \LogicException
@@ -188,7 +197,9 @@ class DbModel
 
     /**
      * Получить итератор для обхода результата запроса.
+     *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
+     *
      * @param int $style в каком стиле выдать результат
      * @return RowIterator
      * @throws \LogicException
@@ -264,21 +275,38 @@ class DbModel
         return $this->getConnection()->lastInsertId();
     }
 
+    /**
+     * Инициализация транзакции
+     * @throws \Exception
+     */
     public function beginTransaction()
     {
         $this->getConnection()->beginTransaction();
     }
 
+    /**
+     * Проверка: транзакция в процессе
+     * @return bool
+     * @throws \Exception
+     */
     public function inTransaction()
     {
         return $this->getConnection()->inTransaction();
     }
 
+    /**
+     * Завершение транзакции
+     * @throws \Exception
+     */
     public function commit()
     {
         $this->getConnection()->commit();
     }
 
+    /**
+     * Откат транзакции
+     * @throws \Exception
+     */
     public function rollBack()
     {
         $this->getConnection()->rollBack();

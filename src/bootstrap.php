@@ -10,11 +10,12 @@ set_error_handler(['engine\Handlers', 'errorHandler']);
 ob_start();
 register_shutdown_function(['engine\Handlers', 'shutdown']);
 
-/**
- * Упростил себе жизнь. Заколебался писать FQN-путь к методу. Не по "фен-шую" конечно, но для приложения покатит.
- * Теперь вызов простой: dd($var1, $var2, ...);
- */
 if (!function_exists('dd')) {
+    /**
+     * Короткий вызвов для дампа переменной через engine\utils\Dumper::dump()
+     *
+     * Упростил себе жизнь. Заколебался писать FQN-путь к методу. Теперь вызов простой: dd($var1, $var2, ...);
+     */
     function dd()
     {
         foreach (func_get_args() as $var) {

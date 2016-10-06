@@ -2,7 +2,8 @@
 namespace engine\utils;
 
 /**
- * Дампер позаимствован из Yii 1.x, класс CVarDumper. Авторские реквизиты:
+ * Дампер позаимствован из Yii 1.x, класс CVarDumper.
+ *
  * @author    Qiang Xue <qiang.xue@gmail.com>
  * @link      http://www.yiiframework.com/
  * @copyright 2008-2013 Yii Software LLC

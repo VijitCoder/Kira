@@ -17,7 +17,7 @@ interface IRouter
     /**
      * Построение URL по описанию.
      *
-     * @param mixed $route какое-то определение роута. Например controller/action
+     * @param mixed $route  какое-то определение роута. Например controller/action
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      */
@@ -38,12 +38,15 @@ interface IRouter
 
 interface IDetectEnvironment
 {
-    //Домен. Константы введены для устранения "magic string"
-    const D_LOCAL = 0;
-    const D_DEV = 1;
-    const D_STAGE = 2;
-    const D_PROD = 3;
-    const D_MOBILE = 4;
+    /**
+     * Домен. Константы введены для устранения "magic string"
+     */
+    const
+        D_LOCAL = 0,
+        D_DEV = 1,
+        D_STAGE = 2,
+        D_PROD = 3,
+        D_MOBILE = 4;
 
     /**
      * Определение среды окружения (local, dev, stage, production, mobile).

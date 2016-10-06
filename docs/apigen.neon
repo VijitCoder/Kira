@@ -1,0 +1,9 @@
+title: Kira. Web engine
+
+source:
+ - ./src
+
+exclude:
+ - ./src/html
+
+destination: ./docs/api

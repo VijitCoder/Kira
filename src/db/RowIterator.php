@@ -2,13 +2,16 @@
 namespace engine\DB;
 
 /**
- * Взял из движка ClickBlocks
- * @copyright  2007-2010 SARITASA LLC <info@saritasa.com>
- * @link       http://www.saritasa.com
+ * Итератор для результата запроса в БД
  *
  * Итераторы удобны тем, что в память выгружаются не все данные, а только один элемент массива. Применительно к запросу
  * в базу: не все записи, а только одна. Экономия памяти в случае большого результата запроса. При этом, реализуя
  * интерфейс \Iterator, получаем возможность обхода всех записей через цикл.
+
+ * Взял из движка ClickBlocks
+ *
+ * @copyright  2007-2010 SARITASA LLC <info@saritasa.com>
+ * @link       http://www.saritasa.com
  */
 class RowIterator implements \Iterator
 {

@@ -10,18 +10,23 @@ namespace engine\utils;
  * Тема отправки писем имеет множество ньюансов. Если методы этого класса не работают в вашем случае - создавайте
  * свои :)
  *
- * Полезно почитать
- * - php::mail() {@link http://php.net/manual/ru/function.mail.php}
- * - Как грамотно отправлять почту из скриптов {@link https://habrahabr.ru/post/17531/}
+ * Полезно почитать:
+ * <ul>
+ * <li>php::mail() {@link http://php.net/manual/ru/function.mail.php}</li>
+ * <li>Как грамотно отправлять почту из скриптов {@link https://habrahabr.ru/post/17531/}</li>
+ * </ul>
  *
  * Внимание! У себя на локалке обнаружил баг, см. коммент в функции _prepare(). Отключил кодирование заголовков во
  * избежание повтора на серверах. На боевом стоит проверить, если бага не будет, оставить функцию включенной.
  */
 class Mailer
 {
-    //Файлы в письме могут быть простыми вложениями или картинками для html-версии письма.
-    const ATTACH = 'attach';
-    const RELATED = 'related';
+    /**
+     * Файлы в письме могут быть простыми вложениями или картинками для html-версии письма.
+     */
+    const
+        ATTACH = 'attach',
+        RELATED = 'related';
 
     /**
      * Отправка простого текстового письма. Например, уведомление админу.
@@ -95,11 +100,11 @@ class Mailer
      * @param string       $from    от кого
      * @param string       $to      кому
      * @param string       $subject тема письма
-     * @param array|string &$body   текст письма. Если массив, тогда [text|html|MIME-type => тест письма].
+     * @param array|string $body   текст письма. Если массив, тогда [text|html|MIME-type => тест письма].
      * @param array        $files   вложения. Смешанный массив. НЕ передавай этот массив по ссылке. Так выгоднее.
      * @return bool
      */
-    public static function complex($from, $to, $subject, &$body, $files = [])
+    public static function complex($from, $to, $subject, $body, $files = [])
     {
         $letter = '';
         $rn = "\r\n";
@@ -280,7 +285,7 @@ class Mailer
     private static function encodeHeaders($data)
     {
         /*
-        TODO Тесты на локалке приводят к багу. В конце кодированного значения From, To и Reply-To добавляется имя
+        @todo Тесты на локалке приводят к багу. В конце кодированного значения From, To и Reply-To добавляется имя
         моей машины:
            From: =?utf-8?b?0K7Qt9C10YAgT25lIDx1c2VyX29uZUBtYWlsLnJ1Pg==?=@Z710
         Причем это не PHP, т.к. дамп готовых значений ничего лишнего не показывает. Если записать одинаковое значение
