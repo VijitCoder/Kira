@@ -1,0 +1,9 @@
+title: Kira. Web engine
+
+source:
+    - ./vendor/vijitcoder/kira/src
+
+exclude:
+    - html
+
+destination: ./vendor/vijitcoder/kira/docs/api
