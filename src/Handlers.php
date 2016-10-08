@@ -24,7 +24,10 @@ class Handlers
      * Если указано предыдущее исключение, отсюда не пишем в лог. Сей факт указывает на то, что реальное исключение
      * уже было поймано и обработано. Считаем, что необходимость логирования была решена в предыдущих обработчиках.
      *
-     * @param Exception $ex
+     * Прим: для поддержки PHP 7.0 тип ожидаемого параметра расширен,
+     * см. {@see http://php.net/manual/ru/function.set-exception-handler.php PHP::set_exception_handler()}
+     *
+     * @param Throwable $ex
      */
     public static function exceptionHandler($ex)
     {
