@@ -1,10 +1,10 @@
 <?php
-namespace engine;
+namespace kira;
 
-use engine\net\Request,
-    engine\db\DbModel,
-    engine\utils\Mailer,
-    engine\html\Render;
+use kira\net\Request,
+    kira\db\DbModel,
+    kira\utils\Mailer,
+    kira\html\Render;
 
 /**
  * Логирование.
@@ -18,7 +18,7 @@ use engine\net\Request,
  * <pre>
  * 'log' => [
  *      'switch_on'    => true,       // включить логирование
- *      'store'        => \engine\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
+ *      'store'        => \kira\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
  *      'db_conf_key'  => 'db',       // ключ конфига БД (значение по умолчанию), если храним логи в базе
  *      'table_name'   => 'kira_log', // таблица лога (значение по умолчанию) при записи в БД
  *      'log_path'     => TEMP_PATH,  // путь к каталогу, куда складывать файлы логов, если храним в файлах

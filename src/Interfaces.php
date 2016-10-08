@@ -4,7 +4,7 @@
  * не найдет в таком виде, а создавать кучу файлов под интерфейсы нехорошо.
  */
 
-namespace engine;
+namespace kira;
 
 interface IRouter
 {

@@ -1,7 +1,7 @@
 <?php
-namespace engine\db;
+namespace kira\db;
 
-use \engine\App;
+use \kira\App;
 
 /**
  * Супер-класс моделей. Подключение и методы работы с БД.
@@ -155,7 +155,7 @@ class DbModel
                 $msg .= $trace[2]['function'] . '(...)';
             }
 
-            App::log()->addTyped($msg, \engine\Log::DB_QUERY);
+            App::log()->addTyped($msg, \kira\Log::DB_QUERY);
 
             throw new \Exception($e->getMessage(), 0, $e);
         }

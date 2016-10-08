@@ -1,5 +1,5 @@
 <?php
-namespace engine\DB;
+namespace kira\db;
 
 /**
  * Итератор для результата запроса в БД

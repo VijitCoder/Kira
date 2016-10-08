@@ -1,5 +1,5 @@
 <?php
-namespace engine\utils;
+namespace kira\utils;
 
 /**
  * Свои манипуляции с массивами. В PHP их много, но иногда чего-то не хватает :)

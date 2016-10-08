@@ -1,8 +1,8 @@
 <?php
-namespace engine\net;
+namespace kira\net;
 
-use engine\Env;
-use engine\utils;
+use kira\Env;
+use kira\utils;
 
 /**
  * Запрос клиента.
@@ -28,7 +28,7 @@ use engine\utils;
  * переменной. Такой вызов поддерживаются для полноты картины.
  *
  * Ключ можно указать составной, типа "['lvl1' => ['lvl2' => 'param1']]".
- * см. комментарий к engine\utils\Arrays::getValue()
+ * см. комментарий к kira\utils\Arrays::getValue()
  *
  * Значение из массива, приведенное к целому числу (ведущие нули не сохраняются):
  *

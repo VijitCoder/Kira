@@ -1,7 +1,7 @@
 <?php
-namespace engine;
+namespace kira;
 
-use engine\html\Render;
+use kira\html\Render;
 
 /**
  * Перехватчик исключений, обработчики ошибок.

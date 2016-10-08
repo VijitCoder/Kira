@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-4": {
-            "engine\\": "src/"
+            "kira\\": "src/"
         },
         "classmap": [
             "src/Interfaces.php"

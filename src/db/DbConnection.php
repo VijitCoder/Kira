@@ -1,8 +1,8 @@
 <?php
-namespace engine\db;
+namespace kira\db;
 
 use PDO;
-use engine\App;
+use kira\App;
 
 /**
  * Подключение к базе.
@@ -90,7 +90,7 @@ class DbConnection
                 $msg .= $trace[3]['function'] . '(...)';
             }
 
-            App::log()->add(['message' => $msg, 'type' => \engine\Log::DB_CONNECT, 'file_force' => true]);
+            App::log()->add(['message' => $msg, 'type' => \kira\Log::DB_CONNECT, 'file_force' => true]);
 
             throw new \Exception($e->getMessage(), 0, $e);
         }

@@ -1,7 +1,7 @@
 <?php
-namespace engine\web;
+namespace kira\web;
 
-use engine\App;
+use kira\App;
 
 /**
  * Служебный класс для модели формы. Содержит только методы валидации. Готовые данные и ошибки передаются в клиентский

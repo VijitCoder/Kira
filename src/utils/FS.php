@@ -1,5 +1,5 @@
 <?php
-namespace engine\utils;
+namespace kira\utils;
 
 /**
  * FileSystem. Утилиты по работе с файловой системой
@@ -56,7 +56,7 @@ class FS
             $cnt++;
         }
 
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             if ($cnt) {
@@ -113,7 +113,7 @@ class FS
             return 'Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.';
         }
 
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             self::internalRemoveDir($path);
@@ -206,7 +206,7 @@ class FS
             throw new \InvalidArgumentException($path . ' должно быть каталогом');
         }
 
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             $dirList = new \DirectoryIterator($path);
@@ -240,7 +240,7 @@ class FS
      */
     public static function copyFile($from, $to, $context = null)
     {
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             if ($context) {
@@ -271,7 +271,7 @@ class FS
      */
     public static function moveFile($from, $to)
     {
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             rename($from, $to);
@@ -299,7 +299,7 @@ class FS
             return true;
         }
 
-        set_error_handler(['\engine\utils\FS', 'error_handler']);
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
         try {
             unlink($fn);
             $result = true;

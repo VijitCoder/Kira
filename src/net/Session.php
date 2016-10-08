@@ -1,7 +1,7 @@
 <?php
-namespace engine\net;
+namespace kira\net;
 
-use engine\App;
+use kira\App;
 
 /**
  * Работа с сессией.

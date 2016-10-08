@@ -1,5 +1,5 @@
 <?php
-namespace engine;
+namespace kira;
 
 use Exception;
 
@@ -134,7 +134,7 @@ class App
     public static function router()
     {
         if (!isset(self::$instances['router'])) {
-            $router = self::conf('router.class', false) ?: 'engine\net\Router';
+            $router = self::conf('router.class', false) ?: 'kira\net\Router';
             self::$instances['router'] = new $router;
         }
         return self::$instances['router'];
@@ -147,12 +147,12 @@ class App
      * недоступна, будем сбрасывать логи в файлы. Чтоб в течение работы приложения не выяснять на каждом логе факт
      * доступности базы, используем этот геттер.
      *
-     * @return \engine\Log
+     * @return \kira\Log
      */
     public static function log()
     {
         if (!isset(self::$instances['log'])) {
-            self::$instances['log'] = new \engine\Log;
+            self::$instances['log'] = new \kira\Log;
         }
         return self::$instances['log'];
     }

@@ -1,7 +1,7 @@
 <?php
-namespace engine\net;
+namespace kira\net;
 
-use engine\Env;
+use kira\Env;
 
 /**
  * Ответ клиенту.

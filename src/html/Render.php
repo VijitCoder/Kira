@@ -1,5 +1,5 @@
 <?php
-namespace engine\html;
+namespace kira\html;
 
 /**
  * Служебная фича. Не для использования в приложениях.

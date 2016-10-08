@@ -1,5 +1,5 @@
 <?php
-namespace engine\utils;
+namespace kira\utils;
 
 /**
  * Функции работы со строками.

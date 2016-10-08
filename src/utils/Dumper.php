@@ -1,5 +1,5 @@
 <?php
-namespace engine\utils;
+namespace kira\utils;
 
 /**
  * Дампер позаимствован из Yii 1.x, класс CVarDumper.

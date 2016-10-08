@@ -1,8 +1,8 @@
 <?php
-namespace engine\web;
+namespace kira\web;
 
-use engine\utils\Arrays;
-use engine\net\Request;
+use kira\utils\Arrays;
+use kira\net\Request;
 
 /**
  * Супер-класс моделей форм (валидации форм).
@@ -321,7 +321,7 @@ class Form
      * Работающий метод. Обращается к private массивам класса и возвращает их данные по запросу.
      *
      * Ключ может быть составным, типа "['lvl1' => ['lvl2' => 'param1']]".
-     * см. комментарий к engine\utils\Arrays::getValue()
+     * см. комментарий к kira\utils\Arrays::getValue()
      *
      * @param array  &$data массив данных в текущем классе
      * @param string $key   ключ в массиве данных. Возможно составной ключ.

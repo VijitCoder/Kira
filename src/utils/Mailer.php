@@ -1,5 +1,5 @@
 <?php
-namespace engine\utils;
+namespace kira\utils;
 
 /**
  * Простой скрипт по отправке почты.

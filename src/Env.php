@@ -1,5 +1,5 @@
 <?php
-namespace engine;
+namespace kira;
 
 /**
  * Среда окружения сайта.

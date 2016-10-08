@@ -1,7 +1,7 @@
 <?php
-namespace engine\web;
+namespace kira\web;
 
-use engine\net\Response;
+use kira\net\Response;
 
 /**
  * Базовый класс контроллеров
