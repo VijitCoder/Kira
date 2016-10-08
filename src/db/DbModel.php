@@ -1,7 +1,8 @@
 <?php
 namespace kira\db;
 
-use \kira\App;
+use kira\App;
+use kira\exceptions\DbException;
 
 /**
  * Супер-класс моделей. Подключение и методы работы с БД.
@@ -39,8 +40,10 @@ class DbModel
     protected $binds = [];
 
     /**
-     * Имя таблицы, сразу в обратных кавычках. Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model"
-     * будет отброшен, регистр букв сохраняется.
+     * Имя таблицы, сразу в обратных кавычках.
+     *
+     * Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model" будет отброшен, регистр букв сохраняется.
+     *
      * @var string
      */
     protected $table;
@@ -73,12 +76,12 @@ class DbModel
     /**
      * Возвращает дескриптор соединения с БД
      * @return \PDO
-     * @throws \Exception
+     * @throws DbException
      */
     public function getConnection()
     {
         if (!$this->dbh) {
-            throw new \Exception ('Нет соединения с БД');
+            throw new DbException('Нет соединения с БД');
         }
         return $this->dbh;
     }
@@ -91,9 +94,18 @@ class DbModel
     public function getStatement()
     {
         if (!$this->sth) {
-            throw new \LogicException ('Сначала нужно выполнить запрос, см. метод DBModel::query()');
+            throw new \LogicException('Сначала нужно выполнить запрос, см. метод DBModel::query()');
         }
         return $this->sth;
+    }
+
+    /**
+     * Геттер: имя таблицы, которой соответствует текущая модель
+     * @return string
+     */
+    public function getTableName()
+    {
+        return $this->table;
     }
 
     /**
@@ -101,6 +113,7 @@ class DbModel
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
      * @return object указатель на себя же
+     * @throws DbException через connect()
      */
     public function switchConnection($confKey)
     {
@@ -120,8 +133,7 @@ class DbModel
      * @param array  $params значения для подстановки в запрос
      * @return $this
      * @throws \LogicException
-     * @throws \PDOException
-     * @throws \Exception
+     * @throws DbException
      */
     public function query($sql, $params = [])
     {
@@ -134,10 +146,10 @@ class DbModel
             $this->binds = $params;
         }
 
-        $this->sth = $this->dbh->prepare($sql);
-        //$this->sth->debugDumpParams(); exit;//DBG
-
         try {
+            $this->sth = $this->dbh->prepare($sql);
+            //$this->sth->debugDumpParams(); exit;//DBG
+
             $this->sth->execute($params);
         } catch (\PDOException $e) {
             if (DEBUG) {
@@ -157,7 +169,7 @@ class DbModel
 
             App::log()->addTyped($msg, \kira\Log::DB_QUERY);
 
-            throw new \Exception($e->getMessage(), 0, $e);
+            throw new DbException($e->getMessage(), 0, $e);
         }
 
         return $this;
@@ -253,7 +265,7 @@ class DbModel
         $cond = "`{$field}` = ? " . $cond;
 
         $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
-        $params = [$value]; //параметры подстановки должны быть в массиве
+        $params = [$value]; // параметры подстановки должны быть в массиве
 
         $result = $this->query($sql, $params);
         return $one_row ? $result->fetch() : $result->fetchAll();
@@ -404,13 +416,12 @@ class DbModel
             return 'Заполненный текст запроса доступен только в DEBUG-режиме.';
         }
 
-        if (!$sql = &$this->sql) {
+        if (!$this->sql) {
             return 'Модель еще не выполнила ни одного запроса. Нечего показать.';
         }
 
-        if ($binds = &$this->binds) {
-            $replaces = [];
-            foreach ($binds as $placeholder => $value) {
+        if ($this->binds) {
+            foreach ($this->binds as $placeholder => $value) {
                 if (is_null($value)) {
                     $value = 'NULL';
                 } else if (is_string($value)) {
@@ -422,12 +433,12 @@ class DbModel
                 }
 
                 $placeholder = "/$placeholder/";
-                $sql = preg_replace($placeholder, $value, $sql, 1);
+                $this->sql = preg_replace($placeholder, $value, $this->sql, 1);
             }
 
-            $binds = [];
+            $this->binds = [];
         }
 
-        return $sql;
+        return $this->sql;
     }
 }

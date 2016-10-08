@@ -3,6 +3,7 @@ namespace kira\db;
 
 use PDO;
 use kira\App;
+use kira\exceptions\DbException;
 
 /**
  * Подключение к базе.
@@ -51,8 +52,7 @@ class DbConnection
      *
      * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
      * @return PDO объект подключения к БД
-     * @throws \PDOException
-     * @throws \Exception
+     * @throws DbException
      */
     public static function connect($confKey)
     {
@@ -68,7 +68,7 @@ class DbConnection
             if ($tz = $conf['mysql_timezone']) {
                 $sql = 'SET time_zone = ?';
                 if (false === $dbh->prepare($sql)->execute([$tz])) {
-                    throw new \PDOException('Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
+                    throw new DbException('Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
                         . 'Запрос: ' . str_replace('?', "'$tz'", $sql));
                 }
             }
@@ -92,7 +92,7 @@ class DbConnection
 
             App::log()->add(['message' => $msg, 'type' => \kira\Log::DB_CONNECT, 'file_force' => true]);
 
-            throw new \Exception($e->getMessage(), 0, $e);
+            throw new DbException($e->getMessage(), 0, $e);
         }
 
         return self::$cons[$confKey];
@@ -117,11 +117,11 @@ class DbConnection
      * Запрещаем любое размножение объекта. Установка private доступа к этим методам не позволит выполнить
      * соответствующие действия над объектом.
      *
-     * @throws \Exception
+     * @throws \LogicException
      */
     private function __construct()
     {
-        throw new \Exception('Создание объекта запрещено. Только статичное использование.');
+        throw new \LogicException('Создание объекта запрещено. Только статичное использование.');
     }
 
     private function __clone()
