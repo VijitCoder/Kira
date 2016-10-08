@@ -129,13 +129,16 @@ class App
      * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
      * метода url(). Чтобы в клиентском коде не выяснять, кто - текущий роутер, введена эта функция.
      *
+     * В конструктор класса роутера передается экземпляр автозагрузчика Composer. В роутере можно использовать его API.
+     *
+     * @param \Composer\Autoload\ClassLoader $composer экземпляр класса автозагрузчика Composer
      * @return object реализация интерфейса IRouter, объект класса роутера
      */
-    public static function router()
+    public static function router($composer)
     {
         if (!isset(self::$instances['router'])) {
             $router = self::conf('router.class', false) ?: 'kira\net\Router';
-            self::$instances['router'] = new $router;
+            self::$instances['router'] = new $router($composer);
         }
         return self::$instances['router'];
     }

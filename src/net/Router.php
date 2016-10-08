@@ -17,6 +17,24 @@ class Router implements \kira\IRouter
     private $action = '';
 
     /**
+     * Экземпляр класса автозагрузчика Composer
+     * @var \Composer\Autoload\ClassLoader
+     */
+    private $composer;
+
+    /**
+     * Конструктор
+     *
+     * Автозагрузчик Composer нужен для проверки существования файла контроллера.
+     *
+     * @param \Composer\Autoload\ClassLoader $composer экземпляр класса автозагрузчика Composer
+     */
+    public function __construct($composer)
+    {
+        $this->composer = $composer;
+    }
+
+    /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      *
      * Когда сервер Apache передает ошибки >=401 (см. Apache::ErrorDocument), он добавляет свой заголовок REDIRECT_URL.
@@ -143,7 +161,7 @@ class Router implements \kira\IRouter
             }
         }
 
-//echo "{$namespace}\\{$right}";
+//echo "{$right} in {$namespace}";
         $_GET = array_merge($params, $_GET);
 
         $right = explode('/', $right);
@@ -162,12 +180,8 @@ class Router implements \kira\IRouter
      */
     private function createController($ctrl)
     {
-        $pattern = '~^' . str_replace('\\', '/', APP_NAMESPACE) . '/~';
-        $str = str_replace('\\', '/', $ctrl);
-        $file = preg_replace($pattern, APP_PATH, $str, 1) . '.php';
-        return file_exists($file) ? new $ctrl : null;
+        return $this->composer->findFile($ctrl) ? new $ctrl : null;
     }
-
 
     /**
      * Контроллер не найден, нужно ответить юзеру страницей 404.
