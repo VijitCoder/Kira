@@ -1,7 +1,6 @@
 <?php
 namespace kira\db;
 
-use kira\App;
 use kira\exceptions\DbException;
 
 /**
@@ -17,29 +16,6 @@ use kira\exceptions\DbException;
 class DbModel
 {
     /**
-     * @var \PDO дескриптор соединения с БД
-     */
-    private $dbh;
-
-    /**
-     * Объект хранит результирующий набор, соответствующий выполненному запросу.
-     * @var \PDOStatement
-     */
-    private $sth = null;
-
-    /**
-     * Тест запроса, с плейсходерами. Только для отладки.
-     * @var string
-     */
-    private $sql = '';
-
-    /**
-     * Связываемые параметры. Как раз те значения, что будут подставляться в запрос. Только для отладки.
-     * @var array
-     */
-    protected $binds = [];
-
-    /**
      * Имя таблицы, сразу в обратных кавычках.
      *
      * Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model" будет отброшен, регистр букв сохраняется.
@@ -53,6 +29,29 @@ class DbModel
      * @var string|array
      */
     protected $pk = 'id';
+
+    /**
+     * @var \PDO дескриптор соединения с БД
+     */
+    private $dbh;
+
+    /**
+     * Объект хранит результирующий набор, соответствующий выполненному запросу.
+     * @var \PDOStatement
+     */
+    private $sth = null;
+
+    /**
+     * Тест запроса, с плейсходерами
+     * @var string
+     */
+    private $sqlText = '';
+
+    /**
+     * Связываемые параметры. Как раз те значения, что будут подставляться в "prepared statement".
+     * @var array
+     */
+    private $bindingParams = [];
 
     /**
      * Конструктор.
@@ -112,12 +111,11 @@ class DbModel
      * Подключить модель к другой базе
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
-     * @return object указатель на себя же
+     * @return $this указатель на себя же
      * @throws DbException через connect()
      */
     public function switchConnection($confKey)
     {
-        $this->_confKey = $confKey;
         $this->dbh = DbConnection::connect($confKey);
         return $this;
     }
@@ -127,7 +125,9 @@ class DbModel
      *
      * Подготовка запроса и его выполнение. Перехват ошибок, сбор информации для отладки.
      *
-     * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :)
+     * Логика исключений повторяет DBConnection::connect(). Ну почти повторяет :) Тут источником кипиша могут быть
+     * какие-то PDO классы, они займут первую позицию в трейсе. Сразу за ними - возможная инфа о клиентском коде,
+     * которую и пытаемся добыть для дополнения сообщения.
      *
      * @param string $sql    текст запроса
      * @param array  $params значения для подстановки в запрос
@@ -141,15 +141,12 @@ class DbModel
             throw new \LogicException('Не указан текст запроса');
         }
 
-        if (DEBUG) {
-            $this->sql = $sql;
-            $this->binds = $params;
-        }
+        $this->sqlText = $sql;
+        $this->bindingParams = $params;
 
         try {
             $this->sth = $this->dbh->prepare($sql);
             //$this->sth->debugDumpParams(); exit;//DBG
-
             $this->sth->execute($params);
         } catch (\PDOException $e) {
             $msg = $e->getMessage();
@@ -160,12 +157,10 @@ class DbModel
             }
 
             if (isset($trace[2])) {
-                $msg .= $trace[2]['function'] . '(...)';
+                $msg .= 'функция ' . $trace[2]['function'] . '(...)';
             }
 
-            App::log()->addTyped($msg, \kira\Log::DB_QUERY);
-
-            throw new DbException($e->getMessage(), 0, $e);
+            throw new DbException($msg, DbException::QUERY, $e);
         }
 
         return $this;
@@ -214,7 +209,7 @@ class DbModel
      */
     public function getIterator($style = \PDO::FETCH_ASSOC)
     {
-        return new RowIterator($this->getStatement(), $style);
+        return new RowIterator($this->getStatement(), $this->bindingParams, $style);
     }
 
     /**
@@ -247,13 +242,11 @@ class DbModel
      */
     public function findByField($field, $value, $ops = [])
     {
-        $default = [
-            'select'  => '*',
-            'one_row' => true,
-            'cond'    => '',
-        ];
-        $ops = array_merge($default, $ops);
-        extract($ops);
+        // @see http://php.net/manual/ru/migration70.new-features.php#migration70.new-features.null-coalesce-op
+        $select = $ops['select'] ?? '*';
+        $one_row = $ops['one_row'] ?? true;
+        $cond = $ops['cond'] ?? true;
+
         if ($select !== '*') {
             $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
         }
@@ -276,7 +269,7 @@ class DbModel
      * Источник {@link http://php.net/manual/ru/pdo.lastinsertid.php#107622}
      *
      * @return int
-     * @throws \Exception
+     * @throws DBException
      */
     public function getLastId()
     {
@@ -285,7 +278,7 @@ class DbModel
 
     /**
      * Инициализация транзакции
-     * @throws \Exception
+     * @throws DBException
      */
     public function beginTransaction()
     {
@@ -295,7 +288,7 @@ class DbModel
     /**
      * Проверка: транзакция в процессе
      * @return bool
-     * @throws \Exception
+     * @throws DBException
      */
     public function inTransaction()
     {
@@ -304,7 +297,7 @@ class DbModel
 
     /**
      * Завершение транзакции
-     * @throws \Exception
+     * @throws DBException
      */
     public function commit()
     {
@@ -313,7 +306,7 @@ class DbModel
 
     /**
      * Откат транзакции
-     * @throws \Exception
+     * @throws DBException
      */
     public function rollBack()
     {
@@ -347,7 +340,7 @@ class DbModel
      * @param array  &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
      * @return $this
      * @throws \LogicException
-     * @throws \Exception из getConnection()
+     * @throws DBException из getConnection()
      */
     public function prepareIN(&$sql, &$params)
     {
@@ -402,8 +395,6 @@ class DbModel
      * Функция только для отладки, не использовать в реальном обращении к серверу БД. Экранирование строк полагается
      * на функцию PDO::quote().
      *
-     * После подстановок сохраняем итоговый запрос и очищаем массив параметров за ненадобностью.
-     *
      * @return string
      */
     public function getLastQuery()
@@ -412,12 +403,12 @@ class DbModel
             return 'Заполненный текст запроса доступен только в DEBUG-режиме.';
         }
 
-        if (!$this->sql) {
+        if (!$sql = $this->sqlText) {
             return 'Модель еще не выполнила ни одного запроса. Нечего показать.';
         }
 
-        if ($this->binds) {
-            foreach ($this->binds as $placeholder => $value) {
+        if ($this->bindingParams) {
+            foreach ($this->bindingParams as $placeholder => $value) {
                 if (is_null($value)) {
                     $value = 'NULL';
                 } else if (is_string($value)) {
@@ -429,12 +420,10 @@ class DbModel
                 }
 
                 $placeholder = "/$placeholder/";
-                $this->sql = preg_replace($placeholder, $value, $this->sql, 1);
+                $sql = preg_replace($placeholder, $value, $sql, 1);
             }
-
-            $this->binds = [];
         }
 
-        return $this->sql;
+        return $sql;
     }
 }

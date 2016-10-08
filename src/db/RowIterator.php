@@ -1,14 +1,15 @@
 <?php
 namespace kira\db;
 
+use kira\exceptions\DbException;
+
 /**
  * Итератор для результата запроса в БД
  *
  * Итераторы удобны тем, что в память выгружаются не все данные, а только один элемент массива. Применительно к запросу
  * в базу: не все записи, а только одна. Экономия памяти в случае большого результата запроса. При этом, реализуя
  * интерфейс \Iterator, получаем возможность обхода всех записей через цикл.
-
- * Взял из движка ClickBlocks
+ * Взял из движка ClickBlocks. Исправил ошибку с подстановкой параметров в методе rewind().
  *
  * @copyright  2007-2010 SARITASA LLC <info@saritasa.com>
  * @link       http://www.saritasa.com
@@ -20,6 +21,16 @@ class RowIterator implements \Iterator
      */
     private $sth;
 
+    /**
+     * Связываемые параметры. Как раз те значения, что будут подставляться в "prepared statement".
+     * @var array
+     */
+    protected $params;
+
+    /**
+     * В каком стиле выдать результат, см. \PDO::FETCH_*
+     * @var int|null
+     */
     private $fetchStyle = null;
 
     private $key = 0;
@@ -27,19 +38,25 @@ class RowIterator implements \Iterator
     private $current = null;
 
     /**
-     * RowIterator constructor.
+     * Конструктор
      * @param \PDOStatement $statement
-     * @param int           $fetchStyle см. \PDO::FETCH_*
+     * @param array         $params     значения для подстановки в запрос, если они имеются
+     * @param int           $fetchStyle в каком стиле выдать результат, см. \PDO::FETCH_*
      */
-    public function __construct($statement, $fetchStyle)
+    public function __construct(\PDOStatement $statement, array $params = [], int $fetchStyle = \PDO::FETCH_ASSOC)
     {
         $this->sth = $statement;
+        $this->params = $params;
         $this->fetchStyle = $fetchStyle;
     }
 
     public function rewind()
     {
-        $this->sth->execute();
+        try {
+            $this->sth->execute($this->params);
+        } catch (\PDOException $e) {
+            throw new DbException('Ошибка запроса при перемотке в итераторе', DbException::QUERY, $e);
+        }
         $this->key = 0;
         $this->current = $this->sth->fetch($this->fetchStyle);
     }
