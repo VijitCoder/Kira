@@ -152,10 +152,6 @@ class DbModel
 
             $this->sth->execute($params);
         } catch (\PDOException $e) {
-            if (DEBUG) {
-                throw $e;
-            }
-
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[1])) {

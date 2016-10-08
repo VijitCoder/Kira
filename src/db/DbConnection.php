@@ -75,10 +75,6 @@ class DbConnection
 
             self::$cons[$confKey] = $dbh;
         } catch (\PDOException $e) {
-            if (DEBUG) {
-                throw $e;
-            }
-
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[2])) {
