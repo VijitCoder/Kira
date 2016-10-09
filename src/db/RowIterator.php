@@ -39,6 +39,9 @@ class RowIterator implements \Iterator
 
     /**
      * Конструктор
+     *
+     * Сразу пробуем получить первую запись запроса. Тогда обращение к current() вне цикла будет обеспечено данными.
+     *
      * @param \PDOStatement $statement
      * @param array         $params     значения для подстановки в запрос, если они имеются
      * @param int           $fetchStyle в каком стиле выдать результат, см. \PDO::FETCH_*
@@ -48,6 +51,7 @@ class RowIterator implements \Iterator
         $this->sth = $statement;
         $this->params = $params;
         $this->fetchStyle = $fetchStyle;
+        $this->current = $this->sth->fetch($this->fetchStyle);
     }
 
     public function rewind()

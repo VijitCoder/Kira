@@ -79,12 +79,16 @@ class Controller
      *                         вероятности совпадения с параметрами шаблона
      * @param array  $data     параметры в шаблон
      * @return string
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
     private function renderFile($_view123, $data)
     {
         if (isset($data['_view123'])) {
-            throw new \Exception ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);
+            throw new \InvalidArgumentException ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);
+        }
+
+        if (!is_array($data)) {
+            throw new \InvalidArgumentException('Ожидается массив параметров');
         }
 
         extract($data);

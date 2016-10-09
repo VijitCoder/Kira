@@ -199,6 +199,22 @@ class DbModel
     }
 
     /**
+     * Получить значение одного поля из одного ряда запроса.
+     *
+     * Если запросом ничего не получено, следовательно нет данных поля. Возвращаем FALSE. Так можно отличить реальный
+     * результат запроса от "нет данных". Т.е. из БД не может прийти FALSE, а все остальное - запросто.
+     *
+     * @param int $field имя поля
+     * @return mixed|FALSE
+     * @throws \LogicException
+     */
+    public function fetchField($field)
+    {
+        $row = $this->getStatement()->fetch(\PDO::FETCH_ASSOC);
+        return $row[$field] ?? false;
+    }
+
+    /**
      * Получить итератор для обхода результата запроса.
      *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
@@ -245,7 +261,7 @@ class DbModel
         // @see http://php.net/manual/ru/migration70.new-features.php#migration70.new-features.null-coalesce-op
         $select = $ops['select'] ?? '*';
         $one_row = $ops['one_row'] ?? true;
-        $cond = $ops['cond'] ?? true;
+        $cond = $ops['cond'] ?? '';
 
         if ($select !== '*') {
             $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
