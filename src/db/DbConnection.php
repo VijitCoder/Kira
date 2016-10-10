@@ -31,7 +31,7 @@ use kira\exceptions\DbException;
  *
  * Больше класс ничего не делает, только хранит подключения к базам.
  */
-class DbConnection
+final class DbConnection
 {
     /** @var PDO объекты подключения к БД. Одна БД + юзер = один объект */
     private static $cons = [];
@@ -108,18 +108,14 @@ class DbConnection
 
     /**
      * Запрещаем любое размножение объекта. Установка private доступа к этим методам не позволит выполнить
-     * соответствующие действия над объектом.
-     *
-     * @throws \LogicException
+     * соответствующие действия над объектом из клиентского кода.
      */
     private function __construct()
     {
-        throw new \LogicException('Создание объекта запрещено. Только статичное использование.');
     }
 
     private function __clone()
     {
-        exit('клонирование запрещено.');
     }
 
     private function __sleep()
