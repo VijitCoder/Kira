@@ -52,7 +52,7 @@ class Handlers
                     "Message: $message" . PHP_EOL .
                     "Source: $file:$line" . PHP_EOL . PHP_EOL .
                     "Trace: $trace",
-                    Log::EXCEPTION
+                    Logger::EXCEPTION
                 );
             }
         }

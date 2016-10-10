@@ -11,14 +11,14 @@ use kira\net\Request,
  *
  * Класс предназначен для записи критической информации (ошибок) на больших отрезках времени.
  *
- * Логи могут писаться в БД или в файлы. Для записи в базу будет создана таблица `kira_log`, {@see Log::init()}, запись
- * в файлы ведется по маске "yyyymmdd_kira_log.csv", разделитель данных ";"
+ * Логи могут писаться в БД или в файлы. Для записи в базу будет создана таблица `kira_log`, {@see Logger::init()},
+ * запись в файлы ведется по маске "yyyymmdd_kira_log.csv", разделитель данных ";"
  *
  * Поведение логера описывается группой настроек в конфиге приложения:
  * <pre>
  * 'log' => [
  *      'switch_on'    => true,       // включить логирование
- *      'store'        => \kira\Log::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
+ *      'store'        => \kira\Logger::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
  *      'db_conf_key'  => 'db',       // ключ конфига БД (значение по умолчанию), если храним логи в базе
  *      'table_name'   => 'kira_log', // таблица лога (значение по умолчанию) при записи в БД
  *      'log_path'     => TEMP_PATH,  // путь к каталогу, куда складывать файлы логов, если храним в файлах
@@ -42,7 +42,9 @@ use kira\net\Request,
  */
 class Logger
 {
-    // Типы логов
+    /**
+     * Типы логов
+     */
     const
         ENGINE = 'engine',
         DB_CONNECT = 'DB connection',
@@ -52,13 +54,20 @@ class Logger
         INFO = 'information',
         UNTYPED = 'untyped';
 
-    // Хранение лога. В случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
+    /**
+     * Хранение лога.
+     *
+     * Эти константы используются только в настройках приложения и задают поведение логера по умолчанию. В текущей
+     * реализации интерфейса логера в случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
+     */
     const
         STORE_ERROR = 0,
         STORE_IN_FILES = 1,
         STORE_IN_DB = 2;
 
-    /** @var array конфигурация логера */
+    /**
+     * @var array конфигурация логера
+     */
     private $conf;
 
     /**
@@ -178,7 +187,7 @@ class Logger
         $result = false;
         if (!$data['file_force'] && $store == self::STORE_IN_DB) {
             $this->conf['store'] = self::STORE_IN_FILES;
-            if ($result = $this->_writeToDb()) {
+            if ($result = $this->writeToDb()) {
                 $this->conf['store'] = $store;
             }
         }
@@ -214,7 +223,7 @@ class Logger
      * @param array $data исходные данные
      * @return void
      */
-    private function prepareLogData(&$data)
+    private function prepareLogData($data)
     {
         $ts = $this->conf['php_timezone']
             ? new \DateTime(null, new \DateTimeZone($this->conf['php_timezone']))
@@ -262,7 +271,7 @@ class Logger
      * @return bool
      * @throws \Exception
      */
-    private function _writeToDb()
+    private function writeToDb()
     {
         $logIt = $this->logIt;
         try {

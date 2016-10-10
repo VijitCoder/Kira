@@ -1,6 +1,7 @@
 <?php
 namespace kira;
 
+use Composer\Autoload\ClassLoader;
 use Exception;
 
 /**
@@ -131,10 +132,10 @@ class App
      *
      * В конструктор класса роутера передается экземпляр автозагрузчика Composer. В роутере можно использовать его API.
      *
-     * @param \Composer\Autoload\ClassLoader $composer экземпляр класса автозагрузчика Composer
+     * @param ClassLoader $composer экземпляр класса автозагрузчика Composer
      * @return object реализация интерфейса IRouter, объект класса роутера
      */
-    public static function router($composer)
+    public static function router(ClassLoader $composer)
     {
         if (!isset(self::$instances['router'])) {
             $router = self::conf('router.class', false) ?: 'kira\net\Router';
