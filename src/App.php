@@ -160,4 +160,16 @@ class App
         }
         return self::$instances['logger'];
     }
+
+    /**
+     * Обращение к реестру
+     *
+     * Это просто обертка для вызова метода. Возможно в клиентском коде ее удобнее читать.
+     *
+     * @return Registry
+     */
+    public static function registry()
+    {
+        return Registry::getInstance();
+    }
 }
