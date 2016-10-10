@@ -245,7 +245,7 @@ class Router implements \kira\IRouter
         }
 
         if (App::conf('router.log_redirects', false)) {
-            App::log()->addTyped('pедирект на /' . $url, 'router redirect');
+            App::logger()->addTyped('pедирект на /' . $url, 'router redirect');
         }
 
         Response::redirect('/' . $url, 301);
@@ -267,7 +267,8 @@ class Router implements \kira\IRouter
      * Если ничего не найдем, проброс ошибки. Вообще ситуация некритичная, но иначе можно прозевать исчезновение роута
      * и получить битую ссылку.
      *
-     * @param mixed $route  массив 2-х элементов ["пространство имен", "правая часть из описания роута"]
+     * @param mixed $route <b>неассоциативный</b> массив 2-х элементов
+     *                     ["пространство имен", "правая часть из описания роута"]
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      * @throws \RangeException
@@ -341,7 +342,7 @@ class Router implements \kira\IRouter
             return $url;
         } else {
             $strParams = [];
-            foreach($params as $k => $v) {
+            foreach ($params as $k => $v) {
                 $strParams[] = "$k => $v";
             }
 

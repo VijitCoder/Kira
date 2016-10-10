@@ -47,7 +47,7 @@ class Handlers
         } else {
             echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
             if ($ex->getPrevious() === null) {
-                App::log()->addTyped(
+                App::logger()->addTyped(
                     "Class: $class" . PHP_EOL .
                     "Message: $message" . PHP_EOL .
                     "Source: $file:$line" . PHP_EOL . PHP_EOL .

@@ -29,11 +29,11 @@ class DbException extends \Exception
      */
     public function __construct($message, $code = self::QUERY, $previous = null)
     {
-        $log =  App::log();
+        $logger = App::logger();
         if ($code === self::CONNECT) {
-            $log->add(['message' => $message, 'type' => $log::DB_CONNECT, 'file_force' => true]);
+            $logger->add(['message' => $message, 'type' => $logger::DB_CONNECT, 'file_force' => true]);
         } else {
-            $log->addTyped($message, $log::DB_QUERY);
+            $logger->addTyped($message, $logger::DB_QUERY);
         }
 
         parent::__construct($message, $code, $previous);

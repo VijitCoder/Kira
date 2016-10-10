@@ -150,13 +150,13 @@ class App
      * недоступна, будем сбрасывать логи в файлы. Чтоб в течение работы приложения не выяснять на каждом логе факт
      * доступности базы, используем этот геттер.
      *
-     * @return \kira\Log
+     * @return \kira\Logger
      */
-    public static function log()
+    public static function logger()
     {
-        if (!isset(self::$instances['log'])) {
-            self::$instances['log'] = new \kira\Log;
+        if (!isset(self::$instances['logger'])) {
+            self::$instances['logger'] = new \kira\Logger;
         }
-        return self::$instances['log'];
+        return self::$instances['logger'];
     }
 }

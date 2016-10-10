@@ -68,7 +68,7 @@ class ErrorController extends \kira\web\Controller
     public function index()
     {
         $code = http_response_code();
-        $log = App::log();
+        $logger = App::logger();
         $data = [
             'domain' => Env::domainName(),
             'index'  => Env::indexPage(),
@@ -79,24 +79,24 @@ class ErrorController extends \kira\web\Controller
                 break;
             case 403:
                 $this->title = '403 В доступе отказано';
-                $log->addTyped('403 В доступе отказано', $log::HTTP_ERROR);
+                $logger->addTyped('403 В доступе отказано', $logger::HTTP_ERROR);
                 break;
             case 404:
                 $this->title = '404 Страница не найдена';
                 $data['request'] = Request::absoluteURL();
-                $log->addTyped('404 Страница не найдена', $log::HTTP_ERROR);
+                $logger->addTyped('404 Страница не найдена', $logger::HTTP_ERROR);
                 break;
             case 500:
                 $this->title = '500 Внутренняя ошибка сервера';
-                $log->add([
+                $logger->add([
                     'message' => '500 Внутренняя ошибка сервера',
-                    'type' => $log::HTTP_ERROR,
+                    'type' => $logger::HTTP_ERROR,
                     'notify' => true]);
                 break;
             default:
                 $msg = "Ошибка. $code " . Response::textOf($code);
                 echo $msg;
-                $log->addTyped($msg, $log::HTTP_ERROR);
+                $logger->addTyped($msg, $logger::HTTP_ERROR);
                 return;
         }
 
