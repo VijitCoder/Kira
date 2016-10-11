@@ -9,13 +9,13 @@ use kira\exceptions\ReadException;
  *
  * Шаблоны проектирования - Singleton, Registry + доп.фичи.
  */
-final class Registry implements Serializable
+final class Registry implements \Serializable
 {
     /**
      * Объект этого класса
      * @var self
      */
-    private $instance;
+    private static $instance;
 
     /**
      * Внутреннее хранилище данных
@@ -80,15 +80,17 @@ final class Registry implements Serializable
      * @param string $key     ключ в массиве внутреннего хранилища
      * @param mixed  $value   значение для сохранения
      * @param bool   $rewrite разрешить перезапись значения при совпадении ключа
+     * @return $this
      * @throws WriteException
-     * @internal param string $prop
      */
     public function set($key, $value, $rewrite = false)
     {
-        if (!$rewrite && $this->isExists($key)) {
+        if ($this->isExists($key) && !$rewrite) {
             throw new WriteException("Реестр уже хранит значение с заданным ключом ($key) и запрещена перезапись");
         }
         $this->stack[$key] = $value;
+
+        return $this;
     }
 
     /**
@@ -100,14 +102,14 @@ final class Registry implements Serializable
      * Если режим нестрогий и значение не найдено, метод вернет NULL. Это может ввести в заблужение, поэтому нужно
      * правильно выбрать стратегию в клиентском коде.
      *
-     * @param string $key    ключ в массиве внутреннего хранилища
-     * @param bool   $strict строгая реакция на отсутствие значения
+     * @param string $key           ключ в массиве внутреннего хранилища
+     * @param bool   $allowNonExist FALSE = строгая реакция на отсутствие значения
      * @return mixed
      * @throws ReadException
      */
-    public function get($key, $strict = true)
+    public function get($key, $allowNonExist = false)
     {
-        if ($strict && $this->isExists($key)) {
+        if (!$this->isExists($key) && !$allowNonExist) {
             throw new ReadException(
                 "В реестре не найдено значение по заданному ключу ($key) и установлен строгий режим реакции");
         }
@@ -121,6 +123,17 @@ final class Registry implements Serializable
     public function delete($key)
     {
         unset($this->stack[$key]);
+    }
+
+    /**
+     * Сброс всего хранилища.
+     *
+     * Метод нужен unit-тесту, т.к. Реестр реализует синглтон и хранит свое состояние до конца приложения.
+     */
+    public function drop()
+    {
+        $this->stack = [];
+        return $this;
     }
 
     /**
