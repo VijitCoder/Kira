@@ -1,4 +1,15 @@
 <?php
+if (!function_exists('isConsoleInterface')) {
+    /**
+     * Проверка, что PHP запущен из консоли
+     * @return bool
+     */
+    function isConsoleInterface()
+    {
+        return (php_sapi_name() === 'cli');
+        // return !isset($_SERVER['REQUEST_URI']); // еще вариант
+    }
+}
 
 if (!function_exists('dd')) {
     /**
@@ -9,19 +20,9 @@ if (!function_exists('dd')) {
     function dd()
     {
         foreach (func_get_args() as $var) {
-            echo kira\utils\Dumper::dump($var);
+            echo isConsoleInterface()
+                ? kira\utils\Dumper::dumpAsString($var, 10, 0) . PHP_EOL
+                : kira\utils\Dumper::dump($var);
         }
-    }
-}
-
-if (!function_exists('isConsoleInterface')) {
-    /**
-     * Проверка, что PHP запущен из консоли
-     * @return bool
-     */
-    function isConsoleInterface()
-    {
-        return (php_sapi_name() === 'cli');
-        // return !isset($_SERVER['REQUEST_URI']); // еще вариант
     }
 }

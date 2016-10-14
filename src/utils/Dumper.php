@@ -31,6 +31,8 @@ class Dumper
     /**
      * Выводим дамп переменной.
      *
+     * Метод работает аналогично var_dump и print_r, но возвращаем информацию в более приглядном виде.
+     *
      * @param mixed   $var       variable to be dumped
      * @param integer $depth     maximum depth that the dumper should go into the variable. Defaults to 10.
      * @param boolean $highlight whether the result should be syntax-highlighted
@@ -45,8 +47,6 @@ class Dumper
 
     /**
      * Возвращаем дамп переменной в строку.
-     *
-     * Метод работает аналогично var_dump и print_r, но возвращаем информацию в более приглядном виде.
      *
      * @param mixed $var       переменная для дампа
      * @param int   $depth     максимальная глубина вложений в данных переменной, на которую должен идти дампер.

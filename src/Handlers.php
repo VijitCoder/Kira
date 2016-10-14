@@ -119,7 +119,7 @@ class Handlers
 
         $file = str_replace(ROOT_PATH, '', $file);
 
-        $stack_output = $log_data = '';
+        $stack_html = $stack_console = '';
 
         if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR)) == 0) {
             $trace = array_reverse(debug_backtrace());
@@ -149,21 +149,24 @@ class Handlers
                     $args = '';
                 }
 
-                $stack_output .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>" . PHP_EOL;
-                $log_data .= "$where > $func($args)" . PHP_EOL;
+                $stack_html .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>" . PHP_EOL;
+                $stack_console .= "$where > $func($args)" . PHP_EOL;
             }
 
-            $stack_output = "
+            $stack_html = "
                 <p>Стек вызова в хронологическом порядке:</p>
                 <table class = 'php-err-stack'>
-                    {$stack_output}
+                    {$stack_html}
                 </table>
             ";
         }
 
+        $rn = PHP_EOL;
         if (error_reporting() & $code) {
             if (isConsoleInterface()) {
-                echo $log_data;
+                echo "$rn{$codeTxt}$rn$rn\t{$msg}$rn$rn"
+                    . "Стек вызовов:$rn$rn"
+                    . $stack_console . "$rn";
             } else {
                 if (!headers_sent()) {
                     header('500 Internal Server Error');
@@ -173,10 +176,12 @@ class Handlers
                 echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
             }
         } else {
-            $rn = PHP_EOL;
-            $log_data .= "$rn{$codeTxt}$rn$rn\t{$msg}$rn$rn";
-            $log_data .= 'at ' . date('Y.m.d. H:i:s') . "$rn---$rn$rn";
-            file_put_contents(TEMP_PATH . 'kira_php_error.log', $log_data, FILE_APPEND);
+            $info = "{$codeTxt}$rn$rn\t{$msg}$rn$rn"
+                . 'в ' . date('Y.m.d. H:i:s') . "$rn$rn"
+                . "Стек вызовов:$rn$rn"
+                . $stack_console . "$rn---$rn$rn";
+
+            file_put_contents(TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
             return false;
         }
 

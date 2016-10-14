@@ -333,7 +333,6 @@ class Router implements \kira\IRouter
             $url = '/' . $left;
 
             if ($params) {
-                //$url .= '?' . http_build_query($params, 'p', '&', PHP_QUERY_RFC3986);
                 foreach ($params as $k => &$v) {
                     $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');
                 }
