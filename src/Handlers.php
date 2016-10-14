@@ -37,6 +37,17 @@ class Handlers
         $line = $ex->getLine();
         $trace = $ex->getTraceAsString();
 
+        if (isConsoleInterface()) {
+            echo
+                'Исключение: ' . $class . PHP_EOL .
+                PHP_EOL .
+                $message . PHP_EOL .
+                PHP_EOL .
+                'Стек вызовов:' . PHP_EOL .
+                $trace . PHP_EOL;
+            return;
+        }
+
         if (!headers_sent()) {
             header('500 Internal Server Error');
             header('Content-Type: text/html; charset=UTF-8');
@@ -151,7 +162,7 @@ class Handlers
         }
 
         if (error_reporting() & $code) {
-            if (!isset($_SERVER['REQUEST_URI'])) { // работаем в консоли
+            if (isConsoleInterface()) {
                 echo $log_data;
             } else {
                 if (!headers_sent()) {
