@@ -32,9 +32,10 @@ class RegistryTest extends TestCase
     {
         $reg = Registry::getInstance();
 
-        // Обычная ситуация. Записать, прочитать
+        // Обычная ситуация. Записать, проверить, прочитать
         $reg->set('test2', 'yeap!');
         $this->assertEquals('yeap!', $reg->get('test2'), 'Получение значения через обычный геттер');
+        $this->assertTrue($reg->isExists('test2'), 'Значение есть в реестре');
 
         try {
             $reg->set('test2', 'deny overwrite');
