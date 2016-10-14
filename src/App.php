@@ -151,12 +151,15 @@ class App
      * недоступна, будем сбрасывать логи в файлы. Чтоб в течение работы приложения не выяснять на каждом логе факт
      * доступности базы, используем этот геттер.
      *
+     * Логер можно подменить через конфиг приложения, log.class
+     *
      * @return \kira\Logger
      */
     public static function logger()
     {
         if (!isset(self::$instances['logger'])) {
-            self::$instances['logger'] = new \kira\Logger;
+            $logger = self::conf('logger.class', false) ?: 'kira\Logger';
+            self::$instances['logger'] = new $logger();
         }
         return self::$instances['logger'];
     }

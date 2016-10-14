@@ -17,6 +17,7 @@ use kira\net\Request,
  * Поведение логера описывается группой настроек в конфиге приложения:
  * <pre>
  * 'log' => [
+ *      'class'        => string|''   // FQN класс реализации интерфейса логера
  *      'switch_on'    => true,       // включить логирование
  *      'store'        => \kira\Logger::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
  *      'db_conf_key'  => 'db',       // ключ конфига БД (значение по умолчанию), если храним логи в базе
@@ -40,31 +41,8 @@ use kira\net\Request,
  * попытается писать в файлы. Если сбоит сохранение в файлы, будет отправлено письмо админу. Если не задан даже
  * админский email, тогда всё - /dev/nul.
  */
-class Logger
+class Logger implements ILogger
 {
-    /**
-     * Типы логов
-     */
-    const
-        ENGINE = 'engine',
-        DB_CONNECT = 'DB connection',
-        DB_QUERY = 'DB query',
-        EXCEPTION = 'exception',
-        HTTP_ERROR = 'HTTP error', // например, 404, 403 можно логировать
-        INFO = 'information',
-        UNTYPED = 'untyped';
-
-    /**
-     * Хранение лога.
-     *
-     * Эти константы используются только в настройках приложения и задают поведение логера по умолчанию. В текущей
-     * реализации интерфейса логера в случае сбоя переключаемся на вышестоящий. При 0 - только письмо админу.
-     */
-    const
-        STORE_ERROR = 0,
-        STORE_IN_FILES = 1,
-        STORE_IN_DB = 2;
-
     /**
      * @var array конфигурация логера
      */
@@ -251,7 +229,7 @@ class Logger
      * @param string $type    тип лога, см. константы этого класса
      * @return void
      */
-    public function addTyped($message, $type)
+    public function addTyped(string $message, string $type)
     {
         $this->add(compact('message', 'type'));
     }
