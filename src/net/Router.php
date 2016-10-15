@@ -18,24 +18,6 @@ class Router implements IRouter
     private $action = '';
 
     /**
-     * Экземпляр класса автозагрузчика Composer
-     * @var \Composer\Autoload\ClassLoader
-     */
-    private $composer;
-
-    /**
-     * Конструктор
-     *
-     * Автозагрузчик Composer нужен для проверки существования файла контроллера.
-     *
-     * @param \Composer\Autoload\ClassLoader $composer экземпляр класса автозагрузчика Composer
-     */
-    public function __construct($composer)
-    {
-        $this->composer = $composer;
-    }
-
-    /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      *
      * Когда сервер Apache передает ошибки >=401 (см. Apache::ErrorDocument), он добавляет свой заголовок REDIRECT_URL.
@@ -78,9 +60,11 @@ class Router implements IRouter
         list($ctrlName, $action, $params) = $set;
 //dd($set);//DBG
 
-        if (!$controller = $this->createController($ctrlName)) {
+        if (!App::composer()->findFile($ctrlName)) {
             return $this->notFound();
         }
+
+        $controller = new $ctrlName;
 
         if (!$action) {
             $action = $controller->defaultAction;
@@ -174,17 +158,6 @@ class Router implements IRouter
     }
 
     /**
-     * Из FQN имени класса получаем полный путь к файлу. Если он существует, создаем класс контроллера. Иначе - 404.
-     *
-     * @param $ctrl
-     * @return Controller|null
-     */
-    private function createController($ctrl)
-    {
-        return $this->composer->findFile($ctrl) ? new $ctrl : null;
-    }
-
-    /**
      * Контроллер не найден, нужно ответить юзеру страницей 404.
      *
      * В конфиге должен быть прописан контроллер, который будет обрабатывать 404 ошибку. Если он не задан (пустая
@@ -206,7 +179,8 @@ class Router implements IRouter
             if (isset($_SERVER['REDIRECT_URL'])) {
                 $msg .= '<br>URL: ' . $_SERVER['REDIRECT_URL'];
             }
-            return Response::send($msg);
+            Response::send($msg);
+            App::end();
         }
 
         http_response_code(404);
@@ -216,6 +190,7 @@ class Router implements IRouter
             $controller->$action();
         } else {
             Response::send('Неизвестный URL');
+            App::end();
         }
     }
 
@@ -268,8 +243,8 @@ class Router implements IRouter
      * Если ничего не найдем, проброс ошибки. Вообще ситуация некритичная, но иначе можно прозевать исчезновение роута
      * и получить битую ссылку.
      *
-     * @param mixed $route <b>неассоциативный</b> массив 2-х элементов
-     *                     ["пространство имен", "правая часть из описания роута"]
+     * @param mixed $route  <b>неассоциативный</b> массив 2-х элементов
+     *                      ["пространство имен", "правая часть из описания роута"]
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      * @throws \RangeException

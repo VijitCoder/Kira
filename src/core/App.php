@@ -3,6 +3,8 @@ namespace kira\core;
 
 use Composer\Autoload\ClassLoader;
 use kira\exceptions\ConfigException;
+use kira\interfaces\ILogger;
+use kira\interfaces\IRouter;
 use kira\utils\Registry;
 
 /**
@@ -126,21 +128,49 @@ class App
     }
 
     /**
+     * Запоминаем экземпляр автозагрузчика Composer, который управляет нашей автозагрузкой.
+     *
+     * Моему роутеру нужен Composer, чтобы выяснять, существует ли класс контроллера, иначе - 404. Возможно, появятся
+     * и другие примеры использования.
+     *
+     * @internal
+     * @param ClassLoader $composer экземпляр класса автозагрузчика Composer
+     */
+    public static function setComposer($composer)
+    {
+        self::$instances['composer'] = $composer;
+    }
+
+    /**
+     * Получить экземпляр класса текущего загрузчика
+     *
+     * Запоминание объекта обычно инициируется в главном index.php Если до сего места объект неизвестен, то вероятно
+     * имеем дело с ошибкой логики выполнения приложения.
+     *
+     * @return ClassLoader
+     * @throws \LogicException
+     */
+    public static function composer()
+    {
+        if (!isset(self::$instances['composer'])) {
+            throw \LogicException('Не задан экземпляр класса ClassLoader');
+        }
+        return self::$instances['composer'];
+    }
+
+    /**
      * Возвращает объект класса текущего роутера.
      *
      * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
      * метода url(). Чтобы в клиентском коде не выяснять, кто - текущий роутер, введена эта функция.
      *
-     * В конструктор класса роутера передается экземпляр автозагрузчика Composer. В роутере можно использовать его API.
-     *
-     * @param ClassLoader $composer экземпляр класса автозагрузчика Composer
-     * @return object реализация интерфейса IRouter, объект класса роутера
+     * @return IRouter реализация интерфейса, объект класса роутера
      */
-    public static function router(ClassLoader $composer)
+    public static function router()
     {
         if (!isset(self::$instances['router'])) {
             $router = self::conf('router.class', false) ?: 'kira\net\Router';
-            self::$instances['router'] = new $router($composer);
+            self::$instances['router'] = new $router();
         }
         return self::$instances['router'];
     }
@@ -154,12 +184,12 @@ class App
      *
      * Логер можно подменить через конфиг приложения, log.class
      *
-     * @return \kira\Logger
+     * @return ILogger реализация интерфейса, объект класса логера
      */
     public static function logger()
     {
         if (!isset(self::$instances['logger'])) {
-            $logger = self::conf('logger.class', false) ?: 'kira\Logger';
+            $logger = self::conf('logger.class', false) ?: 'kira\core\Logger';
             self::$instances['logger'] = new $logger();
         }
         return self::$instances['logger'];
