@@ -1,5 +1,5 @@
 <?php
-namespace kira;
+namespace kira\utils;
 
 use kira\exceptions\WriteException;
 use kira\exceptions\ReadException;
