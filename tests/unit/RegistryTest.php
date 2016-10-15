@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use kira\Registry;
+use kira\utils\Registry;
 use kira\exceptions\WriteException;
 use kira\exceptions\ReadException;
 
@@ -75,7 +75,7 @@ class RegistryTest extends TestCase
         $serializedValue = serialize($reg);
         $reg = unserialize($serializedValue);
 
-        $serializeExpect = 'C:13:"kira\Registry":141:{a:3:{s:11:"savedObject";O:8:"stdClass":1:{s:9:"publicVar";'
+        $serializeExpect = 'C:19:"kira\utils\Registry":141:{a:3:{s:11:"savedObject";O:8:"stdClass":1:{s:9:"publicVar";'
             . 's:10:"some value";}s:4:"some";s:12:"single value";s:3:"arr";a:2:{i:0;i:1;i:1;i:3;}}}';
 
         $this->assertEquals($serializeExpect, $serializedValue, 'Сериализованный реестр');

@@ -1,12 +1,13 @@
 <?php
 namespace kira\net;
 
-use kira\App;
+use kira\core\App;
+use kira\interfaces\IRouter;
 
 /**
  * Маршрутизатор запросов
  */
-class Router implements \kira\IRouter
+class Router implements IRouter
 {
     /**
      * Названия контроллера и метода-действия, которые вызвал роутер после парсинга запроса

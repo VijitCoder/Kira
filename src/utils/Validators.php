@@ -1,7 +1,7 @@
 <?php
 namespace kira\utils;
 
-use kira\App;
+use kira\core\App;
 
 /**
  * Общие валидаторы.

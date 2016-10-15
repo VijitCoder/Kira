@@ -1,5 +1,7 @@
 <?php
-namespace kira;
+namespace kira\web;
+
+use kira\interfaces\IDetectEnvironment;
 
 /**
  * Среда окружения сайта.

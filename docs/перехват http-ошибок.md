@@ -48,8 +48,8 @@ RewriteRule ^(.*)$ index.php [L,QSA]
 ```PHP
 namespace app\controllers;
 
-use kira\App,
-    kira\Env,
+use kira\core\App,
+    kira\web\Env,
     kira\net\Request,
     kira\net\Response;
 

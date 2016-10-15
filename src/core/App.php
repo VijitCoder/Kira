@@ -1,8 +1,9 @@
 <?php
-namespace kira;
+namespace kira\core;
 
 use Composer\Autoload\ClassLoader;
-use Exception;
+use kira\exceptions\ConfigException;
+use kira\utils\Registry;
 
 /**
  * Базовый класс. Будет что-то общее у многих - можно разместить тут.
@@ -10,7 +11,7 @@ use Exception;
 class App
 {
     /** Название и версия движка. Ссылка на оф.сайт движка */
-    const VERSION = 'Kira 1.2';
+    const VERSION = 'Kira 1.3';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /** @var array конфигурация приложения */
@@ -34,7 +35,7 @@ class App
      * @param string $key    ключ в конфиге
      * @param bool   $strict флаг "критичности", когда настройка не найдена: TRUE = пробросить исключение
      * @return mixed|null
-     * @throws \Exception
+     * @throws ConfigException
      */
     public static function conf($key, $strict = true)
     {
@@ -46,7 +47,7 @@ class App
         foreach(explode('.', $key) as $k => $part) {
             if (!isset($level[$part])) {
                 if ($strict) {
-                    throw new Exception("В конфигурации не найден ключ '{$part}'");
+                    throw new ConfigException("В конфигурации не найден ключ '{$part}'");
                 } else {
                     return null;
                 }

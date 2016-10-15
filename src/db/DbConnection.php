@@ -2,7 +2,7 @@
 namespace kira\db;
 
 use PDO;
-use kira\App;
+use kira\core\App;
 use kira\exceptions\DbException;
 
 /**

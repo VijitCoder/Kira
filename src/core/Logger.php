@@ -1,10 +1,11 @@
 <?php
-namespace kira;
+namespace kira\core;
 
-use kira\net\Request,
-    kira\db\DbModel,
-    kira\utils\Mailer,
-    kira\html\Render;
+use kira\interfaces\ILogger;
+use kira\net\Request;
+use kira\db\DbModel;
+use kira\utils\Mailer;
+use kira\html\Render;
 
 /**
  * Логирование.
@@ -18,7 +19,7 @@ use kira\net\Request,
  * <pre>
  * 'log' => [
  *      'switch_on'    => true,       // включить логирование
- *      'store'        => \kira\Logger::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
+ *      'store'        => ILogger::[STORE_IN_DB | STORE_IN_FILES], // тип хранителя логов
  *      'db_conf_key'  => 'db',       // ключ конфига БД (значение по умолчанию), если храним логи в базе
  *      'table_name'   => 'kira_log', // таблица лога (значение по умолчанию) при записи в БД
  *      'log_path'     => TEMP_PATH,  // путь к каталогу, куда складывать файлы логов, если храним в файлах
@@ -71,7 +72,7 @@ class Logger implements ILogger
         $conf = array_merge(
             [
                 'switch_on'    => true,
-                'store'        => self::STORE_IN_FILES,
+                'store'        => ILogger::STORE_IN_FILES,
                 'db_conf_key' => 'db',
                 'log_path'     => TEMP_PATH,
                 'php_timezone' => '',
@@ -82,12 +83,12 @@ class Logger implements ILogger
 
         $conf['_mail'] = App::conf('admin_mail', false);
 
-        if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
+        if ($conf['store'] == ILogger::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
             throw new \LogicException('Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке.'
                 . PHP_EOL . 'Лог в БД невозможен');
         }
 
-        if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
+        if ($conf['store'] == ILogger::STORE_IN_FILES && !$conf['log_path']) {
             throw new \LogicException('Ошибка конфигурации логера: не задан каталог ("log_path") для лог-файлов.'
                 . PHP_EOL . 'Логирование в файлы невозможно.');
         }
@@ -102,7 +103,7 @@ class Logger implements ILogger
      * <pre>
      * [
      *  'message'    => string                 текст сообщения
-     *  'type'       => const  | self::UNTYPED тип лога, см. константы этого класса
+     *  'type'       => const  | ILogger::UNTYPED тип лога, см. константы этого класса
      *  'source'     => string | ''            источник сообщения
      *  'notify'     => bool | FALSE           флаг "Нужно оповещение по почте"
      *  'file_force' => bool | FALSE           сообщение писать в файл, независимо от настройки.
@@ -133,13 +134,13 @@ class Logger implements ILogger
     {
         $conf = $this->conf;
 
-        if (!$conf['switch_on'] || $conf['store'] == self::STORE_ERROR) {
+        if (!$conf['switch_on'] || $conf['store'] == ILogger::STORE_ERROR) {
             return;
         }
 
         $default = [
             'message'    => '',
-            'type'       => self::UNTYPED,
+            'type'       => ILogger::UNTYPED,
             'source'     => '',
             'notify'     => false,
             'file_force' => false,
@@ -162,8 +163,8 @@ class Logger implements ILogger
         // в базу, которая уже лежит.
         $store = $this->conf['store'];
         $result = false;
-        if (!$data['file_force'] && $store == self::STORE_IN_DB) {
-            $this->conf['store'] = self::STORE_IN_FILES;
+        if (!$data['file_force'] && $store == ILogger::STORE_IN_DB) {
+            $this->conf['store'] = ILogger::STORE_IN_FILES;
             if ($result = $this->writeToDb()) {
                 $this->conf['store'] = $store;
             }
@@ -175,10 +176,10 @@ class Logger implements ILogger
         в логере, второе - собственно то сообщение, которое не удалось никуда записать. Это работает, если заранее
         готовимся к сбою в файлах.
         */
-        //if (!$result && $store == self::STORE_IN_FILES) {
+        //if (!$result && $store == ILogger::STORE_IN_FILES) {
 
         if (!$result) {
-            $this->conf['store'] = self::STORE_ERROR;
+            $this->conf['store'] = ILogger::STORE_ERROR;
             if ($this->writeToFile()) {
                 $this->conf['store'] = $store;
             } else {
@@ -362,7 +363,7 @@ class Logger implements ILogger
         $logIt = $this->logIt;
 
         if (!$mailTo = $this->conf['_mail']) {
-            $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', self::ENGINE);
+            $this->addTyped('Не задан email админа, не могу отправить сообщение от логера.', ILogger::ENGINE);
             return;
         }
 
@@ -398,7 +399,7 @@ class Logger implements ILogger
 
         $from = App::conf('noreply_mail') ?: "noreply@$domain";
         if (!Mailer::complex($from, $mailTo, "Сообщение от логера сайта $domain", $letters)) {
-            $this->addTyped('Не удалось отправить сообщение от логера.', self::ENGINE);
+            $this->addTyped('Не удалось отправить сообщение от логера.', ILogger::ENGINE);
         }
     }
 

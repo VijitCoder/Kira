@@ -1,0 +1,9 @@
+<FilesMatch "^\.ht">
+    deny from all
+</FilesMatch>
+
+RewriteEngine On
+RewriteBase /
+
+RewriteCond %{REQUEST_URI} !^/(index\.php|robots\.txt|public/)
+RewriteRule .* index.php [L,QSA]
