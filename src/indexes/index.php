@@ -2,6 +2,8 @@
 /**
  * Главный скрипт приложения 'app'
  */
+use kira\core\App;
+
 mb_internal_encoding('UTF-8');
 
 define('APP_NAMESPACE', 'app');
@@ -20,7 +22,9 @@ ini_set('display_startup_errors', (int)DEBUG);
 error_reporting(DEBUG ? E_ALL : 0);
 
 $composer = require ROOT_PATH . 'vendor/autoload.php';
+App::setComposer($composer);
+unset($composer);
 
-date_default_timezone_set(kira\App::conf('timezone'));
+date_default_timezone_set(App::conf('timezone'));
 
-kira\App::router($composer)->callAction();
+App::router()->callAction();

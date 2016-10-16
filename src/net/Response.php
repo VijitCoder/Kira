@@ -1,6 +1,7 @@
 <?php
 namespace kira\net;
 
+use kira\core\App;
 use kira\web\Env;
 
 /**
@@ -105,7 +106,6 @@ class Response
      *
      * @param string $url  новый относительный адрес, с ведущим слешем
      * @param int    $code код ответа HTTP
-     * @return void
      */
     public static function redirect($url, $code = 302)
     {
@@ -124,7 +124,7 @@ class Response
             ";
         }
 
-        exit;
+        App::end();
     }
 
     /**
@@ -145,7 +145,6 @@ class Response
      * в output.
      *
      * @param string $file полный путь + файл
-     * @return void
      * @throws \LogicException
      */
     public static function download($file)
@@ -186,7 +185,27 @@ class Response
     }
 
     /**
-     * Отвечаем браузеру json-строкой с соответствующим заголовком.
+     * Отправляем ответ браузеру с заданными заголовками
+     *
+     * По умолчанию в заголовках указан text/html, UTF-8. Если требуется свой набор заголовков, нужно описывать их все,
+     * т.к. результат не объединяется с заголовками по умолчанию, но заменяется на переданные в параметре.
+     *
+     * @param string $message ответ браузеру
+     * @param array  $headers заголовки
+     */
+    public static function send($message, $headers = [])
+    {
+        if (!headers_sent()) {
+            if (!$headers) {
+                $headers = ['Content-Type: text/html; charset=UTF-8'];
+            }
+            array_map('header', $headers);
+        }
+        echo $message;
+    }
+
+    /**
+     * Отвечаем браузеру json-строкой с соответствующим заголовком. Кодировку объявляем UTF-8.
      *
      * Кроме отправки заголовка, остальное - обертка json_encode(), с предустановленными опциями:
      * <ul>
@@ -203,32 +222,15 @@ class Response
      * @param mixed $data    данные для упаковки в json-строку
      * @param int   $options параметры упаковки
      * @param int   $depth   максимальная глубина вложения
-     * @return void
      */
     public static function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
     {
-        header('Content-Type: application/json');
         if (DEBUG) {
             $options = $options | JSON_PRETTY_PRINT;
         }
-        echo json_encode($data, $options, $depth);
-    }
-
-    /**
-     * Отвечаем браузеру текстом с заголовком кодировки.
-     *
-     * Для ситуаций, когда нет ни каких шаблонов или других способов уточнить кодировку.
-     *
-     * @todo заголовки принимать в параметре функции. Только по умолчанию передавать тот заголовок, что сейчас есть.
-     *
-     * @param string $message
-     * @return void
-     */
-    public static function send($message)
-    {
-        if (!headers_sent()) {
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-        echo $message;
+        self::send(
+            json_encode($data, $options, $depth),
+            ['Content-Type: application/json; charset=UTF-8']
+        );
     }
 }
