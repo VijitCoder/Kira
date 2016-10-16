@@ -2,6 +2,7 @@
 namespace kira\net;
 
 use kira\core\App;
+use kira\exceptions\ConfigException;
 use kira\interfaces\IRouter;
 
 /**
@@ -10,11 +11,20 @@ use kira\interfaces\IRouter;
 class Router implements IRouter
 {
     /**
-     * Названия контроллера и метода-действия, которые вызвал роутер после парсинга запроса
-     * @var string
+     * Названия контроллера, который вызвал роутер после парсинга запроса
      * @var string
      */
     private $controller = '';
+
+    /**
+     * Названия действия, который вызвал роутер после парсинга запроса.
+     *
+     * Прим: если вызывается действие по умолчанию, информацию об этом действии нельзя получить из роутера
+     * в конструкторе контроллера. Т.е. будет пустая строка. Это связано с тем, что сначала отрабатывает конструктор,
+     * и только потом в объекте контроллера можно прочитать $defaultAction.
+     *
+     * @var string
+     */
     private $action = '';
 
     /**
@@ -58,6 +68,8 @@ class Router implements IRouter
         }
 
         list($ctrlName, $action, $params) = $set;
+        $this->controller = $ctrlName;
+        $this->action = $action;
 //dd($set);//DBG
 
         if (!App::composer()->findFile($ctrlName)) {
@@ -68,11 +80,10 @@ class Router implements IRouter
 
         if (!$action) {
             $action = $controller->defaultAction;
+            $this->action = $action;
         }
 
         if (method_exists($controller, $action)) {
-            $this->controller = $controller;
-            $this->action = $action;
             if ($params) {
                 $ref_method = new \ReflectionMethod("$ctrlName::$action");
                 $funcParams = [];
@@ -158,7 +169,7 @@ class Router implements IRouter
     }
 
     /**
-     * Контроллер не найден, нужно ответить юзеру страницей 404.
+     * Контроллер или роут не найден, нужно ответить юзеру страницей 404.
      *
      * В конфиге должен быть прописан контроллер, который будет обрабатывать 404 ошибку. Если он не задан (пустая
      * строка), возвращаем 404-й заголовок и простой текст.
@@ -196,15 +207,32 @@ class Router implements IRouter
 
     /**
      * Разбираем контроллер и метод, прописанные в конфиге.
+     *
      * Ожидаем FQN имя класса + действие. Или будет выбрано действие, заданное в контроллер по умолчанию.
-     * @param $handler
+     *
+     * Прим: тут не проверяем существование скрипта в соответствии с классом. Позволяем возникнуть ошибке. Тогда кодер
+     * сможет сразу понять, что его конфиг описан неверно, и не придется гадать, почему он видит 404 вместо главной,
+     * например. Более того, неправильно описанный контроллер для 404-й с проверкой привел бы с бесконечному редиректу.
+     *
+     * @param string $handler FQN имя класса [+ действие].
      * @return array
+     * @throws ConfigException
      */
     private function parseHandler($handler)
     {
-        $handler = explode('->', $handler);
-        $controller = (new $handler[0]);
-        $action = isset($handler[1]) ? $handler[1] : $controller->defaultAction;
+        $handlerArr = explode('->', $handler);
+
+        $ctrlName = $handlerArr[0];
+        $this->controller = $ctrlName;
+        if (!App::composer()->findFile($ctrlName)) {
+            throw new ConfigException(
+                "Контроллер не найден. Неверный хендлер '{$handler}' прописан в конфигурации приложения");
+        }
+        $controller = new $ctrlName;
+
+        $action = $handlerArr[1] ?? $controller->defaultAction;
+        $this->action = $action;
+
         return [$controller, $action];
     }
 
