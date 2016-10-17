@@ -20,14 +20,14 @@ class Arrays
      * приравнивается к неассоциативному.
      *
      * @param array $data массив любого типа и вложенности
-     * @return ArrayObject
+     * @return ArrayObject|mixed
      */
     public static function arrObject($data)
     {
         if (is_array($data)) {
-            $data = array_map(['DataHelper', 'arrObject'], $data);
+            $data = array_map([__CLASS__, 'arrObject'], $data);
             if (!is_numeric(key($data)) && count($data)) {
-                $data = new ArrayObject($data, ArrayObject::ARRAY_AS_PROPS);
+                $data = new \ArrayObject($data, \ArrayObject::ARRAY_AS_PROPS);
             }
         }
 
@@ -35,55 +35,69 @@ class Arrays
     }
 
     /**
-     * Фильтрация массива по ключам через функцию обратного вызова.
+     * Фильтрация многомерного массива
      *
-     * Функция делает тоже самое, что и array_filter() в сочетании с константой ARRAY_FILTER_USE_KEY
-     * @see http://php.net/manual/ru/function.array-filter.php
+     * Функция по типу array_filter() {@link http://php.net/manual/ru/function.array-filter.php}, только работает
+     * с многомерными массивами.
      *
-     * Потребовалась своя реализация для PHP < 5.6
+     * Если не задана callback-функция, из массива убираются элементы, приравниваемые к FALSE (как в мануале), в том
+     * числе пустые массивы.
      *
-     * @param callable $callback
-     * @param array    $arr
+     * Если в фильтрация подмассива вернет пустой массив, он не попадет в результат.
+     *
+     * Флаг ARRAY_FILTER_USE_BOTH для подмассива неоднозначен. Поэтому в callback-функцию будут переданы сначала ключ
+     * и его подмассив. Если функция одобрит, то дальше будет передано содержимое подмассива с ключами.
+     *
+     * @param array    $array    исходный массив
+     * @param callable $callback функция для фильтрации
+     * @param int      $flag     фильтровать по значениям или по ключам. см. ARRAY_FILTER_USE_* в справке PHP
      * @return array
-     */
-    public static function filter_keys($callback, $arr)
-    {
-        foreach ($arr as $key => $whatever) {
-            if (!$callback($key)) {
-                unset($arr[$key]);
-            }
-        }
-        return $arr;
-    }
-
-    /**
-     * Фильтрация многомерного массива.
-     *
-     * Функция на основе array_filter() {@see http://php.net/manual/ru/function.array-filter.php}, просто вызывает ее
-     * для каждого подмассива.
-     *
-     * @todo полностью заменить array_filter() на свою реализацию (см. выше filter_keys()). Это будет быстрее.
-     * Проблема: как работать с константами, которых нет до PHP 5.6? Для клиентского кода их использование должно быть
-     * прозрачным на любой версии PHP.
-     *
-     * @param array    $array
-     * @param callable $callback
-     * @param int      $flag
-     * @return array
+     * @throws \LogicException
      */
     public static function array_filter_recursive(array $array, callable $callback = null, $flag = 0)
     {
-        foreach ($array as &$v) {
-            if (is_array($v)) {
-                $v = self::array_filter_recursive($v, $callback, $flag);
-            }
+        $result = [];
+        $viaFunc = (bool)$callback;
+
+        if (!$viaFunc && in_array($flag, [ARRAY_FILTER_USE_KEY, ARRAY_FILTER_USE_BOTH])) {
+            throw new \LogicException(
+                'Не задана callback-функция. Фильтрация по ключам или ключ + значение бессмысленна');
         }
 
-        if (!$callback) {
-            return array_filter($array);
-        } else {
-            return phpversion() < '5.6' ? array_filter($array, $callback) : array_filter($array, $callback, $flag);
+        foreach ($array as $k => $v) {
+            if ($flag == ARRAY_FILTER_USE_KEY && !$callback($k)) {
+                continue;
+            }
+
+            if ($flag == ARRAY_FILTER_USE_BOTH && !$callback($v, $k)) {
+                continue;
+            }
+
+            if (!$viaFunc && !$v) {
+                continue;
+            }
+
+            if (is_array($v)) {
+                if ($v = self::array_filter_recursive($v, $callback, $flag)) {
+                    $result[$k] = $v;
+                }
+                continue;
+            }
+
+            if ($flag == 0) { // фильтр только по значениям
+                if ($viaFunc && $callback($v)) {
+                    $result[$k] = $v;
+                    continue;
+                }
+
+                if (!$viaFunc && $v) {
+                    $result[$k] = $v;
+                }
+            } else {
+                $result[$k] = $v;
+            }
         }
+        return $result;
     }
 
     /**
@@ -116,7 +130,7 @@ class Arrays
      *                              в конец, с новыми числовыми ключами.
      * @return array
      */
-    public static function merge_recursive(array &$array1, array &$array2, $numKeyAsString = false)
+    public static function merge_recursive(array &$array1, array &$array2, bool $numKeyAsString = false)
     {
         $merged = $array1;
 
@@ -144,7 +158,7 @@ class Arrays
      * @param string $eol  клей между соседними подмассивами
      * @return string
      */
-    public static function implode_recursive($arr, $glue = ' ', $eol = '')
+    public static function implode_recursive(array $arr, string $glue = ' ', string $eol = '')
     {
         if (!is_array($arr)) {
             trigger_error('Неверный первый параметр ($arr). Нужен массив', E_USER_ERROR);
@@ -198,7 +212,7 @@ class Arrays
      * @param mixed $chain массив ключей или строковый/числовой ключ
      * @return mixed
      */
-    public static function getValue(&$arr, $chain)
+    public static function getValue(array &$arr, $chain)
     {
         if (is_array($chain)) {
             $key = key($chain);
