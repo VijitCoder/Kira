@@ -13,7 +13,7 @@ class RegistryTest extends TestCase
     /**
      * Тест магического сеттера и геттера
      */
-    public function testMagicMethods()
+    public function test_magicMethods()
     {
         $reg = Registry::getInstance();
 
@@ -28,7 +28,7 @@ class RegistryTest extends TestCase
     /**
      * Тест нормальных get(), set()
      */
-    public function testNormalMethods()
+    public function test_normalMethods()
     {
         $reg = Registry::getInstance();
 
@@ -63,7 +63,7 @@ class RegistryTest extends TestCase
     /**
      * Тест сериализации/десериализации
      */
-    public function testSaveRestore()
+    public function test_saveRestore()
     {
         $reg = Registry::getInstance()->drop();
 

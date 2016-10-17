@@ -21,7 +21,7 @@ final class Registry implements \Serializable
      * Внутреннее хранилище данных
      * @var array
      */
-    private $stack = [];
+    private $storage = [];
 
     /**
      * Получение объекта реестра в единственном экземпляре
@@ -45,7 +45,7 @@ final class Registry implements \Serializable
      */
     public function __set($prop, $value)
     {
-        $this->stack[$prop] = $value;
+        $this->storage[$prop] = $value;
     }
 
     /**
@@ -58,7 +58,7 @@ final class Registry implements \Serializable
      */
     public function __get($prop)
     {
-        return $this->stack[$prop] ?? null;
+        return $this->storage[$prop] ?? null;
     }
 
     /**
@@ -68,7 +68,7 @@ final class Registry implements \Serializable
      */
     public function isExists($key)
     {
-        return isset($this->stack[$key]);
+        return isset($this->storage[$key]);
     }
 
     /**
@@ -88,7 +88,7 @@ final class Registry implements \Serializable
         if ($this->isExists($key) && !$rewrite) {
             throw new WriteException("Реестр уже хранит значение с заданным ключом ($key) и запрещена перезапись");
         }
-        $this->stack[$key] = $value;
+        $this->storage[$key] = $value;
 
         return $this;
     }
@@ -113,7 +113,7 @@ final class Registry implements \Serializable
             throw new ReadException(
                 "В реестре не найдено значение по заданному ключу ($key) и установлен строгий режим реакции");
         }
-        return $this->stack[$key] ?? null;
+        return $this->storage[$key] ?? null;
     }
 
     /**
@@ -122,7 +122,7 @@ final class Registry implements \Serializable
      */
     public function delete($key)
     {
-        unset($this->stack[$key]);
+        unset($this->storage[$key]);
     }
 
     /**
@@ -132,7 +132,7 @@ final class Registry implements \Serializable
      */
     public function drop()
     {
-        $this->stack = [];
+        $this->storage = [];
         return $this;
     }
 
@@ -152,7 +152,7 @@ final class Registry implements \Serializable
         if (!is_callable($func) || substr($func, 0, 6) !== 'array_') {
             throw new \BadMethodCallException(__CLASS__ . '->' . $func);
         }
-        array_unshift($argv, $this->stack);
+        array_unshift($argv, $this->storage);
         return call_user_func_array($func, $argv);
     }
 
@@ -163,7 +163,7 @@ final class Registry implements \Serializable
      */
     public function serialize()
     {
-        return serialize($this->stack);
+        return serialize($this->storage);
     }
 
     /**
@@ -172,7 +172,7 @@ final class Registry implements \Serializable
      */
     public function unserialize($data)
     {
-        $this->stack = unserialize($data);
+        $this->storage = unserialize($data);
     }
 
     /**
