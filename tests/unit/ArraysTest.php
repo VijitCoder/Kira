@@ -1,8 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use kira\utils\Arrays;
-use kira\exceptions\WriteException;
-use kira\exceptions\ReadException;
 
 /**
  * Тестируем утилиту Arrays
@@ -27,7 +25,6 @@ class ArraysTest extends TestCase
         $this->assertObjectHasAttribute('prop1', $result[0], 'Найдено свойство "prop1"');
         $this->assertEquals($result[0]->prop1, 234, 'prop1 равно ожидаемому значению');
     }
-
 
     /**
      * Рекурсивная фильтрация пустых значений в массиве
@@ -144,5 +141,79 @@ class ArraysTest extends TestCase
             3 => [19]];
 
         $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация ключей и значений массива через callback-функцию');
+    }
+
+    public function test_merge_recursive()
+    {
+        $arr1 = [
+            'key1' => 'will be rewrite to array',
+            'key2' => ['will be', 'rewrite to', 'k2' => 'string',],
+            'key3' => ['k3' => 'sub', 'k4' => 'array', 1, 2,],
+            'nums' => [1 => 14, 3 => 32, 5 => 53,],
+            'key4' => 'unique value',
+        ];
+
+        $arr2 = [
+            'key1' => ['str', 'rewrite with', 'new value'],
+            'key2' => 'array rewrite to a new string',
+            'key3' => ['k3' => 'new sub', 'k5' => 'here', 3, 4],
+            'nums' => [0 => 4, 2 => 27, 4 => 46],
+        ];
+
+        $arr = Arrays::merge_recursive($arr1, $arr2, false);
+        $expect = [
+            'key1' => ['str', 'rewrite with', 'new value',],
+            'key2' => 'array rewrite to a new string',
+            'key3' => ['k3' => 'new sub', 'k4' => 'array', 0 => 1, 1 => 2, 'k5' => 'here', 2 => 3, 3 => 4,],
+            'nums' => [
+                1 => 14, // Эти ключи сохранятся просто потому, что первый массив копируется в результат.
+                3 => 32,
+                5 => 53,
+                6 => 4,  // От этого ключа все изменится, т.к. числовые ключи не сохраняются и нумерация
+                7 => 27, // определяется внутренним механизмом PHP.
+                8 => 46,
+            ],
+            'key4' => 'unique value',
+        ];
+
+        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Не сохраняем числовые ключи.');
+
+        $arr = Arrays::merge_recursive($arr1, $arr2, true);
+        $expect = [
+            'key1' => ['str', 'rewrite with', 'new value',],
+            'key2' => 'array rewrite to a new string',
+            // Числовые ключи рассматривались как текстовые. Два элемента переписаны, т.к. было совпадение ключей.
+            'key3' => ['k3' => 'new sub', 'k4' => 'array', 0 => 3, 1 => 4, 'k5' => 'here'],
+            'nums' => [
+                1 => 14, // Все ключи сохранились, т.к. рассматривались как текстовые
+                3 => 32,
+                5 => 53,
+                0 => 4,
+                2 => 27,
+                4 => 46,
+            ],
+            'key4' => 'unique value',
+        ];
+        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Сохраняем числовые ключи.');
+    }
+
+    public function test_implode_recursive()
+    {
+        $arr = [
+            'string 1',
+            ['string 2', 'string 3',],
+            ['sub' => ['string 4', 'string 5',]],
+        ];
+
+        $expect = Arrays::implode_recursive($arr, ' + ' , ' rn ');
+        $this->assertEquals($expect, 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5',
+            'Слияние многомерного массива в строку');
+    }
+
+    public function test_getValue()
+    {
+        $arr = ['path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],];
+        $expect = Arrays::getValue($arr, ['path' => ['app' => 'level2']]);
+        $this->assertEquals($expect, '/www', 'Получение значения массива по заданной цепочке ключей');
     }
 }
