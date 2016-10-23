@@ -47,11 +47,11 @@ class Validators
         $options = array_merge(['min_len' => 1, 'min_comb' => 0], $options);
 
         if (!preg_match('~^[\w!@#$%^&`\~]+$~u', $pass)) {
-            $errors[] = App::t('Недопустимые символы.');
+            $errors[] = App::t('Недопустимые символы');
         }
 
         if (mb_strlen($pass) < $options['min_len']) {
-            $errors[] = App::t('Пароль слишком короткий.');
+            $errors[] = App::t('Пароль слишком короткий');
         }
 
         if ($options['min_comb']) {
@@ -103,7 +103,7 @@ class Validators
         $options = array_merge(['regexp' => '~.+@.+\..+~', 'black_servers' => null], $options);
 
         if (!preg_match($options['regexp'], $mail)) {
-            return ['error' => App::t('неверный формат почтового адреса.')];
+            return ['error' => App::t('Неверный формат почтового адреса')];
         }
 
         if ($black = $options['black_servers']) {

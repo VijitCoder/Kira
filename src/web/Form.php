@@ -12,7 +12,10 @@ class Form
 {
     /**
      * Контракт. Описание полей и правил валидации
-     * @var array;
+     *
+     * Подробное описание см. в мануале движка, документ "модель формы"
+     *
+     * @var array
      */
     protected $contract;
 
@@ -30,6 +33,8 @@ class Form
      *
      * Не нужно объявлять это поле в контракте полей. Тем не менее проверка токена выполняется по требованию валидации
      * формы. Если токен не пройдет проверку, будет проброшено исключение.
+     *
+     * @var string
      */
     protected $csrfField = '';
 
@@ -197,7 +202,6 @@ class Form
      * нужные программисту. С другой же стороны, ошибка кодера в имени поля может оказаться незамеченной.
      *
      * @param array $value ключ => начение
-     * @return void
      */
     public function setValue($value)
     {
@@ -245,7 +249,6 @@ class Form
      * уровне.
      *
      * @param array $message ключ => сообщение
-     * @return void
      */
     public function addError($message)
     {
@@ -260,7 +263,6 @@ class Form
      *
      * @param mixed        $errors куда писать сообщение
      * @param string|array $msg    текст сообщения ИЛИ массив ключей и в итоге текст сообщения.
-     * @return void
      */
     private function internalAddError(&$errors, &$msg)
     {

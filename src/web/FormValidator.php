@@ -27,7 +27,6 @@ class FormValidator
      *
      * @param $method
      * @param $params
-     * @return void
      * @throws \LogicException
      */
     public function __call($method, $params)
@@ -53,7 +52,6 @@ class FormValidator
      * @param mixed      $data         проверяемые данные. Соответствуют узлу в массиве self::$_rawdata
      * @param mixed      $value        куда писать валидированное значение. Соответствует узлу в self::$_values
      * @param mixed      $error        куда писать ошибку. Соответствует узлу в self::$_errors.
-     * @return void
      * @throws \LogicException через магический FormValidator::__call()
      */
     public function internalValidate(&$contractPart, &$data, &$value, &$error)
@@ -120,7 +118,6 @@ class FormValidator
      * валидаторов. Если он не описан в контракте, тогда просто ставим его в FALSE.
      *
      * @param array $validators
-     * @return void
      */
     private function popupRequired(&$validators)
     {
@@ -145,7 +142,6 @@ class FormValidator
      * @param mixed $data       проверяемые данные
      * @param mixed $value      куда писать значение
      * @param mixed $error      куда писать ошибку
-     * @return void
      */
     private function fireValidators(&$validators, &$data, &$value, &$error)
     {
