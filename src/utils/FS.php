@@ -1,8 +1,13 @@
 <?php
 namespace kira\utils;
 
+use  kira\exceptions\FSException;
+
 /**
  * FileSystem. Утилиты по работе с файловой системой
+ *
+ * На любые ошибки пробрасывается исключение движка FSException. В случае перехвата ошибок PHP, кодом исключения будет
+ * уровень ошибки PHP (E_WARNING, E_NOTICE и т.п.)
  */
 class FS
 {
@@ -31,16 +36,16 @@ class FS
      *
      * @param string $path путь к конечному каталогу
      * @param int    $mode права доступа, восьмеричное число
-     * @return true|string
+     * @throws FSException
      */
     public static function makeDir($path, $mode = 0777)
     {
         if (self::hasDots($path)) {
-            return 'Путь не должен содержать переходы типа "../", "./"';
+            throw new FSException('Путь не должен содержать переходы типа "../", "./"');
         }
 
         if (!preg_match('~\\\\|/~', $path)) {
-            return 'Неправильный путь. В нем нет ни одного слеша.';
+            throw new FSException('Неправильный путь. В нем нет ни одного слеша.');
         }
 
         $dirs = array_reverse(preg_split('~\w:\\\\|\\\\|/~', $path, -1, PREG_SPLIT_NO_EMPTY));
@@ -70,14 +75,9 @@ class FS
             } else {
                 chmod($path, $mode);
             }
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-
-        restore_error_handler();
-
-        return $result;
     }
 
     /**
@@ -93,38 +93,33 @@ class FS
      * @param string $path      каталог для удаления
      * @param int    $fuseLevel предохранитель: ожидаемый максимальный уровень вложенности каталогов.
      * @return true|string
-     * @throws \InvalidArgumentException
+     * @throws FSException
      */
     public static function removeDir($path, $fuseLevel = 1)
     {
         if (!file_exists($path)) {
-            return true;
+            return;
         }
 
         if (!is_dir($path)) {
-            throw new \InvalidArgumentException($path . ' должно быть каталогом');
+            throw new FSException($path . ' должно быть каталогом');
         }
 
         if ($fuseLevel < 1 || $fuseLevel > 4) {
-            return 'удалить можно от 1 до 4 уровней каталогов. Для вашей же пользы.';
+            throw new FSException('удалить можно от 1 до 4 уровней каталогов. Для вашей же пользы.');
         }
 
         if (!self::checkMaxDepth($path, 0, $fuseLevel)) {
-            return 'Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.';
+            throw new FSException('Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.');
         }
 
         set_error_handler(['\kira\utils\FS', 'error_handler']);
 
         try {
             self::internalRemoveDir($path);
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-
-        restore_error_handler();
-
-        return $result;
     }
 
     /**
@@ -171,9 +166,9 @@ class FS
             if ($obj->isDot() || !$obj->isDir()) {
                 continue;
             }
-            if ($parentDepth >= $maxDepth) {
-                return false;
-            } elseif (!self::checkMaxDepth($obj->getPathname(), $parentDepth, $maxDepth)) {
+            if ($parentDepth >= $maxDepth
+                || !self::checkMaxDepth($obj->getPathname(), $parentDepth, $maxDepth)
+            ) {
                 return false;
             }
         }
@@ -193,17 +188,16 @@ class FS
      * @param string $path   каталог для очистки
      * @param string $filter регулярка для фильтрации. Полностью, включая операторные скобки и модификаторы.
      * @return true|string
-     * @throws \LogicException
-     * @throws \InvalidArgumentException
+     * @throws FSException
      */
     public static function clearDir($path, $filter = '')
     {
         if (!file_exists($path)) {
-            throw new \LogicException("Каталог {$path} не существует.");
+            throw new FSException("Каталог {$path} не существует.");
         }
 
         if (!is_dir($path)) {
-            throw new \InvalidArgumentException($path . ' должно быть каталогом');
+            throw new FSException($path . ' должно быть каталогом');
         }
 
         set_error_handler(['\kira\utils\FS', 'error_handler']);
@@ -220,14 +214,9 @@ class FS
                     unlink($name);
                 }
             }
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-
-        restore_error_handler();
-
-        return $result;
     }
 
     /**
@@ -236,7 +225,7 @@ class FS
      * @param string   $from    путь/файл_источник
      * @param string   $to      путь/файл_назначение
      * @param resource $context корректный ресурс контекста, созданный функцией php::stream_context_create().
-     * @return string|true
+     * @throws FSException из обработчика ошибок
      */
     public static function copyFile($from, $to, $context = null)
     {
@@ -248,14 +237,9 @@ class FS
             } else {
                 copy($from, $to);
             }
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-
-        restore_error_handler();
-
-        return $result;
     }
 
     /**
@@ -267,7 +251,7 @@ class FS
      *
      * @param string $from путь/файл_источник
      * @param string $to   путь/файл_назначение
-     * @return true|string
+     * @throws FSException из обработчика ошибок
      */
     public static function moveFile($from, $to)
     {
@@ -275,55 +259,46 @@ class FS
 
         try {
             rename($from, $to);
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-
-        restore_error_handler();
-
-        return $result;
     }
 
     /**
      * Удаление файла с перехватом ошибок. Просто обертка для php::unlink().
      *
-     * Перехватываем ошибки и возвращаем как сообщение об ошибке из этого метода. Иначе будет E_WARNING.
+     * Перехватываем ошибки и пробрасываем исключение . Иначе будет E_WARNING.
      *
      * @param string $fn путь/файл для удаления
-     * @return true|string
+     * @throws FSException из обработчика ошибок
      */
     public static function deleteFile($fn)
     {
         if (!file_exists($fn)) {
-            return true;
+            return;
         }
 
         set_error_handler(['\kira\utils\FS', 'error_handler']);
         try {
             unlink($fn);
-            $result = true;
-        } catch (\ErrorException $e) {
-            $result = $e->getMessage();
+        } finally {
+            restore_error_handler();
         }
-        restore_error_handler();
-        return $result;
     }
 
     /**
-     * Перехватываем ошибки функций PHP и вместо них пробрасываем исключение. Его должны ловить методы этого класса.
+     * Перехватываем ошибки функций PHP и вместо них пробрасываем свое исключение.
      *
      * По мотивам {@link http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
      *
-     * @param int    $errno
-     * @param string $errstr
-     * @param string $errfile
-     * @param int    $errline
-     * @return void
-     * @throws \ErrorException
+     * @param int    $errLevel уровень ошибки, {@link http://php.net/manual/ru/errorfunc.constants.php}
+     * @param string $message
+     * @param string $file
+     * @param int    $line
+     * @throws FSException
      */
-    public static function error_handler($errno, $errstr, $errfile, $errline)
+    public static function error_handler($errLevel, $message, $file, $line)
     {
-        throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        throw new FSException("{$message}\nИсточник: {$file}:{$line}", $errLevel);
     }
 }
