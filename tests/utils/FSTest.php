@@ -3,10 +3,10 @@ use PHPUnit\Framework\TestCase;
 use kira\utils\FS;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
-use  kira\exceptions\FSException;
+use kira\exceptions\FSException;
 
 /**
- * Тестируем утилиту FS
+ * Тестируем утилиту по работе с файловой системой
  *
  * Прим: библиотека vfsStream вообще не любит слеши. Например, создание каталога с концевым слешем или без него - это
  * два разных набора в vfsStream::getChildren(). Поэтому не меняй текущее использование слешей. Сейчас оно описано
@@ -38,8 +38,8 @@ class FSTest extends TestCase
                         'log.csv'      => 'Something else',
                         'justFile.txt' => 'just a text',
                     ],
-                    'AnEmptyFolder' => [],
-                    'deepInside.php'  => 'some content',
+                    'AnEmptyFolder'  => [],
+                    'deepInside.php' => 'some content',
                 ],
                 'lvl1.file' => 'nop',
             ],
@@ -107,9 +107,9 @@ class FSTest extends TestCase
 
         FS::removeDir($this->rootPath . '/level1', 3);
         $this->assertTrue($this->root->hasChild($deepestChild),
-            'Проверка предохранителя. Реальная вложеность больше заданной. Удаление не выполнено');
+            'Проверка предохранителя. Реальная вложенность больше заданной. Удаление не выполнено');
 
-        FS::removeDir($this->rootPath, 5); // от корня вложеность - 5, превышает допустимый максимум
+        FS::removeDir($this->rootPath, 5); // от корня вложенность - 5, превышает допустимый максимум
         $this->assertTrue($this->root->hasChild($deepestChild),
             'Проверка предохранителя. Требуемая вложенность больше максимально допустимой. Удаление не выполнено');
     }

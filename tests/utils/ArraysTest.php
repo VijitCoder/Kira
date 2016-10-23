@@ -3,7 +3,7 @@ use PHPUnit\Framework\TestCase;
 use kira\utils\Arrays;
 
 /**
- * Тестируем утилиту Arrays
+ * Тестируем утилиту по работе с массивами
  */
 class ArraysTest extends TestCase
 {
