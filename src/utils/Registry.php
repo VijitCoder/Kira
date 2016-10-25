@@ -1,6 +1,7 @@
 <?php
 namespace kira\utils;
 
+use kira\core\Singleton;
 use kira\exceptions\WriteException;
 use kira\exceptions\ReadException;
 
@@ -11,29 +12,13 @@ use kira\exceptions\ReadException;
  */
 final class Registry implements \Serializable
 {
-    /**
-     * Объект этого класса
-     * @var self
-     */
-    private static $instance;
+    use Singleton;
 
     /**
      * Внутреннее хранилище данных
      * @var array
      */
     private $storage = [];
-
-    /**
-     * Получение объекта реестра в единственном экземпляре
-     * @return Registry
-     */
-    public static function getInstance()
-    {
-        if (!self::$instance) {
-            self::$instance = new self;
-        }
-        return self::$instance;
-    }
 
     /**
      * Магический сеттер
@@ -175,15 +160,7 @@ final class Registry implements \Serializable
         $this->storage = unserialize($data);
     }
 
-    /**
-     * Запрещаем любое размножение объекта. Установка private доступа к этим методам не позволит выполнить
-     * соответствующие действия над объектом из клиентского кода.
-     */
-    private function __construct()
-    {
-    }
-
-    private function __clone()
+    public function __wakeup()
     {
     }
 }

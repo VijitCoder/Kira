@@ -3,6 +3,7 @@ namespace kira\db;
 
 use PDO;
 use kira\core\App;
+use kira\core\Singleton;
 use kira\exceptions\DbException;
 
 /**
@@ -31,6 +32,8 @@ use kira\exceptions\DbException;
  */
 final class DbConnection
 {
+    use Singleton;
+
     /**
      * Объекты подключения к БД. Одна БД + юзер = один объект
      * @var PDO[]
@@ -105,25 +108,5 @@ final class DbConnection
     public static function disconnect($confKey)
     {
         unset(self::$cons[$confKey]);
-    }
-
-    /**
-     * Запрещаем любое размножение объекта. Установка private доступа к этим методам не позволит выполнить
-     * соответствующие действия над объектом из клиентского кода.
-     */
-    private function __construct()
-    {
-    }
-
-    private function __clone()
-    {
-    }
-
-    private function __sleep()
-    {
-    }
-
-    private function __wakeup()
-    {
     }
 }

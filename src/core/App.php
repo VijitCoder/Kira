@@ -12,6 +12,8 @@ use kira\utils\Registry;
  */
 class App
 {
+    use Singleton;
+
     /** Название и версия движка. Ссылка на оф.сайт движка */
     const VERSION = 'Kira 1.3';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
