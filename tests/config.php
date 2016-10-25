@@ -1,18 +1,59 @@
 <?php
-$main = [
-    'indexHandler' => 'app\blog\BlogController',
-
+return [
     'router' => [
-        '404_handler' => 'app\common\ErrorController',
-        'log_redirects' => true,
-        'routes' => require 'routes.php',
+
+        /*
+         * Примеры этих роутов - дикая смесь. Все для того, чтобы нагрузить роутер тестами. На реальном сайте скорее
+         * всего маршрутизация будет в более нормальном виде.
+         */
+
+        'routes' => [
+            'app\admin\controllers' => [
+                'adm/edit'          => 'EditController/new',
+                'adm/edit/<id:\d+>' => 'EditController',
+            ],
+
+            'app\modules\user\controllers' => [
+                // все маршруты рабочие, для разных URL-ов роутер найдет верное соответствие
+                'login'               => 'AuthController/login',
+                'login/<user:[a-z]+>' => 'AuthController/loginUser',
+                // Поддержка кириллицы в URL. Получить эту ссылку через роутер невозможно, применится правило выше.
+                // Для выхода из ситуации см. ниже хак.
+                'вход/на/сайт'        => 'AuthController/login',
+            ],
+
+            /*
+             * Спец. пространство с хаком, для примера
+             *
+             * Этот роут никогда не будет работать "слева направо", т.к. правило будет поймано выше. Однако так можно
+             * получать ссылки "справа налево" (Router::url()) при поддержании сайтом множественных ссылок на одну
+             * страницу. Вообще это бред конечно, но демонстрирует логику работы роутера.
+             */
+            'app\hacks'                    => [
+                'вход/на/сайт' => 'AuthController/login',
+            ],
+
+            'app\controllers' => [
+                '<page:about>'                      => 'StaticController/show',
+
+                // Сначала конкретизированные роуты, потом более общие
+                // прим.: используем именование контроллеров без Controller. Так же должен называться и класс
+                'news/recent/<cnt:\d+>'             => 'News/slice',
+
+                // нормализованный роут. Для получения ссылки
+                'news/<action:\w+>/<id:\d+>'        => 'News/<action>',
+                // роут для перехвата запроса. Та же ссылка, что и предыдущая, но с любым хвостом
+                'news/<action:\w+>/<id:\d+>[a-z_]+' => 'News/<action>',
+
+                'news/<action:\w+>'                 => 'News/<action>',
+
+                'articles/<topic:[a-z_]+>/page/<page:\d+>' => 'Story/list',
+                'articles/<topic:[a-z_]+>'                 => 'Story/list',
+
+                //Общие правила. Должны быть самыми последними вообще
+                '<controller:[a-z]+>'                      => '<controller>',
+                '<controller:[a-z]+>/<action:[a-z]+>'      => '<controller>/<action>',
+            ],
+        ],
     ],
-
-    'timezone' => 'Asia/Krasnoyarsk',
-
-    'err_tail' => '<br>Администратору отправлено сообщение.<br>Повторите попытку позже.',
 ];
-
-$env = require 'env.php';
-
-return kira\utils\Arrays::merge_recursive($main, $env, true);

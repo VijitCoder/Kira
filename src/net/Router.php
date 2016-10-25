@@ -2,8 +2,9 @@
 namespace kira\net;
 
 use kira\core\App;
-use kira\exceptions\ConfigException;
 use kira\interfaces\IRouter;
+use kira\exceptions\ConfigException;
+use kira\exceptions\RouteException;
 
 /**
  * Маршрутизатор запросов
@@ -35,7 +36,6 @@ class Router implements IRouter
      * а не REQUEST_URI.
      *
      * @internal
-     * @return void
      */
     public function callAction()
     {
@@ -85,7 +85,7 @@ class Router implements IRouter
 
         if (method_exists($controller, $action)) {
             if ($params) {
-                $ref_method = new \ReflectionMethod("$ctrlName::$action");
+                $ref_method = new \ReflectionMethod($ctrlName, $action);
                 $funcParams = [];
                 foreach ($ref_method->getParameters() as $v) {
                     $k = $v->name;
@@ -122,10 +122,11 @@ class Router implements IRouter
      * Возвращаем массив: контроллер, метод и параметры для него. Эти же параметры дублируются в $_GET на всякий случай.
      * При слиянии параметров с GET, приоритет у $_GET.
      *
+     * @internal Метод объявлен публичным только для возможности unit-тестирования. Он не должен вызываться вне класса
      * @param string $url запрос к серверу, без ведущего слеша и без GET-параметров.
      * @return array
      */
-    private function findRouteFor($url)
+    public function findRouteFor($url)
     {
 //echo $url;
         $matches = null;
@@ -178,8 +179,7 @@ class Router implements IRouter
      * неизвестен. Тогда роутер попытается ответить 404 (т.е. сюда попадет). А мы при этом реальный ответ веб-сервера
      * не подменяем и возвращаем текст по его коду.
      *
-     * @return void
-     * @throws \Exception
+     * @throws ConfigException из parseHandler()
      */
     private function notFound()
     {
@@ -271,42 +271,43 @@ class Router implements IRouter
      * Если ничего не найдем, проброс ошибки. Вообще ситуация некритичная, но иначе можно прозевать исчезновение роута
      * и получить битую ссылку.
      *
-     * @param mixed $route  <b>неассоциативный</b> массив 2-х элементов
-     *                      ["пространство имен", "правая часть из описания роута"]
+     * @param mixed $route  <b>неассоциативный</b> массив 2-х элементов ["пространство имен", "контроллер/действие"]
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
-     * @throws \RangeException
+     * @throws RouteException
      */
     public function url($route, array $params = [])
     {
-        list($ns, $ctrl) = $route;
-        $ctrl = trim($ctrl, '/');
+        list($ns, $ctrlAct) = $route;
+        $ctrlAct = trim($ctrlAct, '/');
 
-        $routes = App::conf('router.routes');
-        if (!isset($routes[$ns])) {
-            throw new \RangeException("Нет карты роутов для пространства имен '$ns'");
+        $routes = App::conf("router.routes.{$ns}", false);
+        if (!$routes) {
+            throw new RouteException("Нет карты роутов для пространства имен '$ns'");
         }
 
         $match = null;
-        foreach ($routes[$ns] as $left => $right) {
+        $paramsBackup = $params;
+        foreach ($routes as $left => $right) {
             $left = ltrim($left, '/');
             $right = ltrim($right, '/');
             $pattern = preg_replace('~(<(.+)>)~U', '(?P<$2>[^/]+)', $right);
             $pattern = "~^$pattern$~Ui";
 
-            if (preg_match($pattern, $ctrl, $match)) {
+            if (preg_match($pattern, $ctrlAct, $matchCtrlAct)) {
                 if (preg_match_all('~<([a-z0-9_]+):.+>~U', $left, $requiredParams)) {
 
                     $requiredParams = array_flip($requiredParams[1]);
 
                     foreach ($requiredParams as $k => &$v) {
-                        if (isset($match[$k])) {
-                            $v = $match[$k];
+                        if (isset($matchCtrlAct[$k])) {
+                            $v = $matchCtrlAct[$k];
                         } else if (isset($params[$k])) {
                             $v = $params[$k];
                             // удаляем из параметров то, что будет использовано в подстановке
                             unset($params[$k]);
                         } else {
+                            $params = $paramsBackup;
                             continue 2;
                         }
                     }
@@ -319,7 +320,7 @@ class Router implements IRouter
             }
         }
 //dd($left, $match);//DBG
-        if ($match) {
+        if ($matchCtrlAct) {
             if ($requiredParams) {
                 $placeholders = [];
                 foreach ($requiredParams as $key => $v) {
@@ -351,7 +352,7 @@ class Router implements IRouter
             }
 
             $strParams = count($strParams) ? 'параметры [' . implode(', ', $strParams) . ']' : 'без параметров';
-            throw new \RangeException("не могу построить URL по заданным значениям: ['$ns', '$ctrl'], $strParams");
+            throw new RouteException("не могу построить URL по заданным значениям: ['$ns', '$ctrlAct'], $strParams");
         }
     }
 
