@@ -54,6 +54,15 @@ class RowIterator implements \Iterator
         $this->current = $this->sth->fetch($this->fetchStyle);
     }
 
+    /**
+     * Перематываем итератор
+     *
+     * При этом будет выполнен повторный запрос в базу, иначе нельзя получить результат запроса. Т.о. использование
+     * перемотки в принципе является плохой идеей. Но для полноты картины метод реализован.
+     *
+     * @return $this
+     * @throws DbException
+     */
     public function rewind()
     {
         try {
@@ -63,6 +72,8 @@ class RowIterator implements \Iterator
         }
         $this->key = 0;
         $this->current = $this->sth->fetch($this->fetchStyle);
+        return $this;
+
     }
 
     public function key()
