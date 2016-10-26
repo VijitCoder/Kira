@@ -372,11 +372,11 @@ class Router implements IRouter
                     if (is_array($subValue)) {
                         throw new RouteException('Слишком большая вложенность массива. Максимум двумерный массив');
                     }
-                    $subValue = urlencode($k) . '[]' . ($subValue ? '=' . urlencode($subValue) : '');
+                    $subValue = urlencode($k) . '[]' . (is_null($subValue) ? '' : '=' . urlencode($subValue));
                 }
                 $v = implode('&', $v);
             } else {
-                $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');
+                $v = urlencode($k) . (is_null($v) ? '' : '=' . urlencode($v));
             }
         }
         return '?' . implode('&', $params);

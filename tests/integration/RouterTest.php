@@ -110,8 +110,8 @@ class RouterTest extends TestCase
     {
         return [
             'GET-строка, одномерный массив' => [
-                ['p' => 12, 'rus' => 'рус', 'str' => 'qwerty', 'парам' => 50],
-                '?p=12&rus=%D1%80%D1%83%D1%81&str=qwerty&%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=50',
+                ['p' => 0, 'rus' => 'рус', 'str' => 'qwerty', 'парам' => 50],
+                '?p=0&rus=%D1%80%D1%83%D1%81&str=qwerty&%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=50',
             ],
 
             'GET-строка, двумерный массив' => [
