@@ -14,20 +14,30 @@ class App
 {
     use Singleton;
 
-    /** Название и версия движка. Ссылка на оф.сайт движка */
+    /**
+     * Название и версия движка. Ссылка на оф.сайт движка
+     */
     const VERSION = 'Kira 1.4';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
-    /** @var array конфигурация приложения */
+    /**
+     * @var array конфигурация приложения
+     */
     private static $config;
 
-    /** @var array словарь локализации */
+    /**
+     * @var array словарь локализации
+     */
     private static $lexicon;
 
-    /** @var string заданный файл локализации. Инфа для проброса исключения */
+    /**
+     * @var string заданный файл локализации. Инфа для проброса исключения
+     */
     private static $lang;
 
-    /** @var array объекты классов, инстанциированных через App: роутер, логер */
+    /**
+     * @var array объекты классов, инстанциированных через App: роутер, логер
+     */
     private static $instances = [];
 
     /**
@@ -47,25 +57,62 @@ class App
             self::$config = require MAIN_CONFIG;
         }
 
-        $level = self::$config;
-        foreach(explode('.', $key) as $k => $part) {
-            if (!isset($level[$part])) {
+        $result = self::$config;
+        foreach (explode('.', $key) as $levelKey) {
+            if (!isset($result[$levelKey])) {
                 if ($strict) {
-                    throw new ConfigException("В конфигурации не найден ключ '{$part}'");
+                    throw new ConfigException("В конфигурации не найден ключ '{$levelKey}'");
                 } else {
                     return null;
                 }
             }
 
-            $level = $level[$part];
+            $result = $result[$levelKey];
         }
 
-        return $level;
+        return $result;
+    }
+
+    /**
+     * Замена значения в конфиге "налету"
+     *
+     * Этой функцией можно поменять значение в конфиге приложения, но только если ключ уже существует. Такое ограничение
+     * введено для предотвращения попытки сохранить в конфиге произвольное глобальное значение. Для этого есть Реестр
+     * (kira\utils\Registry).
+     *
+     * Ключ может быть составным, через точку (по аналогии с чтением конфига). Новое значение <b>перезаписывает</b>
+     * текущее.
+     *
+     * @param string $key   ключ в конфиге
+     * @param mixed  $value новое значение
+     * @throws ConfigException
+     */
+    public static function changeConf($key, $value)
+    {
+        if (!$key) {
+            throw new ConfigException('Ключ в конфигурации не может быть пустым.');
+        }
+
+        if (!self::$config) {
+            self::$config = require MAIN_CONFIG;
+        }
+
+        $conf = &self::$config;
+        $keys = explode('.', $key);
+        for ($i = 0, $cnt = count($keys); $i < $cnt; ++$i) {
+            $levelKey = $keys[$i];
+            if (!isset($conf[$levelKey])) {
+                throw new ConfigException("В конфигурации не найден ключ '{$levelKey}'");
+            }
+            if ($i < $cnt - 1) {
+                $conf = &$conf[$levelKey];
+            }
+        }
+        $conf[$levelKey] = $value;
     }
 
     /**
      * Определяем язык интерфейса
-     *
      * @return string ru|en и т.д.
      */
     public static function detectLang()
@@ -117,9 +164,8 @@ class App
 
     /**
      * Завершение приложения. Последние процедуры после отправки ответа браузеру.
-     *
      * @param callable $callback функция, которую следует выполнить перед выходом.
-     * @param string   $msg сообщение на выходе
+     * @param string   $msg      сообщение на выходе
      */
     public static function end($callback = null, $msg = '')
     {
@@ -155,7 +201,7 @@ class App
     public static function composer()
     {
         if (!isset(self::$instances['composer'])) {
-            throw \LogicException('Не задан экземпляр класса ClassLoader');
+            throw new \LogicException('Не задан экземпляр класса ClassLoader');
         }
         return self::$instances['composer'];
     }
