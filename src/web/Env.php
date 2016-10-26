@@ -2,6 +2,7 @@
 namespace kira\web;
 
 use kira\interfaces\IDetectEnvironment;
+use kira\core\App;
 
 /**
  * Среда окружения сайта.

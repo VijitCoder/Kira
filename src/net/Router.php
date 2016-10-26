@@ -36,6 +36,7 @@ class Router implements IRouter
      * а не REQUEST_URI.
      *
      * @internal
+     * @return null
      */
     public function callAction()
     {
@@ -55,7 +56,7 @@ class Router implements IRouter
             $handler = App::conf('indexHandler');
             list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
-            return;
+            return null;
         }
 
         $tmp = rtrim($url, '/');
@@ -64,7 +65,7 @@ class Router implements IRouter
         }
 
         if (!$set = $this->findRouteFor($url)) {
-            return $this->notFound();
+            $this->notFound();
         }
 
         list($ctrlName, $action, $params) = $set;
@@ -73,7 +74,7 @@ class Router implements IRouter
 //dd($set);//DBG
 
         if (!App::composer()->findFile($ctrlName)) {
-            return $this->notFound();
+            $this->notFound();
         }
 
         $controller = new $ctrlName;
@@ -98,7 +99,7 @@ class Router implements IRouter
                 $controller->$action();
             }
         } else {
-            return $this->notFound();
+            $this->notFound();
         }
     }
 
@@ -124,7 +125,7 @@ class Router implements IRouter
      *
      * @internal Метод объявлен публичным только для возможности unit-тестирования. Он не должен вызываться вне класса
      * @param string $url запрос к серверу, без ведущего слеша и без GET-параметров.
-     * @return array
+     * @return array|null
      */
     public function findRouteFor($url)
     {
@@ -143,7 +144,7 @@ class Router implements IRouter
         }
 //dd($matches);//DBG
         if (!$matches) {
-            return;
+            return null;
         }
 
         $params = [];

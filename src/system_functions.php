@@ -20,9 +20,11 @@ if (!function_exists('dd')) {
     function dd()
     {
         foreach (func_get_args() as $var) {
-            echo isConsoleInterface()
-                ? kira\utils\Dumper::dumpAsString($var, 10, 0) . PHP_EOL
-                : kira\utils\Dumper::dump($var);
+            if (isConsoleInterface()) {
+                echo kira\utils\Dumper::dumpAsString($var, 10, 0) . PHP_EOL;
+            } else {
+                kira\utils\Dumper::dump($var);
+            }
         }
     }
 }

@@ -378,7 +378,7 @@ class FormValidator
     {
         if (is_null($data)) {
             $this->isValid = false;
-            return;
+            return false;
         }
 
         // Предохранитель для разработчика

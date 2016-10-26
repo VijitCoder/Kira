@@ -280,7 +280,7 @@ class Mailer
      * RFC 2047 - MIME Part Thr {@see http://www.faqs.org/rfcs/rfc2047.html}
      *
      * @param array|string $data ассоциативный массив заголовков ИЛИ один заголовок
-     * @return void
+     * @return array|string
      */
     private static function encodeHeaders($data)
     {

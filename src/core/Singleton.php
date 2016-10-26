@@ -13,8 +13,8 @@ trait Singleton
     private static $instance;
 
     /**
-     * Получение объекта реестра в единственном экземпляре
-     * @return Registry
+     * Получение объекта в единственном экземпляре
+     * @return Object
      */
     public static function getInstance()
     {

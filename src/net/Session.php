@@ -64,7 +64,7 @@ class Session
             if (isset($_SESSION[$key])) {
                 return $_SESSION[$key];
             } elseif (!$strict) {
-                return;
+                return null;
             } else {
                 throw new SessionException("В сессии не найдено значение с ключом '{$key}'");
             }
@@ -118,6 +118,8 @@ class Session
 
     /**
      * Алиас функции addFlash() с поднятым флагом перезаписи. Для удобства использования.
+     * @param string $key  ключ в сессии
+     * @param string $data данные для записи
      */
     public static function newFlash($key, $data)
     {

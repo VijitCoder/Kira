@@ -125,13 +125,11 @@ class Dumper
                     foreach ($members as $key => $value) {
                         $keyDisplay = strtr(trim($key), array("\0" => ':'));
                         self::$_output .= "\n" . $spaces . "    [$keyDisplay] => ";
-                        self::$_output .= self::dumpInternal($value, $level + 1);
+                        self::dumpInternal($value, $level + 1);
                     }
                     self::$_output .= "\n" . $spaces . ')';
                 }
                 break;
-            case 'unknown type':
-                ;
             default:
                 self::$_output .= '{unknown}';
         }

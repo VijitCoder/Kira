@@ -31,7 +31,7 @@ class Controller
      * @param string $view   шаблон для отрисовки
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
-     * @return string
+     * @return string|null
      * @throws \Exception
      */
     protected function render($view, $data = [], $output = true)

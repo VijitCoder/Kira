@@ -48,7 +48,7 @@ final class Registry implements \Serializable
 
     /**
      * Проверка существования значения в хранилище по ключу
-     * @param $key ключ в массиве внутреннего хранилища
+     * @param string $key ключ в массиве внутреннего хранилища
      * @return bool
      */
     public function isExists($key)
@@ -103,7 +103,7 @@ final class Registry implements \Serializable
 
     /**
      * Удаление значения из реестра
-     * @param $key ключ в массиве внутреннего хранилища
+     * @param string $key ключ в массиве внутреннего хранилища
      */
     public function delete($key)
     {
@@ -153,6 +153,7 @@ final class Registry implements \Serializable
 
     /**
      * Поддержка десериализации класса
+     * @param string $data
      * @return string
      */
     public function unserialize($data)

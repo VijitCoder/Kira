@@ -110,6 +110,7 @@ class Request
             case 'request':
                 $arr = &$_REQUEST;
                 break;
+            default: $arr = [];
         }
 
         if (!$params) {
@@ -156,6 +157,7 @@ class Request
                         . "Сигнатура вызова: {$verb}AsEnum(\$key, \$expect)");
                 }
                 return in_array($val, $params[1]) ? $val : null;
+            default: return null;
         }
     }
 
@@ -313,6 +315,7 @@ class Request
 
     /**
      * Проверка токена защиты от CSRF-атаки
+     * @param string $token
      * @return bool
      */
     public static function validateCsrfToken($token)

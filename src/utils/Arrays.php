@@ -20,7 +20,7 @@ class Arrays
      * приравнивается к неассоциативному.
      *
      * @param array $data массив любого типа и вложенности
-     * @return ArrayObject|mixed
+     * @return \ArrayObject|mixed
      */
     public static function arrObject($data)
     {

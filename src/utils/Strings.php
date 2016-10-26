@@ -180,6 +180,7 @@ class Strings
         $customSet = '';
         $customLen = 0;
         $cnt = 0;
+        $arr = [];
         foreach ($sets as $k => $v) {
             if ($k & $strength) {
                 $arr[] = $v[rand(0, $setsLength[$k] - 1)];

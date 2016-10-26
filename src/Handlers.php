@@ -2,6 +2,8 @@
 namespace kira;
 
 use kira\html\Render;
+use kira\web\Env;
+use kira\core\App;
 
 /**
  * Перехватчик исключений, обработчики ошибок.
@@ -27,7 +29,7 @@ class Handlers
      * Прим: для поддержки PHP 7.0 тип ожидаемого параметра расширен,
      * см. {@see http://php.net/manual/ru/function.set-exception-handler.php PHP::set_exception_handler()}
      *
-     * @param Throwable $ex
+     * @param \Throwable $ex
      */
     public static function exceptionHandler($ex)
     {
@@ -58,12 +60,13 @@ class Handlers
         } else {
             echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
             if ($ex->getPrevious() === null) {
-                App::logger()->addTyped(
+                $logger = App::logger();
+                $logger->addTyped(
                     "Class: $class" . PHP_EOL .
                     "Message: $message" . PHP_EOL .
                     "Source: $file:$line" . PHP_EOL . PHP_EOL .
                     "Trace: $trace",
-                    Logger::EXCEPTION
+                    $logger::EXCEPTION
                 );
             }
         }
@@ -173,7 +176,7 @@ class Handlers
                     header('Content-Type: text/html; charset=UTF-8');
                 }
                 $msg = nl2br(htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'));
-                echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_output'));
+                echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_html'));
             }
         } else {
             $info = "{$codeTxt}$rn$rn\t{$msg}$rn$rn"

@@ -17,7 +17,7 @@ define('MAIN_CONFIG', APP_PATH . 'conf/main.php');
 
 require ROOT_PATH . 'vendor/autoload.php';
 
-define('DEBUG', kira\core\Env::isLocal()); // перепишите на свой Env, если есть его реализация
+define('DEBUG', kira\web\Env::isLocal()); // перепишите на свой Env, если есть его реализация
 
 ini_set('display_errors', (int)DEBUG);
 ini_set('display_startup_errors', (int)DEBUG);
