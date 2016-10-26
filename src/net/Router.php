@@ -265,7 +265,8 @@ class Router implements IRouter
      * Иначе продолжаем поиск.
      *
      * Все параметры, которые не пойдут в подстановки, допишутся в URL в качестве строки запроса. Если у элемента
-     * не задано значение, а есть только ключ, типа ['p' => null], он попадет в URL без значения.
+     * не задано значение, а есть только ключ, типа ['p' => null], он попадет в URL без значения. Параметры могут быть
+     * двумерным массивом, при этом можно получить строку типа 'label[]=3&label[]=43&q=...'
      *
      * Прим: поиск роута не зависит от регистра. Это немного упрощает требования к описанию параметров функции.
      *
@@ -336,16 +337,8 @@ class Router implements IRouter
                 $left = implode('/', $arr);
             }
 
-            $url = '/' . $left;
+            return '/' . $left . $this->makeQueryString($params);
 
-            if ($params) {
-                foreach ($params as $k => &$v) {
-                    $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');
-                }
-                $url .= '?' . implode('&', $params);
-            }
-
-            return $url;
         } else {
             $strParams = [];
             foreach ($params as $k => $v) {
@@ -355,6 +348,38 @@ class Router implements IRouter
             $strParams = count($strParams) ? 'параметры [' . implode(', ', $strParams) . ']' : 'без параметров';
             throw new RouteException("не могу построить URL по заданным значениям: ['$ns', '$ctrlAct'], $strParams");
         }
+    }
+
+    /**
+     * Собираем из массива GET-строку запроса, которая пишется в URL после знака вопроса
+     *
+     * Каждая пара ключ=значение кодируется для безопасного использования в URL-ах. Поддерживаются ключи-массивы,
+     * т.е. возможно собрать строку вида: label[]=3&label[]=43&q=...
+     *
+     * @param array $params исходные параметры. Максимум двумерный массив
+     * @return string строка типа p=34&str=%23%35%30&arr[]=4&arr[]=qwerty
+     * @throws RouteException
+     */
+    public function makeQueryString(array $params)
+    {
+        if (!$params) {
+            return '';
+        }
+
+        foreach ($params as $k => &$v) {
+            if (is_array($v)) {
+                foreach ($v as &$subValue) {
+                    if (is_array($subValue)) {
+                        throw new RouteException('Слишком большая вложенность массива. Максимум двумерный массив');
+                    }
+                    $subValue = urlencode($k) . '[]' . ($subValue ? '=' . urlencode($subValue) : '');
+                }
+                $v = implode('&', $v);
+            } else {
+                $v = urlencode($k) . ($v ? '=' . urlencode($v) : '');
+            }
+        }
+        return '?' . implode('&', $params);
     }
 
     /**

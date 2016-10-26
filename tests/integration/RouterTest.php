@@ -101,4 +101,39 @@ class RouterTest extends TestCase
         $url = App::router()->url($route, $params);
         $this->assertEquals($expectUrl, $url);
     }
+
+    /**
+     * Провайдер для теста сборки GET-запроса
+     * @return array
+     */
+    public function paramsProvider()
+    {
+        return [
+            'GET-строка, одномерный массив' => [
+                ['p' => 12, 'rus' => 'рус', 'str' => 'qwerty', 'парам' => 50],
+                '?p=12&rus=%D1%80%D1%83%D1%81&str=qwerty&%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=50',
+            ],
+
+            'GET-строка, двумерный массив' => [
+                ['lb' => [12, 43, 'рус', 'парам' => 3], 'str' => 'qwerty'],
+                '?lb[]=12&lb[]=43&lb[]=%D1%80%D1%83%D1%81&lb[]=3&str=qwerty',
+            ],
+
+            'GET-строка, двумерный массив без значений' => [
+                ['dummy' => [null, null,], 'flag' => null],
+                '?dummy[]&dummy[]&flag',
+            ],
+
+            'GET-строка, пустой массив' => [[], ''],
+        ];
+    }
+
+    /**
+     * @dataProvider paramsProvider
+     */
+    public function test_encodePairs($params, $expect)
+    {
+        $get = App::router()->makeQueryString($params);
+        $this->assertEquals($expect, $get);
+    }
 }
