@@ -1,18 +1,16 @@
 <?php
-namespace kira\interfaces;
+namespace kira\net;
 
 /**
- * Интерфейс роутера.
- *
- * В конструктор роутера передается экземпляр автозагрузчика Composer. В роутере можно использовать его API.
+ * Абстрактный класс роутера
  */
-interface IRouter
+abstract class AbstractRouter
 {
     /**
      * Парсинг URL и вызов action-метода в соответствующем контроллере.
      * @return void
      */
-    public function callAction();
+    abstract public function callAction();
 
     /**
      * Построение URL по описанию.
@@ -21,7 +19,7 @@ interface IRouter
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
      */
-    public function url($route, array $params = []);
+    abstract public function url($route, array $params = []);
 
     /**
      * Собираем из массива GET-строку запроса, которая пишется в URL после знака вопроса
@@ -32,17 +30,17 @@ interface IRouter
      * @param array $params исходные параметры. Максимум двумерный массив
      * @return string строка типа ?p=34&str=%23%35%30&arr[]=4&arr[]=qwerty
      */
-    public function makeQueryString(array $params);
+    abstract public function makeQueryString(array $params);
 
     /**
      * Названия контроллера, к которому обратился роутер после парсинга запроса
      * @return string
      */
-    public function getController();
+    abstract public function getController();
 
     /**
      * Названия метода-действия, которое вызвал роутер после парсинга запроса
      * @return string
      */
-    public function getAction();
+    abstract public function getAction();
 }

@@ -2,14 +2,13 @@
 namespace kira\net;
 
 use kira\core\App;
-use kira\interfaces\IRouter;
 use kira\exceptions\ConfigException;
 use kira\exceptions\RouteException;
 
 /**
  * Маршрутизатор запросов
  */
-class Router implements IRouter
+class Router extends AbstractRouter
 {
     /**
      * Названия контроллера, который вызвал роутер после парсинга запроса

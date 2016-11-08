@@ -3,8 +3,7 @@ namespace kira\core;
 
 use Composer\Autoload\ClassLoader;
 use kira\exceptions\ConfigException;
-use kira\interfaces\ILogger;
-use kira\interfaces\IRouter;
+use kira\net\AbstractRouter;
 use kira\utils\Registry;
 
 /**
@@ -209,10 +208,10 @@ class App
     /**
      * Возвращает объект класса текущего роутера.
      *
-     * Роутер движка может быть заменен частной реализацией, в которой согласно IRouter должна быть своя реализация
-     * метода url(). Чтобы в клиентском коде не выяснять, кто - текущий роутер, введена эта функция.
+     * Роутер движка может быть заменен частной реализацией, в которой согласно AbstractRouter должна быть своя
+     * реализация метода url(). Чтобы в клиентском коде не выяснять, кто - текущий роутер, введена эта функция.
      *
-     * @return IRouter реализация интерфейса, объект класса роутера
+     * @return AbstractRouter конкретная реализация абстрактного класса, потомок
      */
     public static function router()
     {
@@ -232,7 +231,7 @@ class App
      *
      * Логер можно подменить через конфиг приложения, log.class
      *
-     * @return ILogger реализация интерфейса, объект класса логера
+     * @return AbstractLogger конкретная реализация абстрактного класса, потомок
      */
     public static function logger()
     {

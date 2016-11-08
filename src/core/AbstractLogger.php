@@ -1,13 +1,13 @@
 <?php
-namespace kira\interfaces;
+namespace kira\core;
 
 /**
- * Интерфейс логера
+ * Абстрактный класс логера
  *
- * Создан в основном для возможности подмены реазлизации на mock-объект в unit-тестах. Поэтому так коряво выглядит.
- * В целом логер запилен в движке. Подробности см. в его реализации.
+ * Создан в основном для возможности подмены реазлизации на mock-объект в unit-тестах. В целом логер запилен в движке.
+ * Подробности см. в его реализации.
  */
-interface ILogger
+abstract class AbstractLogger
 {
     /**
      * Типы логов
@@ -50,7 +50,7 @@ interface ILogger
      * @return void
      * @throws \LogicException
      */
-    public function add($data);
+    abstract public function add($data);
 
     /**
      * Запись типизированного сообщения
@@ -58,5 +58,5 @@ interface ILogger
      * @param string $type    тип лога, см. константы этого класса
      * @return void
      */
-    public function addTyped(string $message, string $type);
+    abstract public function addTyped(string $message, string $type);
 }
