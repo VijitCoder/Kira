@@ -78,13 +78,13 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Определение среды окружения (local, dev, stage, production, mobile).
+     * Определение среды окружения (local, dev, stage, production, mobile, unit-тесты).
      *
      * Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
      * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
      * его динамическим - невыгодно.
      *
-     * @return int см. константы "D_*" в IDetectEnvironment.
+     * @return int см. константы "ENV_*" в IDetectEnvironment.
      */
     public static function detectEnvironment()
     {
@@ -95,26 +95,31 @@ class Env implements IDetectEnvironment
 
     public static final function isLocal()
     {
-        return static::detectEnvironment() === IDetectEnvironment::D_LOCAL;
+        return static::detectEnvironment() === IDetectEnvironment::ENV_LOCAL;
     }
 
     public static final function isDevelopment()
     {
-        return static::detectEnvironment() === IDetectEnvironment::D_DEV;
+        return static::detectEnvironment() === IDetectEnvironment::ENV_DEV;
     }
 
     public static final function isStage()
     {
-        return static::detectEnvironment() === IDetectEnvironment::D_STAGE;
+        return static::detectEnvironment() === IDetectEnvironment::ENV_STAGE;
     }
 
     public static final function isProduction()
     {
-        return self::detectEnvironment() === IDetectEnvironment::D_PROD;
+        return self::detectEnvironment() === IDetectEnvironment::ENV_PROD;
     }
 
     public static final function isMobile()
     {
-        return static::detectEnvironment() === IDetectEnvironment::D_MOBILE;
+        return static::detectEnvironment() === IDetectEnvironment::ENV_MOBILE;
+    }
+
+    public static final function isUnit()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_UNIT;
     }
 }

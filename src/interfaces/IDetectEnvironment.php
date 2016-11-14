@@ -7,14 +7,15 @@ namespace kira\interfaces;
 interface IDetectEnvironment
 {
     /**
-     * Домен. Константы введены для устранения "magic string"
+     * Среда окружения. Константы введены для устранения "magic string"
      */
     const
-        D_LOCAL = 0,
-        D_DEV = 1,
-        D_STAGE = 2,
-        D_PROD = 3,
-        D_MOBILE = 4;
+        ENV_LOCAL = 0,
+        ENV_DEV = 1,
+        ENV_STAGE = 2,
+        ENV_PROD = 3,
+        ENV_MOBILE = 4,
+        ENV_UNIT = 5; // модульное тестирование
 
     /**
      * Определение среды окружения (local, dev, stage, production, mobile).
@@ -59,4 +60,10 @@ interface IDetectEnvironment
      * @return bool
      */
     public static function isMobile();
+
+    /**
+     * Приложение выполняется в тестовом окружении (unit-тесты)
+     * @return bool
+     */
+    public static function isUnit();
 }
