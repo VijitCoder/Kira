@@ -42,12 +42,6 @@ class DbModel
     private $sth = null;
 
     /**
-     * Тест запроса, с плейсходерами
-     * @var string
-     */
-    private $sqlText = '';
-
-    /**
      * Связываемые параметры. Как раз те значения, что будут подставляться в "prepared statement".
      * @var array
      */
@@ -141,7 +135,6 @@ class DbModel
             throw new \LogicException('Не указан текст запроса');
         }
 
-        $this->sqlText = $sql;
         $this->bindingParams = $params;
 
         try {
@@ -406,25 +399,28 @@ class DbModel
     }
 
     /**
-     * Текст последнего запроса с подставленными в него значениями.
+     * Симуляция запроса
      *
-     * Функция только для отладки, не использовать в реальном обращении к серверу БД. Экранирование строк полагается
-     * на функцию PDO::quote().
+     * Получаем текст запроса с подставленными в него значениями. Тест обернут в парный тег [pre] для удобства просмотра
+     * и копипасты.
      *
+     * Возможно название функции неудачное. Но "buildQuery, fillUp" и т.п. наводит на мысль о чем-то важном в плане
+     * работы модели. На самом деле функция только для отладки, не использовать в реальном обращении к серверу БД.
+     * Экранирование строк полагается на функцию PDO::quote().
+     *
+     * @param string $sql           тест запроса, возможно с подстановками
+     * @param array  $bindingParams массив подстановок
      * @return string
+     * @throws \RuntimeException
      */
-    public function getLastQuery()
+    public function simulate(string $sql, array $bindingParams = [])
     {
         if (!DEBUG) {
-            return 'Заполненный текст запроса доступен только в DEBUG-режиме.';
+            throw new \RuntimeException('Нельзя использовать этот метод в боевом режиме сайта. Он только для отладки.');
         }
 
-        if (!$sql = $this->sqlText) {
-            return 'Модель еще не выполнила ни одного запроса. Нечего показать.';
-        }
-
-        if ($this->bindingParams) {
-            foreach ($this->bindingParams as $placeholder => $value) {
+        if ($bindingParams) {
+            foreach ($bindingParams as $placeholder => $value) {
                 if (is_null($value)) {
                     $value = 'NULL';
                 } else if (is_string($value)) {
@@ -440,6 +436,6 @@ class DbModel
             }
         }
 
-        return $sql;
+        return "<pre>$sql</pre>";
     }
 }
