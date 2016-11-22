@@ -55,7 +55,7 @@ class DbModel
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
      */
-    public function __construct($confKey = 'db')
+    public function __construct(string $confKey = 'db')
     {
         if (!$this->table) {
             $reflect = new \ReflectionClass($this);
@@ -105,10 +105,10 @@ class DbModel
      * Подключить модель к другой базе
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
-     * @return $this указатель на себя же
+     * @return $this
      * @throws DbException через connect()
      */
-    public function switchConnection($confKey)
+    public function switchConnection(string $confKey)
     {
         $this->dbh = DbConnection::connect($confKey);
         return $this;
@@ -129,7 +129,7 @@ class DbModel
      * @throws \LogicException
      * @throws DbException
      */
-    public function query($sql, $params = [])
+    public function query(string $sql, array $params = [])
     {
         if (!$sql) {
             throw new \LogicException('Не указан текст запроса');
@@ -166,11 +166,13 @@ class DbModel
      *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
      *
+     * Если тут явно не указать стиль результата, во внимание будут приняты настройки подключения к БД.
+     *
      * @param int $style в каком стиле выдать результат
      * @return mixed
      * @throws \LogicException
      */
-    public function fetch($style = \PDO::FETCH_ASSOC)
+    public function fetch($style = null)
     {
         return $this->getStatement()->fetch($style);
     }
@@ -182,11 +184,13 @@ class DbModel
      *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
      *
+     * Если тут явно не указать стиль результата, во внимание будут приняты настройки подключения к БД.
+
      * @param int $style в каком стиле выдать результат
      * @return mixed
      * @throws \LogicException
      */
-    public function fetchAll($style = \PDO::FETCH_ASSOC)
+    public function fetchAll(int $style = null)
     {
         return $this->getStatement()->fetchAll($style);
     }
@@ -197,11 +201,11 @@ class DbModel
      * Если запросом ничего не получено, следовательно нет данных поля. Возвращаем FALSE. Так можно отличить реальный
      * результат запроса от "нет данных". Т.е. из БД не может прийти FALSE, а все остальное - запросто.
      *
-     * @param int $field имя поля
+     * @param string $field имя поля
      * @return mixed|FALSE
      * @throws \LogicException
      */
-    public function fetchField($field)
+    public function fetchField(string $field)
     {
         $row = $this->getStatement()->fetch(\PDO::FETCH_ASSOC);
         return $row[$field] ?? false;
@@ -212,11 +216,13 @@ class DbModel
      *
      * Константы PDO::FETCH_* {@link http://php.net/manual/ru/pdostatement.fetch.php}
      *
+     * Если тут явно не указать стиль результата, во внимание будут приняты настройки подключения к БД.
+
      * @param int $style в каком стиле выдать результат
      * @return RowIterator
      * @throws \LogicException
      */
-    public function getIterator($style = \PDO::FETCH_ASSOC)
+    public function getIterator(int $style = null)
     {
         return new RowIterator($this->getStatement(), $this->bindingParams, $style);
     }
@@ -249,7 +255,7 @@ class DbModel
      * @param array  $ops   доп.параметры
      * @return mixed
      */
-    public function findByField($field, $value, $ops = [])
+    public function findByField(string $field, string $value, array $ops = [])
     {
         // @see http://php.net/manual/ru/migration70.new-features.php#migration70.new-features.null-coalesce-op
         $select = $ops['select'] ?? '*';
@@ -351,7 +357,7 @@ class DbModel
      * @throws \LogicException
      * @throws DBException из getConnection()
      */
-    public function prepareIN(&$sql, &$params)
+    public function prepareIN(string &$sql, array &$params)
     {
         $replaces = [];
 
@@ -389,7 +395,7 @@ class DbModel
      * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
      * @return array
      */
-    protected function valueSet($keys, $data)
+    protected function valueSet(array $keys, array $data)
     {
         $values = array();
         foreach ($keys as $k) {

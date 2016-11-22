@@ -42,11 +42,13 @@ class RowIterator implements \Iterator
      *
      * Сразу пробуем получить первую запись запроса. Тогда обращение к current() вне цикла будет обеспечено данными.
      *
+     * Если тут явно не указать стиль результата, во внимание будут приняты настройки подключения к БД.
+     *
      * @param \PDOStatement $statement
      * @param array         $params     значения для подстановки в запрос, если они имеются
      * @param int           $fetchStyle в каком стиле выдать результат, см. \PDO::FETCH_*
      */
-    public function __construct(\PDOStatement $statement, array $params = [], int $fetchStyle = \PDO::FETCH_ASSOC)
+    public function __construct(\PDOStatement $statement, array $params = [], int $fetchStyle = null)
     {
         $this->sth = $statement;
         $this->params = $params;

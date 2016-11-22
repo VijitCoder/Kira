@@ -1,7 +1,6 @@
 <?php
 namespace kira\db;
 
-use PDO;
 use kira\core\App;
 use kira\core\Singleton;
 use kira\exceptions\DbException;
@@ -36,7 +35,7 @@ final class DbConnection
 
     /**
      * Объекты подключения к БД. Одна БД + юзер = один объект
-     * @var PDO[]
+     * @var \PDO[]
      */
     private static $cons = [];
 
@@ -54,10 +53,10 @@ final class DbConnection
      * Поэтому такая глубина разбора трассировки.
      *
      * @param string $confKey ключ в настройках, по которому хранится массив с кофигурацией подключения к БД
-     * @return PDO объект подключения к БД
+     * @return \PDO объект подключения к БД
      * @throws DbException
      */
-    public static function connect($confKey)
+    public static function connect(string $confKey)
     {
         if (isset(self::$cons[$confKey])) {
             return self::$cons[$confKey];
@@ -66,7 +65,7 @@ final class DbConnection
         $conf = array_merge(['options' => null, 'mysql_timezone' => '+00:00'], App::conf($confKey));
 
         try {
-            $dbh = new PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
+            $dbh = new \PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
 
             if ($tz = $conf['mysql_timezone']) {
                 $sql = 'SET time_zone = ?';
@@ -105,7 +104,7 @@ final class DbConnection
      *
      * @param string $confKey ключ во массиве соединений
      */
-    public static function disconnect($confKey)
+    public static function disconnect(string $confKey)
     {
         unset(self::$cons[$confKey]);
     }

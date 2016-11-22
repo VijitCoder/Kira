@@ -214,8 +214,11 @@ class Handlers
         $error = error_get_last();
         if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_COMPILE_ERROR))) {
             $output = ob_get_clean();
-            echo preg_replace("~(<br />\r?\n<font size='1'><table class='xdebug-error .*?</table></font>)~s", '',
-                $output);
+            echo preg_replace(
+                "~(<br />\r?\n<font size='1'><table class='xdebug-error .*?</table></font>)~s",
+                '',
+                $output
+            );
             if (strpos($error['message'], 'Allowed memory size') === 0) {
                 ini_set('memory_limit', (intval(ini_get('memory_limit')) + 32) . 'M');
             }
