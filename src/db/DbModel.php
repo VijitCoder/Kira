@@ -172,7 +172,7 @@ class DbModel
      * @return mixed
      * @throws \LogicException
      */
-    public function fetch($style = null)
+    public function fetch(int $style = null)
     {
         return $this->getStatement()->fetch($style);
     }
