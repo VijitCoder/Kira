@@ -5,7 +5,9 @@ use kira\interfaces\IDetectEnvironment;
 use kira\core\App;
 
 /**
- * Среда окружения сайта.
+ * Среда окружения сайта
+ *
+ * См. документацию, "Среда окружения сайта"
  */
 class Env implements IDetectEnvironment
 {
@@ -78,13 +80,13 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Определение среды окружения (local, dev, stage, production, mobile, unit-тесты).
+     * Определение среды окружения (local, dev, production и т.д.)
      *
      * Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
      * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
      * его динамическим - невыгодно.
      *
-     * @return int см. константы "ENV_*" в IDetectEnvironment.
+     * @return int см. константы ENV_* в IDetectEnvironment.
      */
     public static function detectEnvironment()
     {

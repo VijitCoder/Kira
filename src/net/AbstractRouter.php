@@ -3,18 +3,19 @@ namespace kira\net;
 
 /**
  * Абстрактный класс роутера
+ *
+ * См. документацию, "Маршрутизация"
  */
 abstract class AbstractRouter
 {
     /**
-     * Парсинг URL и вызов action-метода в соответствующем контроллере.
+     * Парсинг URL и вызов action-метода в соответствующем контроллере
      * @return void
      */
     abstract public function callAction();
 
     /**
-     * Построение URL по описанию.
-     *
+     * Построение URL по описанию
      * @param mixed $route  какое-то определение роута. Например controller/action
      * @param array $params доп.параметры для передачи в адрес. Ассоциативный массив ['имя параметра' => 'значение']
      * @return string готовый <b>относительный</b> URL
