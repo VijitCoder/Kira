@@ -4,6 +4,8 @@ namespace kira\utils;
 /**
  * Дампер позаимствован из Yii 1.x, класс CVarDumper.
  *
+ * См. документацию, "Утилиты"
+ *
  * @author    Qiang Xue <qiang.xue@gmail.com>
  * @link      http://www.yiiframework.com/
  * @copyright 2008-2013 Yii Software LLC
@@ -16,28 +18,15 @@ class Dumper
     private static $_depth;
 
     /**
-     * Дамп переменной и выход.
-     *
-     * @param mixed $var
-     * @param int   $depth
-     * @param bool  $highlight
-     */
-    public static function dumpEx($var, $depth = 10, $highlight = true)
-    {
-        self::dump($var, $depth, $highlight);
-        exit;
-    }
-
-    /**
-     * Выводим дамп переменной.
+     * Выводим дамп переменной
      *
      * Метод работает аналогично var_dump и print_r, но возвращаем информацию в более приглядном виде.
      *
-     * @param mixed   $var       variable to be dumped
-     * @param integer $depth     maximum depth that the dumper should go into the variable. Defaults to 10.
-     * @param boolean $highlight whether the result should be syntax-highlighted
+     * @param mixed $var       переменная, с которой нужно получить дамп
+     * @param int   $depth     максимальная глубина вложений в данных переменной, на которую должен идти дампер
+     * @param bool  $highlight нужно ли подсвечивать (раскрашивать) результат. Подсветка средствами PHP
      */
-    public static function dump($var, $depth = 10, $highlight = true)
+    public static function dump($var, int $depth = 10, bool $highlight = true)
     {
         if (!headers_sent()) {
             header('Content-Type: text/html; charset=UTF-8');
@@ -46,14 +35,25 @@ class Dumper
     }
 
     /**
-     * Возвращаем дамп переменной в строку.
-     *
-     * @param mixed $var       переменная для дампа
-     * @param int   $depth     максимальная глубина вложений в данных переменной, на которую должен идти дампер.
-     * @param bool  $highlight флаг "подсвечивать результат". Подсветка средствами PHP
-     * @return string строка, представляющая дампированное содержимое переменной
+     * Дамп переменной с завешением приложения
+     * @param mixed $var       переменная, с которой нужно получить дамп
+     * @param int   $depth     максимальная глубина вложений в данных переменной, на которую должен идти дампер
+     * @param bool  $highlight нужно ли подсвечивать (раскрашивать) результат. Подсветка средствами PHP
      */
-    public static function dumpAsString($var, $depth = 10, $highlight = true)
+    public static function dumpEx($var, int $depth = 10, bool $highlight = true)
+    {
+        self::dump($var, $depth, $highlight);
+        exit;
+    }
+
+    /**
+     * Возвращаем дамп переменной в строку
+     * @param mixed $var       переменная, с которой нужно получить дамп
+     * @param int   $depth     максимальная глубина вложений в данных переменной, на которую должен идти дампер
+     * @param bool  $highlight нужно ли подсвечивать (раскрашивать) результат. Подсветка средствами PHP
+     * @return string
+     */
+    public static function dumpAsString($var, int $depth = 10, bool $highlight = true)
     {
         self::$_output = '';
         self::$_objects = array();
@@ -68,11 +68,10 @@ class Dumper
 
     /**
      * Сборка ответа о данных переменной. Рекурсия.
-     *
-     * @param mixed   $var   переменная для дампа
-     * @param integer $level глубина вложений
+     * @param mixed $var   переменная, с которой нужно получить дамп
+     * @param int   $level текущий уровень вложения в данных переменной
      */
-    private static function dumpInternal($var, $level)
+    private static function dumpInternal($var, int $level)
     {
         switch (gettype($var)) {
             case 'boolean':

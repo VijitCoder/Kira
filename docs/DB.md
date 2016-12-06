@@ -30,18 +30,18 @@ ORM нет никакой. Пока нет :)
 
 Обычно конфигурация c конфиденциальной информацией описывается в отдельном файле и не контролируется СКВ. По умолчанию мастер приложения (см. док *"Организация файлов > Мастер создания приложения"*) создает конфиг в `env.php`.
 
-Почти все параметры соответствуют параметрам конструктора класса [PDO] (http://php.net/manual/en/pdo.construct.php).
+Почти все параметры соответствуют параметрам конструктора класса [PDO](http://php.net/manual/en/pdo.construct.php).
 
-Про *"options"* можно почитать в [PDO::setAttribute()] (http://php.net/manual/ru/pdo.setattribute.php).
+Про *"options"* можно почитать в [PDO::setAttribute()](http://php.net/manual/ru/pdo.setattribute.php).
 
 *Прим.: несмотря на то, что **ключи** в PDO Options представляют собой **числовые константы**, массив настроек, описанный в `env.php`, успешно сливается c главным конфигом. Обеспечено особым методом движка, и об этом заботиться не нужно.*
 
 #### Часовой пояс в MySQL-сессии
 
 Полезные ссылки
-waredom.ru: [Время в MySQL] (http://waredom.ru/36#mysql)
-stackoverflow.com: [How do I get the current time zone of MySQL?] (http://stackoverflow.com/a/2934271/5497749)
-stackoverflow.com: [Should MySQL have its timezone set to UTC?] (http://stackoverflow.com/a/19075291/5497749)
+waredom.ru: [Время в MySQL](http://waredom.ru/36#mysql)
+stackoverflow.com: [How do I get the current time zone of MySQL?](http://stackoverflow.com/a/2934271/5497749)
+stackoverflow.com: [Should MySQL have its timezone set to UTC?](http://stackoverflow.com/a/19075291/5497749)
 
 Коротко, в чем смысл: часовой пояс для MySQL важен только для функций типа `now()`, `unix_timestamp()` и т.п. При записи даты/времени в поле типа DATE, DATETIME часовой пояс не пишется. Запись в поле TIMESTAMP сохраняется внутри MySQL в UTC не зависимо от часового пояса.
 
@@ -150,6 +150,6 @@ foreach ($iter as $row) {
 
 ## Обработка ошибок
 
-Ошибки запросов и подключения к БД пишутся в лог (см. док *"Логер"*). Если определено логирование в базу, тогда ошибки запросов пишутся в нее, ошибки подключения - в любом случае в файлы. Если в атрибутах подключения запрещены исключения, тогда логирования не будет. Про настройку тут [PDO::ATTR_ERRMODE] (http://php.net/manual/ru/pdo.setattribute.php).
+Ошибки запросов и подключения к БД пишутся в лог (см. док *"Логер"*). Если определено логирование в базу, тогда ошибки запросов пишутся в нее, ошибки подключения - в любом случае в файлы. Если в атрибутах подключения запрещены исключения, тогда логирования не будет. Про настройку тут [PDO::ATTR_ERRMODE](http://php.net/manual/ru/pdo.setattribute.php).
 
 При возникновении ошибок в клиентский код будет проброшено исключение `kira\exceptions\DbException`.

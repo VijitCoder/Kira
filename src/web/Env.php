@@ -29,7 +29,7 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Имя домена, типа "my.site.com".
+     * Имя домена, типа "my.site.com"
      *
      * Пытаемся его получить из $_SERVER['HTTP_HOST']. Иначе ищем в настройках приложения ('domain').
      *
@@ -41,7 +41,7 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Порт, на котором работает сайт.
+     * Порт, на котором работает сайт
      *
      * Если порт 80, тогда вернем пустую строку. Иначе ведущее двоеточие и номер порта. Двоеточие конечно не относится
      * к порту, это для удобства сборки адреса.
@@ -56,8 +56,7 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Схема://домен:порт. Без слеша в конце.
-     *
+     * Схема://домен:порт. Без слеша в конце
      * @return string|null
      */
     public static function domainUrl()
@@ -69,7 +68,8 @@ class Env implements IDetectEnvironment
     }
 
     /**
-     * Главная страница сайта.
+     * Главная страница сайта
+     *
      * Возможно в потомках потребуется переопределение метода.
      *
      * @return string|null
