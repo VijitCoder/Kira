@@ -183,4 +183,36 @@ class Arrays
         }
         return isset($arr[$chain]) ? $arr[$chain] : null;
     }
+
+    /**
+     * Построение иерархического дерева из одномерного массива
+     *
+     * На вход принимаем произвольный массив с данными. Если задана callback функция получения родительского id, в нее
+     * будет передаваться каждый ключ и элемент этого массива, в двух параметрах. Из функции ожидаем родительский id.
+     *
+     * Если  callback функция не задана, то каждый элемент исходного массива должен содержать 'parentId'. Иначе такой
+     * элемент размещается в корне иерархии.
+     *
+     * В результате получим многомерный массив, где в ключе 'children' каждой ветки перечислены ее потомки.
+     *
+     * @copyright  2007-2010 SARITASA LLC <info@saritasa.com>
+     * @link       http://www.saritasa.com
+     *
+     * @param array         $nodes       исходный массив
+     * @param callable|null $getParentId функция получения id родителя
+     * @return array
+     */
+    public static function buildTree(array $nodes, callable $getParentId = null)
+    {
+        $tree = [];
+        foreach ($nodes as $id => &$node) {
+            $parentId = $getParentId ? $getParentId($id, $node) : ($node['parentId'] ?? null);
+            if ($parentId === null) {
+                $tree[$id] = &$node;
+            } else {
+                $nodes[$parentId]['children'][$id] = &$node;
+            }
+        }
+        return $tree;
+    }
 }

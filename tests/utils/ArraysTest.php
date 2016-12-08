@@ -64,7 +64,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function ($val) {
+            function($val) {
                 return $val & 1;
             }
         );
@@ -93,7 +93,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function ($val) {
+            function($val) {
                 return $val & 1;
             },
             ARRAY_FILTER_USE_KEY
@@ -127,7 +127,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function ($val, $key) {
+            function($val, $key) {
                 return is_array($val) ? $key & 1 : $val & 1;
             },
             ARRAY_FILTER_USE_BOTH
@@ -138,7 +138,8 @@ class ArraysTest extends TestCase
                 0 => 15,
                 2 => 17,
             ],
-            3 => [19]];
+            3 => [19],
+        ];
 
         $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация ключей и значений массива через callback-функцию');
     }
@@ -205,7 +206,7 @@ class ArraysTest extends TestCase
             ['sub' => ['string 4', 'string 5',]],
         ];
 
-        $expect = Arrays::implode_recursive($arr, ' + ' , ' rn ');
+        $expect = Arrays::implode_recursive($arr, ' + ', ' rn ');
         $this->assertEquals($expect, 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5',
             'Слияние многомерного массива в строку');
     }
@@ -215,5 +216,126 @@ class ArraysTest extends TestCase
         $arr = ['path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],];
         $expect = Arrays::getValue($arr, ['path' => ['app' => 'level2']]);
         $this->assertEquals($expect, '/www', 'Получение значения массива по заданной цепочке ключей');
+    }
+
+    /**
+     * Построение иерархического дерева из одномерного массива без использования callback-функции
+     */
+    public function test_buildTree()
+    {
+        $source = [
+            'lvl0'   => [
+                'pos' => 'корень дерева. Уровень 0',
+            ],
+            'lvl1.1' => [
+                'parentId' => 'lvl0',
+                'pos'      => 'уровень 1 ветка 1',
+            ],
+            'lvl1.2' => [
+                'parentId' => 'lvl0',
+                'pos'      => 'уровень 1 ветка 2',
+            ],
+            'lvl2.1' => [
+                'parentId' => 'lvl1.2',
+                'pos'      => 'уровень 2 ветка 1',
+            ],
+            'lvl3.1' => [
+                'parentId' => 'lvl2.1',
+                'pos'      => 'уровень 3 ветка 1',
+            ],
+            'lvl2.2' => [
+                'parentId' => 'lvl1.2',
+                'pos'      => 'уровень 2 ветка 2',
+            ],
+        ];
+
+        $expect = [
+            'lvl0' => [
+                'pos'      => 'корень дерева. Уровень 0',
+                'children' => [
+                    'lvl1.1' => [
+                        'parentId' => 'lvl0',
+                        'pos'      => 'уровень 1 ветка 1',
+                    ],
+                    'lvl1.2' => [
+                        'parentId' => 'lvl0',
+                        'pos'      => 'уровень 1 ветка 2',
+                        'children' => [
+                            'lvl2.1' => [
+                                'parentId' => 'lvl1.2',
+                                'pos'      => 'уровень 2 ветка 1',
+                                'children' => [
+                                    'lvl3.1' => [
+                                        'parentId' => 'lvl2.1',
+                                        'pos'      => 'уровень 3 ветка 1',
+                                    ],
+                                ],
+                            ],
+                            'lvl2.2' => [
+                                'parentId' => 'lvl1.2',
+                                'pos'      => 'уровень 2 ветка 2',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $tree = Arrays::buildTree($source);
+
+        $this->assertEquals($expect, $tree, 'Иерахический массив');
+    }
+
+    /**
+     * Построение иерархического дерева из одномерного массива c использованием callback-функции
+     */
+    public function test_buildTree_callback()
+    {
+        $array = [
+            'lvl0'   => [
+                'pos' => 'корень дерева. Уровень 0',
+            ],
+            'lvl1.1' => [
+                'bindTo' => 'lvl0',
+                'pos'    => 'уровень 1 ветка 1',
+            ],
+            'lvl1.2' => [
+                'bindTo' => 'lvl0',
+                'pos'    => 'уровень 1 ветка 2',
+            ],
+            'lvl2.1' => [
+                'bindTo' => 'lvl1.2',
+                'pos'    => 'уровень 2 ветка 1',
+            ],
+        ];
+
+        $getParentId = function($key, &$item) {
+            $parentId = $item['bindTo'] ?? null;
+            unset($item['bindTo']);
+            return $parentId;
+        };
+
+        $expect = [
+            'lvl0' => [
+                'pos'      => 'корень дерева. Уровень 0',
+                'children' => [
+                    'lvl1.1' => [
+                        'pos' => 'уровень 1 ветка 1',
+                    ],
+                    'lvl1.2' => [
+                        'pos'      => 'уровень 1 ветка 2',
+                        'children' => [
+                            'lvl2.1' => [
+                                'pos' => 'уровень 2 ветка 1',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $tree = Arrays::buildTree($array, $getParentId);
+
+        $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию');
     }
 }
