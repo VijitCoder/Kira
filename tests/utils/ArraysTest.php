@@ -338,4 +338,30 @@ class ArraysTest extends TestCase
 
         $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию');
     }
+
+    /**
+     * Извлечение элемента массива по заданному ключу
+     */
+    public function test_value_extract()
+    {
+        $array = [
+            'one'   => 'раз',
+            'two'   => 'два',
+            'three' => 'три',
+        ];
+
+        $value = Arrays::value_extract($array, 'two');
+        $this->assertEquals('два', $value, 'Извлеченное значение массива');
+        $this->assertEquals(
+            [
+                'one'   => 'раз',
+                'three' => 'три',
+            ],
+            $array,
+            'Массив без извлеченного значения'
+        );
+
+        $notExistValue =  Arrays::value_extract($array, 'four');
+        $this->assertNull($notExistValue, 'Попытка добыть несуществующий элемент');
+    }
 }

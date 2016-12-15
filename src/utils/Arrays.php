@@ -215,4 +215,25 @@ class Arrays
         }
         return $tree;
     }
+
+    /**
+     * Получить значение из массива по его ключу. Удалить соостветствующий элемент массива.
+     *
+     * Поведение похоже на array_pop(), только элемент извлекается не с конца массива, а из любого места по заданному
+     * ключу.
+     *
+     * @param array      $array массив источник
+     * @param string|int $key   ключ элемента для извлечения
+     * @return mixed
+     */
+    public static function value_extract(array &$array, $key)
+    {
+        if (array_key_exists($key, $array)) {
+            $value = $array[$key];
+            unset($array[$key]);
+        } else {
+            $value = null;
+        }
+        return $value;
+    }
 }
