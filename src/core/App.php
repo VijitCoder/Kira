@@ -16,9 +16,9 @@ class App
     use Singleton;
 
     /**
-     * Название и версия движка. Ссылка на оф.сайт движка
+     * Версия движка. Ссылка на оф.сайт движка
      */
-    const VERSION = 'Kira 1.4';
+    const VERSION = '1.4';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /**
