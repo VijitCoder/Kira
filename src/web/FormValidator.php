@@ -2,6 +2,7 @@
 namespace kira\web;
 
 use kira\core\App;
+use kira\exceptions\FormException;
 
 /**
  * Служебный класс для модели формы. Содержит только методы валидации. Готовые данные и ошибки передаются в клиентский
@@ -24,12 +25,12 @@ class FormValidator
      * разработчику в поиске ошибки.
      * @param $method
      * @param $params
-     * @throws \LogicException
+     * @throws FormException
      */
     public function __call($method, $params)
     {
         if (strncmp($method, 'validator', 8) === 0) {
-            throw new \LogicException('Неизвестный типовой валидатор: ' . $method . PHP_EOL
+            throw new FormException('Неизвестный типовой валидатор: ' . $method . PHP_EOL
                 . 'Проверьте правильность контракта формы.');
         }
     }
@@ -49,7 +50,7 @@ class FormValidator
      * @param mixed      $data         проверяемые данные. Соответствуют узлу в массиве {@see Form::$rawData}
      * @param mixed      $value        куда писать валидированное значение. Соответствует узлу в  {@see Form::$values}
      * @param mixed      $error        куда писать ошибку. Соответствует узлу в  {@see Form::$errors}
-     * @throws \LogicException через магический FormValidator::__call()
+     * @throws FormException через магический FormValidator::__call()
      */
     public function internalValidate(&$contractPart, &$data, &$value, &$error)
     {
@@ -210,12 +211,12 @@ class FormValidator
      * @param mixed $value куда писать валидное значение
      * @param mixed $error куда писать ошибку
      * @return bool
-     * @throws \LogicException
+     * @throws FormException
      */
     protected function validatorFilter_var(&$desc, &$data, &$value, &$error)
     {
         if (!isset($desc['filter'])) {
-            throw new \LogicException('Не задан обязательный параметр "filter"');
+            throw new FormException('Не задан обязательный параметр "filter"');
         }
         $filter = $desc['filter'];
         $options = isset($desc['options']) ? ($desc['options']) : null;
@@ -256,13 +257,13 @@ class FormValidator
      * @param mixed $value куда писать валидное значение
      * @param mixed $error куда писать ошибку
      * @return bool
-     * @throws \LogicException
-     * @throws \UnexpectedValueException
+     * @throws FormException
+     * @throws FormException
      */
     protected function validatorExternal(&$desc, &$data, &$value, &$error)
     {
         if (!isset($desc['function'])) {
-            throw new \LogicException('Не задан обязательный параметр "function"');
+            throw new FormException('Не задан обязательный параметр "function"');
         }
         $function = $desc['function'];
         $options = isset($desc['options']) ? ($desc['options']) : [];
@@ -286,7 +287,7 @@ class FormValidator
             if (is_array($function)) {
                 $function = implode('::', $function);
             }
-            throw new \UnexpectedValueException("Внешний валидатор {$function}() вернул неопознанный ответ");
+            throw new FormException("Внешний валидатор {$function}() вернул неопознанный ответ");
         }
 
         return $passed;
@@ -314,12 +315,12 @@ class FormValidator
      * @param mixed  $value куда писать валидное значение
      * @param mixed  $error куда писать ошибку
      * @return bool
-     * @throws \LogicException
+     * @throws FormException
      */
     protected function validatorLength(&$desc, &$data, &$value, &$error)
     {
         if (!is_string($data)) {
-            throw new \LogicException('Проверка длины строки не применима к текущему типу данных: '
+            throw new FormException('Проверка длины строки не применима к текущему типу данных: '
                 . gettype($value));
         }
 
@@ -368,7 +369,7 @@ class FormValidator
      * @param mixed  $value куда писать валидное значение
      * @param mixed  $error куда писать ошибку
      * @return bool
-     * @throws \LogicException
+     * @throws FormException
      */
     protected function validatorBounds(&$desc, &$data, &$value, &$error)
     {
@@ -378,7 +379,7 @@ class FormValidator
         }
 
         if (!is_numeric($data)) {
-            throw new \LogicException('Проверка границ числа не применима к такому типу данных: ' . gettype($value));
+            throw new FormException('Проверка границ числа не применима к такому типу данных: ' . gettype($value));
         }
 
         $min = isset($desc['min']) ? (float)$desc['min'] : null;

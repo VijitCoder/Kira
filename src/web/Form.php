@@ -3,6 +3,7 @@ namespace kira\web;
 
 use kira\utils\Arrays;
 use kira\net\Request;
+use kira\exceptions\FormException;
 
 /**
  * Супер-класс моделей форм (валидации форм).
@@ -112,7 +113,7 @@ class Form
     /**
      * Валидация. Рекурсивный обход контракта
      * @return bool
-     * @throws \LogicException из checkСsrfToken()
+     * @throws FormException из checkСsrfToken()
      */
     public function validate()
     {
@@ -142,8 +143,8 @@ class Form
      * Если поле с токеном не задано, не выполнять проверку. Если не пройдет проверку, пробрасываем исключение.
      *
      * @return true
-     * @throws \LogicException
-     * @throws \RuntimeException с кодом 400, если токен неверный
+     * @throws FormException
+     * @throws FormException с кодом 400, если токен неверный
      */
     private function checkСsrfToken()
     {
@@ -153,7 +154,7 @@ class Form
 
         $method = Request::method();
         if (!in_array($method, ['GET', 'POST'])) {
-            throw new \LogicException('Проверка CSRF токена возможна только при передаче формы методами GET или POST'
+            throw new FormException('Проверка CSRF токена возможна только при передаче формы методами GET или POST'
                 . PHP_EOL . 'Текущий метод определен, как ' . $method);
         }
         $method = strtolower($method);
@@ -161,7 +162,7 @@ class Form
         $token = Request::$method($this->csrfField);
 
         if (!Request::validateCsrfToken($token)) {
-            throw new \RuntimeException('Неверный CSRF токен', 400);
+            throw new FormException('Неверный CSRF токен', 400);
         }
 
         return true;
