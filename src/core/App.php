@@ -55,7 +55,7 @@ class App
     public static function conf($key, $strict = true)
     {
         if (!self::$config) {
-            self::$config = require MAIN_CONFIG;
+            self::$config = require KIRA_MAIN_CONFIG;
         }
 
         $result = self::$config;
@@ -95,7 +95,7 @@ class App
         }
 
         if (!self::$config) {
-            self::$config = require MAIN_CONFIG;
+            self::$config = require KIRA_MAIN_CONFIG;
         }
 
         $conf = &self::$config;
@@ -122,7 +122,7 @@ class App
     public static function detectLang()
     {
         if (!self::$lang) {
-            $langPath = APP_PATH . 'i18n/';
+            $langPath = KIRA_APP_PATH . 'i18n/';
             $lang = 'ru';
             if (isset($_COOKIE['lang'])) {
                 $try = $_COOKIE['lang'];
@@ -150,7 +150,7 @@ class App
     public static function t($key, $ins = array())
     {
         if (!self::$lexicon) {
-            $langPath = APP_PATH . 'i18n/';
+            $langPath = KIRA_APP_PATH . 'i18n/';
             $lang = self::detectLang();
             self::$lexicon = $lang == 'ru' ? array() : require_once "{$langPath}{$lang}.php";
         }

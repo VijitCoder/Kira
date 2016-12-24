@@ -13,7 +13,7 @@ class Convisor
     /**
      * Абсолютный путь к каталогу Консоли
      */
-    const CONSOLE_PATH = APP_PATH . 'console/';
+    const CONSOLE_PATH = KIRA_APP_PATH . 'console/';
 
     /**
      * Целевой скрипт
@@ -78,18 +78,18 @@ class Convisor
      *
      * В режиме отладки - разрешено без вопросов, иначе - при указании правильного ключа. Количество ошибок считается.
      * Ключ и количество попыток задаются в конфиге приложения. Неудавшиеся попытки логируются, после NN попыток
-     * Convisor блокируется через файл [TEMP_PATH/console.lock]. При блокировке админу пойдет письмо.
+     * Convisor блокируется через файл [KIRA_TEMP_PATH/console.lock]. При блокировке админу пойдет письмо.
      *
      * @param string $key ключ доступа, спарсенный из запроса
      * @return null если нет права запуска, прямо тут все и закончится. Поэтому возвращаемое значение не важно.
      */
     private function checkAccess(string $key)
     {
-        if (DEBUG) {
+        if (KIRA_DEBUG) {
             return;
         }
 
-        $lockFile = TEMP_PATH . 'convisor.lock';
+        $lockFile = KIRA_TEMP_PATH . 'convisor.lock';
 
         $count = file_exists($lockFile) ? file_get_contents($lockFile) : 0;
         $tries = (int)App::conf('convisor.tries', false);

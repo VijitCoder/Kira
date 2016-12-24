@@ -21,7 +21,7 @@ class Controller
     protected $viewExt = '.htm';
 
     /**
-     * Макет. Относительный путь в каталоге VIEWS_PATH + имя файла без расширения.
+     * Макет. Относительный путь в каталоге KIRA_VIEWS_PATH + имя файла без расширения.
      * @var string
      */
     protected $layout = 'layout';
@@ -60,7 +60,7 @@ class Controller
         $CONTENT = $this->renderFile($view, $data);
 
         ob_start();
-        require VIEWS_PATH . $this->layout . $this->viewExt;
+        require KIRA_VIEWS_PATH . $this->layout . $this->viewExt;
         $result = ob_get_clean();
 
         $this->afterRender($view);
@@ -112,7 +112,7 @@ class Controller
 
         //Отрисованный шаблон буферизируем, в него уйдут распакованные параметры
         ob_start();
-        require VIEWS_PATH . $_view123 . $this->viewExt;
+        require KIRA_VIEWS_PATH . $_view123 . $this->viewExt;
         return ob_get_clean();
     }
 

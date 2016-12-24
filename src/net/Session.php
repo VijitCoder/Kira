@@ -70,7 +70,7 @@ class Session
                 throw new SessionException("В сессии не найдено значение с ключом '{$key}'");
             }
         } else {
-            return DEBUG ? $_SESSION : null;
+            return KIRA_DEBUG ? $_SESSION : null;
         }
     }
 

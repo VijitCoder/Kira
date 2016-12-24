@@ -213,7 +213,7 @@ class Response
      */
     public static function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
     {
-        if (DEBUG) {
+        if (KIRA_DEBUG) {
             $options = $options | JSON_PRETTY_PRINT;
         }
         self::send(

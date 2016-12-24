@@ -146,7 +146,7 @@ class DbModel
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[1])) {
-                $msg .= PHP_EOL . 'Запрос отправлен из ' . str_replace(ROOT_PATH, '', $trace[1]['file'])
+                $msg .= PHP_EOL . 'Запрос отправлен из ' . str_replace(KIRA_ROOT_PATH, '', $trace[1]['file'])
                     . '(' . $trace[1]['line'] . ') ';
             }
 
@@ -404,7 +404,7 @@ class DbModel
      */
     public function simulate(string $sql, array $bindingParams = [])
     {
-        if (!DEBUG) {
+        if (!KIRA_DEBUG) {
             throw new \RuntimeException('Нельзя использовать этот метод в боевом режиме сайта. Он только для отладки.');
         }
 

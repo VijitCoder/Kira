@@ -33,7 +33,7 @@ class Handlers
     {
         $class = get_class($ex);
         $message = nl2br($ex->getMessage());
-        $file = str_replace(ROOT_PATH, '/', $ex->getFile());
+        $file = str_replace(KIRA_ROOT_PATH, '/', $ex->getFile());
         $line = $ex->getLine();
         $trace = $ex->getTraceAsString();
 
@@ -53,7 +53,7 @@ class Handlers
             header('Content-Type: text/html; charset=UTF-8');
         }
 
-        if (DEBUG) {
+        if (KIRA_DEBUG) {
             echo Render::fetch('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
         } else {
             echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
@@ -106,7 +106,7 @@ class Handlers
         ];
         $codeTxt = $codes[$code];
 
-        $file = str_replace(ROOT_PATH, '', $file);
+        $file = str_replace(KIRA_ROOT_PATH, '', $file);
 
         $stack_html = $stack_console = '';
 
@@ -114,7 +114,9 @@ class Handlers
             $trace = array_reverse(debug_backtrace());
             array_pop($trace);
             foreach ($trace as $step) {
-                $where = isset($step['file']) ? str_replace(ROOT_PATH, '', $step['file']) . ':' . $step['line'] : '';
+                $where = isset($step['file'])
+                    ? str_replace(KIRA_ROOT_PATH, '', $step['file']) . ':' . $step['line']
+                    : '';
 
                 $func = isset($step['class'])
                     ? $step['class'] . $step['type'] . $step['function']
@@ -170,7 +172,7 @@ class Handlers
                 . "Стек вызовов:$rn$rn"
                 . $stack_console . "$rn---$rn$rn";
 
-            file_put_contents(TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
+            file_put_contents(KIRA_TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
             return false;
         }
 

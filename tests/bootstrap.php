@@ -7,19 +7,19 @@
  */
 mb_internal_encoding('UTF-8');
 
-define('APP_NAMESPACE', 'app');
+define('KIRA_APP_NAMESPACE', 'app');
 
-define('ROOT_PATH', realpath(__DIR__ . '/../') . '/'); // !своя версия
-define('APP_PATH', ROOT_PATH . 'src/');
-define('VIEWS_PATH', APP_PATH . 'views/');
-define('TEMP_PATH', APP_PATH . 'temp/');
+define('KIRA_ROOT_PATH', realpath(__DIR__ . '/../') . '/'); // !своя версия
+define('KIRA_APP_PATH', KIRA_ROOT_PATH . 'src/');
+define('KIRA_VIEWS_PATH', KIRA_APP_PATH . 'views/');
+define('KIRA_TEMP_PATH', KIRA_APP_PATH . 'temp/');
 
-define('MAIN_CONFIG', ROOT_PATH . 'tests/config.php');
+define('KIRA_MAIN_CONFIG', KIRA_ROOT_PATH . 'tests/config.php');
 
-define('DEBUG', true);
+define('KIRA_DEBUG', true);
 
-ini_set('display_errors', (int)DEBUG);
-ini_set('display_startup_errors', (int)DEBUG);
-error_reporting(DEBUG ? E_ALL : 0);
+ini_set('display_errors', (int)KIRA_DEBUG);
+ini_set('display_startup_errors', (int)KIRA_DEBUG);
+error_reporting(KIRA_DEBUG ? E_ALL : 0);
 
-$composer = require ROOT_PATH . 'vendor/autoload.php';
+$composer = require KIRA_ROOT_PATH . 'vendor/autoload.php';

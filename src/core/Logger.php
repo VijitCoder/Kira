@@ -47,7 +47,7 @@ class Logger extends AbstractLogger
                 'switch_on'    => true,
                 'store'        => self::STORE_IN_FILES,
                 'db_conf_key' => 'db',
-                'log_path'     => TEMP_PATH,
+                'log_path'     => KIRA_TEMP_PATH,
                 'php_timezone' => '',
                 'table_name'   => 'kira_log',
             ],

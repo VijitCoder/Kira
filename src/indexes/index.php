@@ -6,22 +6,22 @@ use kira\core\App;
 
 mb_internal_encoding('UTF-8');
 
-define('APP_NAMESPACE', 'app');
+define('KIRA_APP_NAMESPACE', 'app');
 
-define('ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
-define('APP_PATH', ROOT_PATH . 'application/');
-define('VIEWS_PATH', APP_PATH . 'views/');
-define('TEMP_PATH', APP_PATH . 'temp/');
+define('KIRA_ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
+define('KIRA_APP_PATH', KIRA_ROOT_PATH . 'application/');
+define('KIRA_VIEWS_PATH', KIRA_APP_PATH . 'views/');
+define('KIRA_TEMP_PATH', KIRA_APP_PATH . 'temp/');
 
-define('MAIN_CONFIG', APP_PATH . 'conf/main.php');
+define('KIRA_MAIN_CONFIG', KIRA_APP_PATH . 'conf/main.php');
 
-define('DEBUG', true);
+define('KIRA_DEBUG', true);
 
-ini_set('display_errors', (int)DEBUG);
-ini_set('display_startup_errors', (int)DEBUG);
-error_reporting(DEBUG ? E_ALL : 0);
+ini_set('display_errors', (int)KIRA_DEBUG);
+ini_set('display_startup_errors', (int)KIRA_DEBUG);
+error_reporting(KIRA_DEBUG ? E_ALL : 0);
 
-$composer = require ROOT_PATH . 'vendor/autoload.php';
+$composer = require KIRA_ROOT_PATH . 'vendor/autoload.php';
 App::setComposer($composer);
 unset($composer);
 
