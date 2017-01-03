@@ -8,7 +8,7 @@ mb_internal_encoding('UTF-8');
 
 define('KIRA_APP_NAMESPACE', 'app');
 
-define('KIRA_ROOT_PATH', str_replace('\\', '/', rtrim(__DIR__, '/')) . '/');
+define('KIRA_ROOT_PATH', rtrim(str_replace('\\', '/', __DIR__), '/') . '/');
 define('KIRA_APP_PATH', KIRA_ROOT_PATH . 'application/');
 define('KIRA_VIEWS_PATH', KIRA_APP_PATH . 'views/');
 define('KIRA_TEMP_PATH', KIRA_APP_PATH . 'temp/');
