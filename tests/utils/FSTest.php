@@ -29,10 +29,10 @@ class FSTest extends TestCase
     public function setUp()
     {
         $structure = [
-            'level1' => [
-                'level2' => [
+            'level1'   => [
+                'level2'    => [
                     // Не меняй расширения и количество файлов в каталоге [level3/]. На нем построен test_clearDir()
-                    'level3' => [
+                    'level3'         => [
                         'test.php'     => 'some text content',
                         'other.php'    => 'Some more text content',
                         'log.csv'      => 'Something else',
@@ -56,6 +56,18 @@ class FSTest extends TestCase
         $this->assertTrue(FS::hasDots('../../path/'), 'Есть точки, переход на два каталога выше');
         $this->assertTrue(FS::hasDots('public/../protected/lib/'), 'Есть точки перехода внутри пути');
         $this->assertFalse(FS::hasDots('public/.hidden/path/'), 'Точка есть, но не управляющая. Норм');
+    }
+
+    public function test_normalizePath()
+    {
+        $this->assertEquals('c:/', FS::normalizePath('c:\\'), 'Нормализация. Корень диска [C:]');
+        $this->assertEquals('c:/www/', FS::normalizePath('c:\\www\\'),
+            'Нормализация. Обычный Windows путь со слешем в конце');
+        $this->assertEquals('c:/temp/', FS::normalizePath('c:\\temp'), 'Нормализация. Windows-путь без слеша в конце');
+        $this->assertEquals('/etc/', FS::normalizePath('/etc/'), 'Нормализация. Linux-путь со слешем в конце');
+        $this->assertEquals('/var/tmp/', FS::normalizePath('/var/tmp'), 'Нормализация. Linux-путь без слеша в конце');
+        $this->assertEquals('/home/user/../tmp/', FS::normalizePath('/home/user/../tmp'),
+            'Нормализация. Не заменился переход на каталог выше');
     }
 
     public function test_makeDir()
@@ -112,6 +124,19 @@ class FSTest extends TestCase
         FS::removeDir($this->rootPath, 5); // от корня вложенность - 5, превышает допустимый максимум
         $this->assertTrue($this->root->hasChild($deepestChild),
             'Проверка предохранителя. Требуемая вложенность больше максимально допустимой. Удаление не выполнено');
+    }
+
+    public function test_dirList()
+    {
+        $targetDir = 'level1/level2/level3';
+
+        $phpFiles = ['test.php', 'other.php'];
+        $fileNames = FS::dirList($this->rootPath . $targetDir, '~\.php$~');
+        $this->assertEquals($phpFiles, $fileNames, 'Список php-файлов в указанном каталоге');
+
+        $allFiles = array_merge($phpFiles, ['log.csv', 'justFile.txt',]);
+        $fileNames = FS::dirList($this->rootPath . $targetDir);
+        $this->assertEquals($allFiles, $fileNames, 'Список всех файлов в указанном каталоге');
     }
 
     public function test_clearDir()

@@ -18,9 +18,24 @@ class FS
      * @param string $path
      * @return bool
      */
-    public static function hasDots($path)
+    public static function hasDots(string $path)
     {
         return (bool)preg_match('~^[.]{1,2}/|/[.]{1,2}/~', $path);
+    }
+
+    /**
+     * Нормализация пути
+     *
+     * Понятие нормы условное. В данном контексте: обратные слеши переводятся в прямые, в конце дописывается слеш
+     * при необходимости. Не заменяются переходы './' и '../'.
+     *
+     * @param string $path исходное значение пути
+     * @return string
+     */
+    public static function normalizePath(string $path)
+    {
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        return substr($path, -2) == ':/' ? $path : $path . '/';
     }
 
     /**
@@ -34,7 +49,7 @@ class FS
      * @param int    $mode права доступа, восьмеричное число
      * @throws FSException
      */
-    public static function makeDir($path, $mode = 0777)
+    public static function makeDir(string $path, int $mode = 0777)
     {
         if (self::hasDots($path)) {
             throw new FSException('Путь не должен содержать переходы типа "../", "./"');
@@ -91,7 +106,7 @@ class FS
      * @return true|string
      * @throws FSException
      */
-    public static function removeDir($path, $fuseLevel = 1)
+    public static function removeDir(string $path, int $fuseLevel = 1)
     {
         if (!file_exists($path)) {
             return;
@@ -122,7 +137,7 @@ class FS
      * Рекурсивное удаление содержимого каталога
      * @param string $path
      */
-    private static function internalRemoveDir($path)
+    private static function internalRemoveDir(string $path)
     {
         $dirList = new \DirectoryIterator($path);
         foreach ($dirList as $obj) {
@@ -150,7 +165,7 @@ class FS
      * @param int    $maxDepth    максимально допустимый уровень вложенности
      * @return bool
      */
-    private static function checkMaxDepth($path, $parentDepth, &$maxDepth)
+    private static function checkMaxDepth(string $path, int $parentDepth, int &$maxDepth)
     {
         $parentDepth++;
         $dirList = new \DirectoryIterator($path);
@@ -169,6 +184,38 @@ class FS
     }
 
     /**
+     * Получение списка файлов в указанном каталоге. Не читает вложенные каталоги, только заданный.
+     * @param string $path   каталог поиска файлов
+     * @param string $filter регулярка для фильтрации. Полностью, включая операторные скобки и модификаторы.
+     * @return array список файлов без пути
+     * @throws FSException
+     */
+    public static function dirList(string $path, string $filter = '')
+    {
+        if (!file_exists($path)) {
+            throw new FSException("Каталог {$path} не существует.");
+        }
+
+        if (!is_dir($path)) {
+            throw new FSException($path . ' должно быть каталогом');
+        }
+
+        $dirList = new \DirectoryIterator($path);
+        $fileNames = [];
+        foreach ($dirList as $obj) {
+            if ($obj->isDot() || $obj->isDir()) {
+                continue;
+            }
+
+            $name = $obj->getBasename();
+            if (!$filter || preg_match($filter, $name)) {
+                $fileNames[] = $name;
+            }
+        }
+        return $fileNames;
+    }
+
+    /**
      * Очистка каталога от файлов.
      *
      * Не работает с подкаталогами из соображений безопасности, очистка проводится только в текущем каталоге. Удаляем
@@ -182,28 +229,15 @@ class FS
      * @return true|string
      * @throws FSException
      */
-    public static function clearDir($path, $filter = '')
+    public static function clearDir(string $path, string $filter = '')
     {
-        if (!file_exists($path)) {
-            throw new FSException("Каталог {$path} не существует.");
-        }
-
-        if (!is_dir($path)) {
-            throw new FSException($path . ' должно быть каталогом');
-        }
-
+        $path = self::normalizePath($path);
+        $filesNames = self::dirList($path, $filter);
         set_error_handler(['\kira\utils\FS', 'error_handler']);
-
         try {
-            $dirList = new \DirectoryIterator($path);
-            foreach ($dirList as $obj) {
-                if ($obj->isDot() || $obj->isDir()) {
-                    continue;
-                }
-
-                $name = $obj->getPathname();
-                if (!$filter || preg_match($filter, $name)) {
-                    unlink($name);
+            foreach ($filesNames as $fileName) {
+                if (!$filter || preg_match($filter, $fileName)) {
+                    unlink($path . $fileName);
                 }
             }
         } finally {
@@ -218,7 +252,7 @@ class FS
      * @param resource $context корректный ресурс контекста, созданный функцией php::stream_context_create().
      * @throws FSException из обработчика ошибок
      */
-    public static function copyFile($from, $to, $context = null)
+    public static function copyFile(string $from, string $to, resource $context = null)
     {
         set_error_handler(['\kira\utils\FS', 'error_handler']);
 
@@ -244,7 +278,7 @@ class FS
      * @param string $to   путь/файл_назначение
      * @throws FSException из обработчика ошибок
      */
-    public static function moveFile($from, $to)
+    public static function moveFile(string $from, string $to)
     {
         set_error_handler(['\kira\utils\FS', 'error_handler']);
 
@@ -260,7 +294,7 @@ class FS
      * @param string $fn путь/файл для удаления
      * @throws FSException из обработчика ошибок
      */
-    public static function deleteFile($fn)
+    public static function deleteFile(string $fn)
     {
         if (!file_exists($fn)) {
             return;
@@ -285,7 +319,7 @@ class FS
      * @param int    $line
      * @throws FSException
      */
-    public static function error_handler($errLevel, $message, $file, $line)
+    public static function error_handler(int $errLevel, string $message, string $file, int $line)
     {
         throw new FSException("{$message}\nИсточник: {$file}:{$line}", $errLevel);
     }
