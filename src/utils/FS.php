@@ -268,6 +268,28 @@ class FS
     }
 
     /**
+     * Переименовывание файла с перехватом ошибок
+     * @param string   $oldName путь/строе_имя_файла
+     * @param string   $newName путь/новое_имя_файла
+     * @param resource $context корректный ресурс контекста, созданный функцией php::stream_context_create().
+     * @throws FSException из обработчика ошибок
+     */
+    public static function renameFile(string $oldName, string $newName, resource $context = null)
+    {
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
+
+        try {
+            if ($context) {
+                rename($oldName, $newName, $context);
+            } else {
+                rename($oldName, $newName);
+            }
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
      * Перемещение файла с перехватом ошибок
      *
      * Для переименования файла нужны только права на запись в каталоге. Сам файл может быть вообще без прав, даже

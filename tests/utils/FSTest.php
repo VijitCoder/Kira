@@ -21,7 +21,7 @@ class FSTest extends TestCase
     private $root;
 
     /**
-     * Путь к корню виртуальной файловой системы
+     * Путь к корню созданной файловой структуры
      * @var string
      */
     private $rootPath;
@@ -46,8 +46,8 @@ class FSTest extends TestCase
             'some.ext' => 'will be renamed, moved and deleted by tests',
         ];
 
-        $this->root = vfsStream::setup('root_path', null, $structure);
-        $this->rootPath = vfsStream::url('root_path') . '/';
+        $this->root = vfsStream::setup('home', null, $structure);
+        $this->rootPath = vfsStream::url('home') . '/';
     }
 
     public function test_hasDots()
@@ -172,6 +172,27 @@ class FSTest extends TestCase
             $this->root->getChild('some.ext')->size(),
             $this->root->getChild('double.ext')->size(),
             'Размеры файлов после копирования совпадают'
+        );
+    }
+
+    /**
+     * Проверка переименовки файла
+     *
+     * Не провожу проверку содержимого, только размеры файлов. Этого достаточно.
+     */
+    public function test_renameFile()
+    {
+        $this->assertTrue($this->root->hasChild('some.ext'), 'Целевой файл перед переименовкой существует');
+
+        $size = $this->root->getChild('some.ext')->size();
+        FS::renameFile($this->rootPath . 'some.ext', $this->rootPath . 'new_some.ext');
+
+        $this->assertFalse($this->root->hasChild('some.ext'), 'Целевой файл после переименовки исчез');
+        $this->assertTrue($this->root->hasChild('new_some.ext'), 'Файл с новым именем появился');
+        $this->assertEquals(
+            $size,
+            $this->root->getChild('new_some.ext')->size(),
+            'Размеры файла после переименовки не изменился'
         );
     }
 
