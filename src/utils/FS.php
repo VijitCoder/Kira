@@ -200,17 +200,22 @@ class FS
             throw new FSException($path . ' должно быть каталогом');
         }
 
-        $dirList = new \DirectoryIterator($path);
-        $fileNames = [];
-        foreach ($dirList as $obj) {
-            if ($obj->isDot() || $obj->isDir()) {
-                continue;
-            }
+        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        try {
+            $dirList = new \DirectoryIterator($path);
+            $fileNames = [];
+            foreach ($dirList as $obj) {
+                if ($obj->isDot() || $obj->isDir()) {
+                    continue;
+                }
 
-            $name = $obj->getBasename();
-            if (!$filter || preg_match($filter, $name)) {
-                $fileNames[] = $name;
+                $name = $obj->getBasename();
+                if (!$filter || preg_match($filter, $name)) {
+                    $fileNames[] = $name;
+                }
             }
+        } finally {
+            restore_error_handler();
         }
         return $fileNames;
     }
