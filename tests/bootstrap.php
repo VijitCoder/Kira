@@ -23,3 +23,6 @@ ini_set('display_startup_errors', (int)KIRA_DEBUG);
 error_reporting(KIRA_DEBUG ? E_ALL : 0);
 
 $composer = require KIRA_ROOT_PATH . 'vendor/autoload.php';
+
+// Подключен для примера. Тестам движка не требуется.
+require 'callAsPublic/CallAsPublic.php';
