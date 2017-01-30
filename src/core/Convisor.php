@@ -49,6 +49,8 @@ class Convisor
      * нулевой элемент - имя скрипта для запуска, остальное - параметры для него. Имя скипта может быть без расширения,
      * гарантируем правильный вариант.
      *
+     * В параметрах поддерживаются имена с одним/двумя минусами в начале, весь набор разбирается в ассоциативный массив.
+     *
      * @param array $params параметры вызова Консоли
      * @return string ключ доступа
      */
@@ -57,7 +59,6 @@ class Convisor
         array_shift($params);
         $key = '';
         if (($k = array_search('-k', $params)) !== false) {
-
             $key = $params[++$k];
             unset($params[$k--]);
             unset($params[$k]);
@@ -65,10 +66,32 @@ class Convisor
 
         if ($params) {
             $script = array_shift($params);
-            $this->script = self::CONSOLE_PATH . basename($script, '.php') . '.php';
+            $script = ltrim(FS::normalizePath($script, true), '/');
+            if (!preg_match('/\.php$/i', $script))  {
+                $script .= '.php';
+            }
+            $this->script = self::CONSOLE_PATH . $script;
         }
 
-        $this->params = $params;
+        if ($params) {
+            $assocParams = [];
+            $lastKey = '';
+            foreach ($params as $p) {
+                if (preg_match('/^-{1,2}[^-]/', $p)) {
+                    $lastKey = $p;
+                    $assocParams[$lastKey] = null;
+                    continue;
+                }
+
+                if ($lastKey) {
+                    $assocParams[$lastKey] = $p;
+                    $lastKey = '';
+                } else {
+                    $assocParams[] = $p;
+                }
+            }
+            $this->params = $assocParams;
+        }
 
         return $key;
     }
@@ -93,7 +116,7 @@ class Convisor
 
         $count = file_exists($lockFile) ? file_get_contents($lockFile) : 0;
         $tries = (int)App::conf('convisor.tries', false);
-        $critical =  $tries && $count >= $tries;
+        $critical = $tries && $count >= $tries;
 
         if ($critical) {
             exit('Консоль заблокирована' . PHP_EOL);
@@ -122,9 +145,9 @@ class Convisor
     public function fireUp()
     {
         if (!file_exists($this->script)) {
-            exit('Не найден скрипт ' .  $this->script . PHP_EOL);
+            exit('Не найден скрипт ' . $this->script . PHP_EOL);
         } elseif (!is_readable($this->script)) {
-            exit('Не могу прочитать скрипт ' .  $this->script . PHP_EOL);
+            exit('Не могу прочитать скрипт ' . $this->script . PHP_EOL);
         }
 
         require $this->script;
