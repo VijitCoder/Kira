@@ -18,7 +18,7 @@ class FS
      * @param string $path
      * @return bool
      */
-    public static function hasDots(string $path)
+    public static function hasDots(string $path): bool
     {
         return (bool)preg_match('~^[.]{1,2}/|/[.]{1,2}/~', $path);
     }
@@ -29,13 +29,14 @@ class FS
      * Понятие нормы условное. В данном контексте: обратные слеши переводятся в прямые, в конце дописывается слеш
      * при необходимости. Не заменяются переходы './' и '../'.
      *
-     * @param string $path исходное значение пути
+     * @param string $path   исходное значение пути
+     * @param bool   $isFile переданное значение является путем к файлу
      * @return string
      */
-    public static function normalizePath(string $path)
+    public static function normalizePath(string $path, bool $isFile = false): string
     {
         $path = rtrim(str_replace('\\', '/', $path), '/');
-        return substr($path, -2) == ':/' ? $path : $path . '/';
+        return $isFile || substr($path, -2) == ':/' ? $path : $path . '/';
     }
 
     /**
@@ -165,7 +166,7 @@ class FS
      * @param int    $maxDepth    максимально допустимый уровень вложенности
      * @return bool
      */
-    private static function checkMaxDepth(string $path, int $parentDepth, int &$maxDepth)
+    private static function checkMaxDepth(string $path, int $parentDepth, int &$maxDepth): bool
     {
         $parentDepth++;
         $dirList = new \DirectoryIterator($path);
@@ -190,7 +191,7 @@ class FS
      * @return array список файлов без пути
      * @throws FSException
      */
-    public static function dirList(string $path, string $filter = '')
+    public static function dirList(string $path, string $filter = ''): array
     {
         if (!file_exists($path)) {
             throw new FSException("Каталог {$path} не существует.");

@@ -68,6 +68,9 @@ class FSTest extends TestCase
         $this->assertEquals('/var/tmp/', FS::normalizePath('/var/tmp'), 'Нормализация. Linux-путь без слеша в конце');
         $this->assertEquals('/home/user/../tmp/', FS::normalizePath('/home/user/../tmp'),
             'Нормализация. Не заменился переход на каталог выше');
+        $this->assertEquals('c:/file.ext', FS::normalizePath('c:\file.ext', true),
+            'Нормализация. Путь заканчивается на имя файла');
+
     }
 
     public function test_makeDir()
