@@ -38,7 +38,13 @@ class Convisor
         }
         $key = $this->parseParams($params);
         $this->checkAccess($key);
-        $this->script ? $this->fireUp() : $this->scriptsList();
+        if ($this->script) {
+            $this->fireUp();
+        } else {
+            $files = [];
+            $this->getScriptsList($files, '/');
+            $this->drawList($files);
+        }
     }
 
     /**
@@ -67,7 +73,7 @@ class Convisor
         if ($params) {
             $script = array_shift($params);
             $script = ltrim(FS::normalizePath($script, true), '/');
-            if (!preg_match('/\.php$/i', $script))  {
+            if (!preg_match('/\.php$/i', $script)) {
                 $script .= '.php';
             }
             $this->script = self::CONSOLE_PATH . $script;
@@ -160,13 +166,77 @@ class Convisor
     }
 
     /**
-     * Получение списка доступных скриптов для запуска
+     * Получение списка доступных скриптов для запуска, включая подкаталоги. Рекурсия.
+     *
+     * Отсчет ведется от каталога консоли приложения.
+     *
+     * В результате $files = [путь от корня консоли => файлы]
+     *
+     * @param array  $files   одномерный массив для сборки результата
+     * @param string $subPath относительный каталог для сканирования
      */
-    private function scriptsList()
+    private function getScriptsList(array &$files, string $subPath)
     {
-        $files = glob(self::CONSOLE_PATH . '*.php');
-        foreach ($files as $fn) {
-            echo basename($fn) . PHP_EOL;
+        $path = self::CONSOLE_PATH . ($subPath == '/' ? '' : $subPath);
+        $consolePathLen = mb_strlen(self::CONSOLE_PATH);
+        $dirList = new \DirectoryIterator($path);
+        foreach ($dirList as $obj) {
+            if ($obj->isDot()) {
+                continue;
+            }
+
+            if ($obj->isDir()) {
+                $subPath = mb_substr($obj->getPathName(), $consolePathLen);
+                $this->getScriptsList($files, $subPath . '/');
+                continue;
+            }
+
+            $fn = $obj->getBasename();
+            if (preg_match('/\.php$/i', $fn)) {
+                $files[$subPath][] = basename($fn);
+            }
+        }
+    }
+
+    /**
+     * Вывод полученного ранее списка скриптов в консоль
+     *
+     * Немного псевдографики и цвета для красоты
+     *
+     * @param array $list список скриптов, [путь от корня консоли => файлы]
+     * @see https://unicode-table.com/ru/blocks/box-drawing/
+     */
+    private function drawList(array $list)
+    {
+        if (!$list) {
+            return;
+        }
+
+        $symbol = function ($hexCode) {
+            return html_entity_decode("&#{$hexCode};", ENT_NOQUOTES, 'UTF-8');
+        };
+
+        $line = $symbol('x2500');   // горизонтальная линия
+        $pass = $symbol('x251c');   // граница вертикально и направо
+        $corner = $symbol('x2514'); // угол вверх вправо
+        $eol = PHP_EOL;
+
+        echo $eol . "\033[32mКорневой каталог:\033[0m " . self::CONSOLE_PATH . "{$eol}{$eol}";
+
+        if (count($list) === 1) {
+            foreach (array_pop($list) as $file) {
+                echo $file . $eol;
+            }
+            echo $eol;
+        } else {
+            foreach ($list as $dir => $files) {
+                echo "\033[1m{$dir}\033[0m{$eol}";
+                $last = array_pop($list);
+                foreach ($files as $file) {
+                    echo "{$pass}{$line} {$file}{$eol}";
+                }
+                echo "{$corner}{$line} {$last}{$eol}{$eol}";
+            }
         }
     }
 }
