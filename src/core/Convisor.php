@@ -1,7 +1,10 @@
 <?php
 namespace kira\core;
 
-use kira\utils\FS;
+use kira\utils\{
+    FS, ColorConsole
+};
+
 
 /**
  * Сonvisor - менеджер консольного запуска скриптов приложения
@@ -43,6 +46,7 @@ class Convisor
         } else {
             $files = [];
             $this->getScriptsList($files, '/');
+            ksort($files);
             $this->drawList($files);
         }
     }
@@ -178,6 +182,7 @@ class Convisor
     private function getScriptsList(array &$files, string $subPath)
     {
         $path = self::CONSOLE_PATH . ($subPath == '/' ? '' : $subPath);
+        $listName = $subPath;
         $consolePathLen = mb_strlen(self::CONSOLE_PATH);
         $dirList = new \DirectoryIterator($path);
         foreach ($dirList as $obj) {
@@ -193,7 +198,7 @@ class Convisor
 
             $fn = $obj->getBasename();
             if (preg_match('/\.php$/i', $fn)) {
-                $files[$subPath][] = basename($fn);
+                $files[$listName][] = basename($fn);
             }
         }
     }
@@ -212,16 +217,18 @@ class Convisor
             return;
         }
 
-        $symbol = function ($hexCode) {
-            return html_entity_decode("&#{$hexCode};", ENT_NOQUOTES, 'UTF-8');
-        };
+        $cc = new ColorConsole;
 
-        $line = $symbol('x2500');   // горизонтальная линия
-        $pass = $symbol('x251c');   // граница вертикально и направо
-        $corner = $symbol('x2514'); // угол вверх вправо
+        $line = $cc->getSymbol('2500');   // горизонтальная линия
+        $pass = $cc->getSymbol('251c');   // граница вертикально и направо
+        $corner = $cc->getSymbol('2514'); // угол вверх вправо
         $eol = PHP_EOL;
 
-        echo $eol . "\033[32mКорневой каталог:\033[0m " . self::CONSOLE_PATH . "{$eol}{$eol}";
+        $cc->setColor('green')
+            ->addText($eol . 'Корневой каталог: ')
+            ->reset()
+            ->addText(self::CONSOLE_PATH . "{$eol}")
+            ->draw($eol);
 
         if (count($list) === 1) {
             foreach (array_pop($list) as $file) {
@@ -230,8 +237,13 @@ class Convisor
             echo $eol;
         } else {
             foreach ($list as $dir => $files) {
-                echo "\033[1m{$dir}\033[0m{$eol}";
-                $last = array_pop($list);
+                $cc->flush()
+                    ->setStyle('bold')
+                    ->addText($dir)
+                    ->reset()
+                    ->draw($eol);
+
+                $last = array_pop($files);
                 foreach ($files as $file) {
                     echo "{$pass}{$line} {$file}{$eol}";
                 }
