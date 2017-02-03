@@ -142,8 +142,13 @@ class Response
      */
     public static function download($file)
     {
-        if (headers_sent($file, $line)) {
-            throw new \LogicException("Не могу отправить заголовки, уже идет передача ответа. Началась тут $file:$line");
+        if (headers_sent($script, $line)) {
+            throw new \LogicException(
+                "Не могу отправить заголовки, уже идет передача ответа. Началась тут $script:$line");
+        }
+
+        if (ini_get('zlib.output_compression')) {
+            ini_set('zlib.output_compression', 'Off');
         }
 
         header('Content-Description: File Transfer');
