@@ -199,4 +199,18 @@ class Strings
         shuffle($arr);
         return implode('', $arr);
     }
+
+    /**
+     * Проверка: символ экранирован
+     *
+     * Сюда нужно передавать весь текст, идущий ДО проверяемого символа. Идея проверки: считаем обратные слеши с конца
+     * текста. Если их будет нечетное количество, значит символ в исходном тексте экранирован.
+     *
+     * @param string $text весь текст до проверяемого символа
+     * @return bool
+     */
+    public static function isShielded(string $text): bool
+    {
+        return preg_match('#\\\\+$#', $text, $match) && (strlen($match[0]) & 1);
+    }
 }

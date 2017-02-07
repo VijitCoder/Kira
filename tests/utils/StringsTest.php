@@ -45,4 +45,20 @@ class StringsTest extends TestCase
     {
         $this->assertEquals('рус + ски + й', Strings::word_chunk('русский', 3, ' + '), 'Мультибайтное разбиение строки');
     }
+
+    /**
+     * Тест: проверка экранированности символа
+     */
+    public function test_isShielded()
+    {
+        $text = "неэкранированный \\' <- символ кавычки";
+        $pos = mb_strpos($text, '"');
+        $result = Strings::isShielded(mb_substr($text, 0, $pos));
+        $this->assertFalse($result, 'Неэкранированный символ');
+
+        $text = "экранированный \\\\\[[\d+] <- символ скобки";
+        $pos = mb_strpos($text, '[');
+        $result = Strings::isShielded(mb_substr($text, 0, $pos));
+        $this->assertTrue($result, 'Экранированный символ');
+    }
 }
