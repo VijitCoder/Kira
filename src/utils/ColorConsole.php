@@ -35,7 +35,7 @@ class ColorConsole
         'black'   => 40,
         'red'     => 41,
         'green'   => 42,
-        'brown'  => 43,
+        'brown'   => 43,
         'blue'    => 44,
         'magenta' => 45,
         'cyan'    => 46,
@@ -75,9 +75,30 @@ class ColorConsole
      * @param bool $flush TRUE - сброс буфера
      * @return string
      */
-    public function getText($flush = true)
+    public function getText($flush = true): string
     {
         $text = $this->text;
+        if ($flush) {
+            $this->text = '';
+        }
+        return $text;
+    }
+
+    /**
+     * Удаляем из текста управляющие последовательности: цвет, стиль и звук.
+     *
+     * Ожидается использование этого метода для вывода сообщения как в консоль так и в браузер, поэтому удаляется только
+     * то, что можно увидеть. Т.е. перемещения курсора и мапуляции с консолью тут неважны. Звук выпиливается просто,
+     * как бонус.
+     *
+     * @param bool $flush TRUE - сброс буфера
+     * @return string
+     */
+    public function getClearText($flush = true): string
+    {
+        $font_style = '/\033\[[\[\d;]+m/';
+        $sound = '/\033\[(10|11);\d+\]|\007/';
+        $text = preg_replace([$font_style, $sound], '', $this->text);
         if ($flush) {
             $this->text = '';
         }
@@ -113,6 +134,7 @@ class ColorConsole
     {
         $this->text = '';
         $this->reset();
+        return $this;
     }
 
     /**
@@ -137,7 +159,7 @@ class ColorConsole
      */
     public function setSoundHerz(int $herz = 100)
     {
-        echo "\033[10;{$herz}]";
+        $this->text .= "\033[10;{$herz}]";
         return $this;
     }
 
@@ -148,7 +170,7 @@ class ColorConsole
      */
     public function setSoundLong(int $milliseconds = 500)
     {
-        echo "\033[11;{$milliseconds}]";
+        $this->text .= "\033[11;{$milliseconds}]";
         return $this;
     }
 
@@ -157,7 +179,7 @@ class ColorConsole
      */
     public function beep()
     {
-        echo "\007";
+        $this->text .= "\007";
         return $this;
     }
 
