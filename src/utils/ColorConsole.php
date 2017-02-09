@@ -48,7 +48,7 @@ class ColorConsole
      * @var array
      */
     private $styles = array(
-        'default'          => 0,
+        'normal'           => 0,
         'bold'             => 1,
         'faint'            => 2,
         'normal'           => 22,
