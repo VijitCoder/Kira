@@ -1,8 +1,8 @@
 <?php
+namespace kira\tests;
+
 /**
  * Вызываем непубличные методы для возможности их протестировать
- *
- * Трейт подключен напрямую, в bootstrap.php тестового окружения.
  */
 trait CallAsPublic
 {
@@ -18,7 +18,7 @@ trait CallAsPublic
      */
     protected function callMethod($class, string $methodName, ...$args)
     {
-        $method = new ReflectionMethod($class, $methodName);
+        $method = new \ReflectionMethod($class, $methodName);
         $method->setAccessible(true);
         $classObject = $method->isStatic() ? null : (is_object($class) ? $class : new $class);
         return $method->invoke($classObject, ...$args);

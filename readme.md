@@ -1,7 +1,7 @@
 # Kira Web Engine
 *Since 20/09/2015*
 
-![PHP 7.0] (https://img.shields.io/badge/PHP%207-%3E%3D7.0-blue.svg)
+![PHP 7.0](https://img.shields.io/badge/PHP%207-%3E%3D7.0-blue.svg)
 
 Мое представление об удобном web-движке.
 
@@ -15,7 +15,7 @@
 
 Стиль оформления кода близок к стандарту [PRS-2](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md). Перенос строк в районе 120 символов.
 
-Адрес проекта на [Github] (https://github.com/VijitCoder/Kira)
+Адрес проекта на [Github](https://github.com/VijitCoder/Kira)
 
 *P.S.: название движку взял по имени кошки, которую очень любил. Это не значит, что я так же тащусь от этого проекта :), просто на ум пришло, когда нужно было назвать. Кстати, коша была строптивая, независимая и злая. Посмотрим, что покажет двиг имени нее.*
 

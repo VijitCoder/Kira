@@ -1,37 +1,40 @@
 {
-    "name": "vijitcoder/kira",
-    "keywords": [
-        "web engine",
-        "kira"
+  "name": "vijitcoder/kira",
+  "keywords": [
+    "web engine",
+    "kira"
+  ],
+  "description": "Kira. Simple web-engine",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vijit",
+      "email": "vijit@mail.ru",
+      "homepage": "https://waredom.ru",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "source": "https://github.com/VijitCoder/Kira"
+  },
+  "require": {
+    "php": ">=7.0"
+  },
+  "require-dev": {
+    "apigen/apigen": "^4.1",
+    "phpunit/phpunit": "^5.6",
+    "mikey179/vfsStream": "^1.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "kira\\": "src/"
+    },
+    "classmap": [
+      "tests/CallAsPublic.php"
     ],
-    "description": "Kira. Simple web-engine",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Vijit",
-            "email": "vijit@mail.ru",
-            "homepage": "https://waredom.ru",
-            "role": "Developer"
-        }
-    ],
-    "support": {
-        "source": "https://github.com/VijitCoder/Kira"
-    },
-    "require": {
-        "php": ">=7.0"
-    },
-    "require-dev": {
-        "apigen/apigen": "^4.1",
-        "phpunit/phpunit": "^5.6",
-        "mikey179/vfsStream": "^1.6"
-    },
-    "autoload": {
-        "psr-4": {
-            "kira\\": "src/"
-        },
-        "files": [
-            "src/bootstrap.php"
-        ]
-    },
-    "minimum-stability": "dev"
+    "files": [
+      "src/bootstrap.php"
+    ]
+  },
+  "minimum-stability": "dev"
 }
