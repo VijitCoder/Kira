@@ -14,8 +14,8 @@ class DbException extends \Exception
      * Код причины исключения
      */
     const
-        QUERY = 0,
-        CONNECT = 1;
+        QUERY = 1,
+        CONNECT = 2;
 
     /**
      * Конструктор

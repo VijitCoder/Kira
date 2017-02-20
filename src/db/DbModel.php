@@ -75,7 +75,7 @@ class DbModel
     public function getConnection()
     {
         if (!$this->dbh) {
-            throw new DbException('Нет соединения с БД');
+            throw new DbException('Нет соединения с БД', DbException::CONNECT);
         }
         return $this->dbh;
     }
@@ -169,7 +169,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws \LogicException
+     * @throws \LogicException из getStatement()
      */
     public function fetch(int $style = null)
     {
@@ -185,7 +185,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws \LogicException
+     * @throws \LogicException из getStatement()
      */
     public function fetchAll(int $style = null)
     {
@@ -200,12 +200,35 @@ class DbModel
      *
      * @param string $field имя поля
      * @return mixed|FALSE
-     * @throws \LogicException
+     * @throws \LogicException из getStatement()
      */
-    public function fetchField(string $field)
+    public function fetchValue(string $field)
     {
         $row = $this->getStatement()->fetch(\PDO::FETCH_ASSOC);
         return $row[$field] ?? false;
+    }
+
+    /**
+     * Получить колонку (значение одного поля) из всех рядов запроса
+     * @param string $field имя поля
+     * @return array
+     * @throws \LogicException из getIterator()
+     * @throws DbException
+     */
+    public function fetchColumn(string $field)
+    {
+        $iterator = $this->getIterator(\PDO::FETCH_ASSOC);
+        if (!$current = $iterator->current()) {
+            return [];
+        }
+        if (!isset($current[$field])) {
+            throw new DbException("В результате запроса нет поля '{$field}'", DbException::QUERY);
+        }
+        $result = [];
+        foreach ($iterator as $row) {
+            $result[] = $row[$field];
+        }
+        return $result;
     }
 
     /**
@@ -215,7 +238,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return RowIterator
-     * @throws \LogicException
+     * @throws \LogicException из getStatement()
      */
     public function getIterator(int $style = null)
     {
