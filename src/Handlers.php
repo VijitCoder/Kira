@@ -4,6 +4,7 @@ namespace kira;
 use kira\html\Render;
 use kira\web\Env;
 use kira\core\App;
+use kira\utils\ColorConsole;
 
 /**
  * Перехватчик исключений, обработчики ошибок.
@@ -36,15 +37,15 @@ class Handlers
         $file = str_replace(KIRA_ROOT_PATH, '/', $ex->getFile());
         $line = $ex->getLine();
         $trace = $ex->getTraceAsString();
+        $rn = PHP_EOL;
 
         if (isConsoleInterface()) {
-            echo
-                'Исключение: ' . $class . PHP_EOL .
-                PHP_EOL .
-                $message . PHP_EOL .
-                PHP_EOL .
-                'Стек вызовов:' . PHP_EOL .
-                $trace . PHP_EOL;
+            (new ColorConsole)->setColor('red')->setStyle('bold')
+                ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
+                ->addText($message)->reset()->setColor('brown')
+                ->addText($rn . $rn . 'Стек вызова в обратном порядке:' . $rn . $rn)
+                ->addText($trace)->reset()
+                ->draw($rn);
             return;
         }
 
@@ -60,10 +61,10 @@ class Handlers
             if ($ex->getPrevious() === null) {
                 $logger = App::logger();
                 $logger->addTyped(
-                    "Class: $class" . PHP_EOL .
-                    "Message: $message" . PHP_EOL .
-                    "Source: $file:$line" . PHP_EOL . PHP_EOL .
-                    "Trace: $trace",
+                    "Class: {$class}{$rn}" .
+                    "Message: {$message}{$rn}" .
+                    "Source: {$file}:{$line}{$rn}{$rn}" .
+                    "Trace: {$trace}{$rn}",
                     $logger::EXCEPTION
                 );
             }
@@ -108,12 +109,18 @@ class Handlers
 
         $file = str_replace(KIRA_ROOT_PATH, '', $file);
 
-        $stack_html = $stack_console = '';
+        $rn = PHP_EOL;
+        $stack_html = '';
+        $stack_console = (new ColorConsole)->setStyle('bold')->setColor('red')
+            ->addText($rn . $codeTxt . $rn . $rn)->setColor('brown')->setBgColor('blue')
+            ->addText($msg)->reset()
+            ->addText($rn . $rn)->setColor('brown')
+            ->addText('Стек вызова в обратном порядке:' . $rn . $rn);
 
         if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR)) == 0) {
-            $trace = array_reverse(debug_backtrace());
-            array_pop($trace);
-            foreach ($trace as $step) {
+            $trace = debug_backtrace();
+            array_shift($trace);
+            foreach ($trace as $i => $step) {
                 $where = isset($step['file'])
                     ? str_replace(KIRA_ROOT_PATH, '', $step['file']) . ':' . $step['line']
                     : '';
@@ -140,24 +147,21 @@ class Handlers
                     $args = '';
                 }
 
-                $stack_html .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>" . PHP_EOL;
-                $stack_console .= "$where > $func($args)" . PHP_EOL;
+                $stack_html .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>$rn";
+                $stack_console->addText("#{$i} {$where} > {$func}({$args}){$rn}");
             }
 
             $stack_html = "
-                <p>Стек вызова в хронологическом порядке:</p>
+                <p>Стек вызова в обратном порядке:</p>
                 <table class = 'php-err-stack'>
                     {$stack_html}
                 </table>
             ";
         }
 
-        $rn = PHP_EOL;
         if (error_reporting() & $code) {
             if (isConsoleInterface()) {
-                echo "$rn{$codeTxt}$rn$rn\t{$msg}$rn$rn"
-                    . "Стек вызовов:$rn$rn"
-                    . $stack_console . "$rn";
+                $stack_console->reset()->draw();
             } else {
                 if (!headers_sent()) {
                     header('500 Internal Server Error');
@@ -167,11 +171,9 @@ class Handlers
                 echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_html'));
             }
         } else {
-            $info = "{$codeTxt}$rn$rn\t{$msg}$rn$rn"
-                . 'в ' . date('Y.m.d. H:i:s') . "$rn$rn"
-                . "Стек вызовов:$rn$rn"
-                . $stack_console . "$rn---$rn$rn";
-
+            $info = $stack_console
+                ->addText($rn . '---' . $rn . $rn)
+                ->getClearText();
             file_put_contents(KIRA_TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
             return false;
         }
