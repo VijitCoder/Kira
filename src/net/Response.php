@@ -12,6 +12,12 @@ use kira\web\Env;
 class Response
 {
     /**
+     * HTTP код отправляемого ответа
+     * @var int
+     */
+    private $httpCode;
+
+    /**
      * @var array тексты кодов HTTP-статусов
      */
     private static $_statuses = [
@@ -86,6 +92,69 @@ class Response
         598 => 'Network read timeout error',
         599 => 'Network connect timeout error',
     ];
+
+    /**
+     * Запоминаем HTTP код отправляемого ответа
+     * @param int $httpCode HTTP код отправляемого ответа
+     */
+    public function __construct(int $httpCode = 200) {
+        $this->httpCode = $httpCode;
+    }
+
+    /**
+     * Смена HTTP кода ответа
+     * @param int $newCode
+     */
+    public function changeCode(int $newCode)
+    {
+        $this->httpCode = $newCode;
+    }
+
+    /**
+     * Отправляем ответ браузеру с заданными заголовками
+     *
+     * По умолчанию в заголовках указан text/html, UTF-8. Если требуется свой набор заголовков, нужно описывать их все,
+     * т.к. результат не объединяется с заголовками по умолчанию, но заменяется на переданные в параметре.
+     *
+     * @param string $message ответ браузеру
+     * @param array  $headers заголовки
+     */
+    public function send(string $message, array $headers = [])
+    {
+        if (!headers_sent()) {
+            http_response_code($this->httpCode);
+            if (!$headers) {
+                $headers = ['Content-Type: text/html; charset=UTF-8'];
+            }
+            array_map('header', $headers);
+        }
+        echo $message;
+    }
+
+    /**
+     * Отвечаем браузеру json-строкой с соответствующим заголовком. Кодировку объявляем UTF-8.
+     *
+     * Кроме отправки заголовка, остальное - обертка json_encode(). В режиме отладки добавляем JSON_PRETTY_PRINT
+     * для удобства.
+     *
+     * Возвращаем результат прямо в output. Не завершаем выполнение программы, об этом должен заботиться клиентский код.
+     *
+     * @see http://php.net/manual/ru/function.json-encode.php PHP::json_encode()
+     *
+     * @param mixed $data    данные для упаковки в json-строку
+     * @param int   $options параметры упаковки
+     * @param int   $depth   максимальная глубина вложения
+     */
+    public function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
+    {
+        if (KIRA_DEBUG) {
+            $options = $options | JSON_PRETTY_PRINT;
+        }
+        self::send(
+            json_encode($data, $options, $depth),
+            ['Content-Type: application/json; charset=UTF-8']
+        );
+    }
 
     /**
      * Тест HTTP-статуса по его коду
@@ -180,50 +249,5 @@ class Response
     public static function setDefaultCookie($name, $value)
     {
         setcookie($name, $value, strtotime('+1 year'), '/', '', false, true);
-    }
-
-    /**
-     * Отправляем ответ браузеру с заданными заголовками
-     *
-     * По умолчанию в заголовках указан text/html, UTF-8. Если требуется свой набор заголовков, нужно описывать их все,
-     * т.к. результат не объединяется с заголовками по умолчанию, но заменяется на переданные в параметре.
-     *
-     * @param string $message ответ браузеру
-     * @param array  $headers заголовки
-     */
-    public static function send($message, $headers = [])
-    {
-        if (!headers_sent()) {
-            if (!$headers) {
-                $headers = ['Content-Type: text/html; charset=UTF-8'];
-            }
-            array_map('header', $headers);
-        }
-        echo $message;
-    }
-
-    /**
-     * Отвечаем браузеру json-строкой с соответствующим заголовком. Кодировку объявляем UTF-8.
-     *
-     * Кроме отправки заголовка, остальное - обертка json_encode(). В режиме отладки добавляем JSON_PRETTY_PRINT
-     * для удобства.
-     *
-     * Возвращаем результат прямо в output. Не завершаем выполнение программы, об этом должен заботиться клиентский код.
-     *
-     * @see http://php.net/manual/ru/function.json-encode.php PHP::json_encode()
-     *
-     * @param mixed $data    данные для упаковки в json-строку
-     * @param int   $options параметры упаковки
-     * @param int   $depth   максимальная глубина вложения
-     */
-    public static function sendAsJson($data, $options = JSON_UNESCAPED_UNICODE, $depth = 512)
-    {
-        if (KIRA_DEBUG) {
-            $options = $options | JSON_PRETTY_PRINT;
-        }
-        self::send(
-            json_encode($data, $options, $depth),
-            ['Content-Type: application/json; charset=UTF-8']
-        );
     }
 }

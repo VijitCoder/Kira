@@ -176,17 +176,16 @@ class Router extends AbstractRouter
             if (isset($_SERVER['REDIRECT_URL'])) {
                 $msg .= '<br>URL: ' . $_SERVER['REDIRECT_URL'];
             }
-            Response::send($msg);
+            (new Response)->send($msg);
             App::end();
         }
 
-        http_response_code(404);
-
         if ($handler = App::conf('router.404_handler', false)) {
+            http_response_code(404);
             list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
         } else {
-            Response::send('Неизвестный URL');
+            (new Response(404))->send('Неизвестный URL');
         }
 
         App::end();

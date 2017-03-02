@@ -2,6 +2,7 @@
 namespace kira;
 
 use kira\html\Render;
+use kira\net\{Request, Response};
 use kira\web\Env;
 use kira\core\App;
 use kira\utils\ColorConsole;
@@ -39,6 +40,17 @@ class Handlers
         $trace = $ex->getTraceAsString();
         $rn = PHP_EOL;
 
+        if (!KIRA_DEBUG && $ex->getPrevious() === null) {
+            $logger = App::logger();
+            $logger->addTyped(
+                "Class: {$class}{$rn}" .
+                "Message: {$message}{$rn}" .
+                "Source: {$file}:{$line}{$rn}{$rn}" .
+                "Trace: {$trace}{$rn}",
+                $logger::EXCEPTION
+            );
+        }
+
         if (isConsoleInterface()) {
             (new ColorConsole)->setColor('red')->setStyle('bold')
                 ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
@@ -46,6 +58,15 @@ class Handlers
                 ->addText($rn . $rn . 'Стек вызова в обратном порядке:' . $rn . $rn)
                 ->addText($trace)->reset()
                 ->draw($rn);
+            return;
+        }
+
+        if (Request::isAjax()) {
+            $trace = $ex->getTrace();
+            $data = KIRA_DEBUG
+                ? compact('message', 'class', 'file', 'line', 'trace')
+                : ['message' => 'В ajax-запросе произошла ошибка.'];
+            (new Response(500))->sendAsJson($data);
             return;
         }
 
@@ -58,16 +79,6 @@ class Handlers
             echo Render::fetch('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
         } else {
             echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
-            if ($ex->getPrevious() === null) {
-                $logger = App::logger();
-                $logger->addTyped(
-                    "Class: {$class}{$rn}" .
-                    "Message: {$message}{$rn}" .
-                    "Source: {$file}:{$line}{$rn}{$rn}" .
-                    "Trace: {$trace}{$rn}",
-                    $logger::EXCEPTION
-                );
-            }
         }
     }
 
@@ -111,7 +122,7 @@ class Handlers
 
         $rn = PHP_EOL;
         $stack_html = '';
-        $stack_console = (new ColorConsole)->setStyle('bold')->setColor('red')
+        $console_msg = (new ColorConsole)->setStyle('bold')->setColor('red')
             ->addText($rn . $codeTxt . $rn . $rn)->setColor('brown')->setBgColor('blue')
             ->addText($msg)->reset()
             ->addText($rn . $rn)->setColor('brown')
@@ -133,7 +144,7 @@ class Handlers
                     $args = $step['args'];
                     array_walk($args, function (&$i) {
                         if (is_string($i)) {
-                            $i = "'$i'";
+                            $i = "'{$i}'";
                         } elseif (is_array($i)) {
                             $i = '[array]';
                         } elseif (is_bool($i)) {
@@ -147,8 +158,8 @@ class Handlers
                     $args = '';
                 }
 
-                $stack_html .= "<tr><td class='php-err-txtright'>$where</td><td>$func($args)</td></tr>$rn";
-                $stack_console->addText("#{$i} {$where} > {$func}({$args}){$rn}");
+                $stack_html .= "<tr><td class='php-err-txtright'>{$where}</td><td>{$func}({$args})</td></tr>{$rn}";
+                $console_msg->addText("#{$i} {$where} > {$func}({$args}){$rn}");
             }
 
             $stack_html = "
@@ -161,7 +172,7 @@ class Handlers
 
         if (error_reporting() & $code) {
             if (isConsoleInterface()) {
-                $stack_console->reset()->draw();
+                $console_msg->reset()->draw();
             } else {
                 if (!headers_sent()) {
                     header('500 Internal Server Error');
@@ -171,7 +182,7 @@ class Handlers
                 echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_html'));
             }
         } else {
-            $info = $stack_console
+            $info = $console_msg
                 ->addText($rn . '---' . $rn . $rn)
                 ->getClearText();
             file_put_contents(KIRA_TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
