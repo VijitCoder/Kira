@@ -2,7 +2,9 @@
 namespace kira;
 
 use kira\html\Render;
-use kira\net\{Request, Response};
+use kira\net\{
+    Request, Response
+};
 use kira\web\Env;
 use kira\core\App;
 use kira\utils\ColorConsole;
@@ -10,15 +12,33 @@ use kira\utils\ColorConsole;
 /**
  * Перехватчик исключений, обработчики ошибок.
  *
- * Как правило, они назначены в bootstrap.php, вызываются внутренним механизмом PHP и не ожидают прямого обращения
- * из кода приложения.
- *
  * См. документацию, "Перехват ошибок"
  *
  * @internal
  */
 class Handlers
 {
+    /**
+     * Коды PHP шибок и их расшифровка
+     */
+    const ERROR_CODES = [
+        1     => 'FATAL ERROR',
+        2     => 'WARNING',
+        4     => 'PARSE ERROR',
+        8     => 'NOTICE',
+        16    => 'CORE ERROR',
+        32    => 'CORE WARNING',
+        64    => 'COMPILE ERROR',
+        128   => 'COMPILE WARNING',
+        256   => 'USER ERROR',
+        512   => 'USER WARNING',
+        1024  => 'USER NOTICE',
+        2048  => 'STRICT',
+        4096  => 'RECOVERABLE ERROR',
+        8192  => 'DEPRECATED',
+        16384 => 'USER DEPRECATED',
+    ];
+
     /**
      * Перехватчик исключений. Ловит исключения, которые не были пойманы ранее.
      *
@@ -52,12 +72,19 @@ class Handlers
         }
 
         if (isConsoleInterface()) {
-            (new ColorConsole)->setColor('red')->setStyle('bold')
-                ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
-                ->addText($message)->reset()->setColor('brown')
-                ->addText($rn . $rn . 'Стек вызова в обратном порядке:' . $rn . $rn)
-                ->addText($trace)->reset()
-                ->draw($rn);
+            if (KIRA_DEBUG) {
+                (new ColorConsole)->setColor('red')->setStyle('bold')
+                    ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
+                    ->addText($message)->reset()->setColor('brown')
+                    ->addText($rn . $rn . 'Стек вызова в обратном порядке:' . $rn . $rn)
+                    ->addText($trace)->reset()
+                    ->draw($rn);
+            } else {
+                (new ColorConsole)->setColor('red')->setStyle('bold')
+                    ->addText("{$rn}Возникло исключение{$rn}")
+                    ->reset()
+                    ->draw($rn);
+            }
             return;
         }
 
@@ -66,71 +93,106 @@ class Handlers
             $data = KIRA_DEBUG
                 ? compact('message', 'class', 'file', 'line', 'trace')
                 : ['message' => 'В ajax-запросе произошла ошибка.'];
-            (new Response(500))->sendAsJson($data);
+            self::responseForAjax($data);
             return;
         }
 
-        if (!headers_sent()) {
-            header('500 Internal Server Error');
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-
         if (KIRA_DEBUG) {
-            echo Render::fetch('exception.htm', compact('class', 'message', 'file', 'line', 'trace'));
+            $view = 'exception.htm';
+            $data = compact('class', 'message', 'file', 'line', 'trace');
         } else {
-            echo Render::fetch('exception_prod.htm', ['domain' => Env::domainName()]);
+            $view = 'exception_prod.htm';
+            $data = ['domain' => Env::domainName()];
         }
+        self::responseForHtml($view, $data);
     }
 
     /**
      * Перехват ошибок PHP
      *
      * Свое оформление, трассировка и логирование. Если текущий тип ошибки отключен в error_reporting, то пишем
-     * ее в temp-каталог приложения, в kira_php_error.log. Иначе - выдаем в браузер.
+     * подробности в temp-каталог приложения, в kira_php_error.log, а в браузер - короткий неинформативный текст.
+     * Если же тип ошибки включен, выдаем в браузер все, как есть.
+     *
+     * @param int    $code     уровень ошибки в виде целого числа
+     * @param string $message  сообщение об ошибке в виде строки
+     * @param string $fileName имя файла, в котором произошла ошибка
+     * @param int    $line     номер строки, в которой произошла ошибка
+     * @return bool
+     */
+    public static function errorHandler($code, $message, $fileName, $line)
+    {
+        $rn = PHP_EOL;
+        $fileName = str_replace(KIRA_ROOT_PATH, '', $fileName);
+        $codeTxt = self::ERROR_CODES[$code];
+        $stack = self::parseStackTrace($code);
+
+        $console_msg = (new ColorConsole)->setStyle('bold')->setColor('red')
+            ->addText($rn . $codeTxt . $rn . $rn)->setColor('brown')->setBgColor('blue')
+            ->addText($message)->reset()
+            ->addText($stack['console']);
+
+        if (error_reporting() & $code) {
+            if (isConsoleInterface()) {
+                $console_msg->draw($rn);
+            } else if (Request::isAjax()) {
+                $stack_ajax = &$stack['ajax'];
+                self::responseForAjax(compact('codeTxt', 'message', 'fileName', 'line', 'stack_ajax'));
+            } else {
+                $message = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
+                $stack_html = &$stack['html'];
+                self::responseForHtml(
+                    'error_handler.htm',
+                    compact('codeTxt', 'message', 'fileName', 'line', 'stack_html')
+                );
+            }
+        } else {
+            if (isConsoleInterface()) {
+                echo 'Произошла ошибка PHP' . $rn;
+            } else if (Request::isAjax()) {
+                self::responseForAjax(['message' => 'В ajax-запросе произошла ошибка PHP']);
+            } else {
+                self::responseForHtml('', 'Произошла ошибка PHP');
+            }
+
+            $info = $console_msg
+                ->addText($rn . '---' . $rn . $rn)
+                ->getClearText();
+            file_put_contents(KIRA_TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
+            return false;
+        }
+
+        if ($code & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR)) {
+            exit();
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Парсим трассировку вызова при возникновении ошибки PHP
+     *
+     * Результат возвращаем для всех возможных вариантов использования: для консоли, ajax-запроса или обычного запроса
      *
      * В случае фатальных ошибок трассировка вызовов уже неважна. К тому же я не могу ее получить почему-то. Поэтому
      * в таких сообщениях не будет стека вызовов.
      *
-     * @param int    $code уровень ошибки в виде целого числа
-     * @param string $msg  сообщение об ошибке в виде строки
-     * @param string $file имя файла, в котором произошла ошибка
-     * @param int    $line номер строки, в которой произошла ошибка
-     * @return bool
+     * @param int $code код PHP ошибки
+     * @return array ['console' => string, 'html' => string, 'ajax' => array]
      */
-    public static function errorHandler($code, $msg, $file, $line)
+    private static function parseStackTrace(int $code)
     {
-        $codes = [
-            1     => 'FATAL ERROR',
-            2     => 'WARNING',
-            4     => 'PARSE ERROR',
-            8     => 'NOTICE',
-            16    => 'CORE ERROR',
-            32    => 'CORE WARNING',
-            64    => 'COMPILE ERROR',
-            128   => 'COMPILE WARNING',
-            256   => 'USER ERROR',
-            512   => 'USER WARNING',
-            1024  => 'USER NOTICE',
-            2048  => 'STRICT',
-            4096  => 'RECOVERABLE ERROR',
-            8192  => 'DEPRECATED',
-            16384 => 'USER DEPRECATED',
-        ];
-        $codeTxt = $codes[$code];
-
-        $file = str_replace(KIRA_ROOT_PATH, '', $file);
-
         $rn = PHP_EOL;
-        $stack_html = '';
-        $console_msg = (new ColorConsole)->setStyle('bold')->setColor('red')
-            ->addText($rn . $codeTxt . $rn . $rn)->setColor('brown')->setBgColor('blue')
-            ->addText($msg)->reset()
-            ->addText($rn . $rn)->setColor('brown')
-            ->addText('Стек вызова в обратном порядке:' . $rn . $rn);
+        $console = '';
+        $html = '';
+        $ajax = [];
 
         if (($code & (E_ERROR | E_PARSE | E_COMPILE_ERROR)) == 0) {
-            $trace = debug_backtrace();
-            array_shift($trace);
+            $console = (new ColorConsole)
+                ->addText($rn . $rn)->setColor('brown')
+                ->addText('Стек вызова в обратном порядке:' . $rn . $rn);
+
+            $trace = array_slice(debug_backtrace(), 2);
             foreach ($trace as $i => $step) {
                 $where = isset($step['file'])
                     ? str_replace(KIRA_ROOT_PATH, '', $step['file']) . ':' . $step['line']
@@ -158,42 +220,49 @@ class Handlers
                     $args = '';
                 }
 
-                $stack_html .= "<tr><td class='php-err-txtright'>{$where}</td><td>{$func}({$args})</td></tr>{$rn}";
-                $console_msg->addText("#{$i} {$where} > {$func}({$args}){$rn}");
+                $html .= "<tr><td class='php-err-txtright'>{$where}</td><td>{$func}({$args})</td></tr>{$rn}";
+                $clearInfo = "{$where} > {$func}({$args})";
+                $console->addText("#{$i} {$clearInfo}{$rn}");
+                $ajax[] = $clearInfo;
             }
 
-            $stack_html = "
+            $html = "
                 <p>Стек вызова в обратном порядке:</p>
                 <table class = 'php-err-stack'>
-                    {$stack_html}
+                    {$html}
                 </table>
             ";
+
+            $console = $console->reset()->getText();
         }
 
-        if (error_reporting() & $code) {
-            if (isConsoleInterface()) {
-                $console_msg->reset()->draw();
-            } else {
-                if (!headers_sent()) {
-                    header('500 Internal Server Error');
-                    header('Content-Type: text/html; charset=UTF-8');
-                }
-                $msg = nl2br(htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'));
-                echo Render::fetch('error_handler.htm', compact('codeTxt', 'msg', 'file', 'line', 'stack_html'));
-            }
-        } else {
-            $info = $console_msg
-                ->addText($rn . '---' . $rn . $rn)
-                ->getClearText();
-            file_put_contents(KIRA_TEMP_PATH . 'kira_php_error.log', $info, FILE_APPEND);
-            return false;
-        }
+        return compact('console', 'html', 'ajax');
+    }
 
-        if ($code & (E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR)) {
-            exit();
-        } else {
-            return true;
+    /**
+     * Ответ на ajax-запрос
+     *
+     * Если ошибка произошла не в режиме отладки, заменяем передаваемые данные на типовую заглушку.
+     *
+     * @param array $data данные для передачи в ответе
+     */
+    private static function responseForAjax(array $data)
+    {
+        (new Response(500))->sendAsJson($data);
+    }
+
+    /**
+     * Ответ на обычный запрос, когда браузер ожидает html
+     * @param string $view название шаблона для заполнения
+     * @param array|string  $data данные в шаблон
+     */
+    private static function responseForHtml(string $view, $data)
+    {
+        if (!headers_sent()) {
+            header('500 Internal Server Error');
+            header('Content-Type: text/html; charset=UTF-8');
         }
+        echo ($view ? Render::fetch($view, $data) : $data);
     }
 
     /**
@@ -208,7 +277,7 @@ class Handlers
      * Есть еще одна ситуация: кончилась память. Так же корректно ее обрабатываем: выделяем немного памяти, чтоб
      * сообщить об этой ошибке, вызываем обработчик и закругляемся.
      *
-     * @todo Потерял первосточник. Где-то на Хабре.
+     * TODO Потерял первосточник. Где-то на Хабре.
      */
     public static function shutdown()
     {
