@@ -20,7 +20,7 @@ class Response
     /**
      * @var array тексты кодов HTTP-статусов
      */
-    private static $_statuses = [
+    private static $statuses = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',
@@ -163,7 +163,7 @@ class Response
      */
     public static function textOf($code)
     {
-        return isset(self::$_statuses[$code]) ? self::$_statuses[$code] : '';
+        return isset(self::$statuses[$code]) ? self::$statuses[$code] : '';
     }
 
     /**
