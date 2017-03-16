@@ -18,7 +18,7 @@ class App
     /**
      * Версия движка. Ссылка на оф.сайт движка
      */
-    const VERSION = '1.4';
+    const VERSION = '1.5';
     const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /**
