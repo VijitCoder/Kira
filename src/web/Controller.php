@@ -57,7 +57,9 @@ class Controller
     {
         $this->beforeRender($view, $data);
 
-        $CONTENT = $this->renderFile($view, $data);
+        if ($view) {
+            $CONTENT = $this->renderFile($view, $data);
+        }
 
         ob_start();
         require KIRA_VIEWS_PATH . $this->layout . $this->viewExt;
