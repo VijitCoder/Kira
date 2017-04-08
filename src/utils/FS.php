@@ -26,8 +26,9 @@ class FS
     /**
      * Нормализация пути
      *
-     * Понятие нормы условное. В данном контексте: обратные слеши переводятся в прямые, в конце дописывается слеш
-     * при необходимости. Не заменяются переходы './' и '../'.
+     * Понятие нормы условное. В данном контексте: обратные слеши переводятся в прямые, в начале убраем слеш, в конце
+     * дописываем при необходимости. Не заменяются переходы './' и '../'. Т.о. получится стабильный вид любого каталога
+     * или файла.
      *
      * @param string $path   исходное значение пути
      * @param bool   $isFile переданное значение является путем к файлу
@@ -35,8 +36,18 @@ class FS
      */
     public static function normalizePath(string $path, bool $isFile = false): string
     {
-        $path = rtrim(str_replace('\\', '/', $path), '/');
-        return $isFile || substr($path, -2) == ':/' ? $path : $path . '/';
+        $path = trim(str_replace('\\', '/', $path), '/');
+        return $isFile ? $path : $path . '/';
+    }
+
+    /**
+     * Проверка: переданный каталог похож на абсолютный в стиле Windows
+     * @param string $path каталог для проверки
+     * @return bool
+     */
+    public static function isWindowsRootedPath(string $path): bool
+    {
+        return preg_match('~^[a-z]+:(/|\\\\)~', $path);
     }
 
     /**

@@ -76,7 +76,7 @@ class Convisor
 
         if ($params) {
             $script = array_shift($params);
-            $script = ltrim(FS::normalizePath($script, true), '/');
+            $script = FS::normalizePath($script, true);
             if (!preg_match('/\.php$/i', $script)) {
                 $script .= '.php';
             }

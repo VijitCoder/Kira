@@ -64,13 +64,23 @@ class FSTest extends TestCase
         $this->assertEquals('c:/www/', FS::normalizePath('c:\\www\\'),
             'Нормализация. Обычный Windows путь со слешем в конце');
         $this->assertEquals('c:/temp/', FS::normalizePath('c:\\temp'), 'Нормализация. Windows-путь без слеша в конце');
-        $this->assertEquals('/etc/', FS::normalizePath('/etc/'), 'Нормализация. Linux-путь со слешем в конце');
-        $this->assertEquals('/var/tmp/', FS::normalizePath('/var/tmp'), 'Нормализация. Linux-путь без слеша в конце');
-        $this->assertEquals('/home/user/../tmp/', FS::normalizePath('/home/user/../tmp'),
+        $this->assertEquals('etc/', FS::normalizePath('/etc/'), 'Нормализация. Linux-путь со слешем в конце');
+        $this->assertEquals('var/tmp/', FS::normalizePath('/var/tmp'), 'Нормализация. Linux-путь без слеша в конце');
+        $this->assertEquals('home/user/../tmp/', FS::normalizePath('/home/user/../tmp'),
             'Нормализация. Не заменился переход на каталог выше');
         $this->assertEquals('c:/file.ext', FS::normalizePath('c:\file.ext', true),
             'Нормализация. Путь заканчивается на имя файла');
 
+    }
+
+    /**
+     * Тест. Проверка: переданный каталог похож на абсолютный в стиле Windows
+     */
+    public function test_isWindowsRootedPath()
+    {
+        $this->assertTrue(FS::isWindowsRootedPath('c:\\'), 'Корень диска [C:]');
+        $this->assertTrue(FS::isWindowsRootedPath('wfs:/temp/'), 'Виртуальная ФС, каталог от корня');
+        $this->assertFalse(FS::isWindowsRootedPath('/home/user'), 'Linux, каталог от корня');
     }
 
     public function test_makeDir()
