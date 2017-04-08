@@ -61,4 +61,16 @@ class StringsTest extends TestCase
         $result = Strings::isShielded(mb_substr($text, 0, $pos));
         $this->assertTrue($result, 'Экранированный символ');
     }
+
+    /**
+     * Тест: Приведение булева значения к строке
+     */
+    public function test_strBool()
+    {
+        $this->assertEquals('true', Strings::strBool(true), 'Булевое "true"');
+        $this->assertEquals('ложь', Strings::strBool(false, Strings::BOOL_RU), 'Булевое "ложь"');
+        $this->assertEquals('yes', Strings::strBool(true, Strings::BOOL_YESNO_EN), 'Булевое "yes"');
+        $this->assertEquals('нет', Strings::strBool(false, Strings::BOOL_YESNO_RU), 'Булевое "нет"');
+        $this->assertEquals('1', Strings::strBool(true, Strings::BOOL_DIGIT), 'Булевое "1"');
+    }
 }
