@@ -1,6 +1,5 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use kira\net\Router;
 use kira\core\App;
 
 /**
