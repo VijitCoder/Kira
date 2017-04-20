@@ -1,6 +1,7 @@
 <?php
 namespace kira\net;
 
+use kira\exceptions\RequestException;
 use kira\web\Env;
 use kira\utils;
 
@@ -16,51 +17,72 @@ use kira\utils;
  *
  * Получение одного значения из массива GET|POST|REQUEST. Если ключ в массиве не существует, вернем NULL:
  *
- * @method static string|null get(string $key)
- * @method static string|null post(string $key)
- * @method static string|null cookie(string $key)
- * @method static string|null request(string $key)
+ * @method static string|null get(string $key = null)
+ * @method static string|null post(string $key = null)
+ * @method static string|null cookie(string $key = null)
+ * @method static string|null request(string $key = null)
  *
  * Ключ можно указать составной, типа "['lvl1' => ['lvl2' => 'param1']]". Если ключ не указан, возвращаем весь массив
  * супеглобальной переменной.
  *
+ *
  * Значение из массива, приведенное к целому числу (ведущие нули не сохраняются):
  *
- * @method static int|null getAsInt(string $key)
- * @method static int|null postAsInt(string $key)
- * @method static int|null cookieAsInt(string $key)
- * @method static int|null requestAsInt(string $key)
+ * @method static int|null getAsInt(string $key, $default = null)
+ * @method static int|null postAsInt(string $key, $default = null)
+ * @method static int|null cookieAsInt(string $key, $default = null)
+ * @method static int|null requestAsInt(string $key, $default = null)
  *
- * Если значение является именно целым числом, оно будет приведено к типу и возвращено. Иначе - NULL. Т.е. не происходит
- * выделение числа из строки, так же содержащей нечисловые символы. Она считается невалидной.
+ * Если значение является именно целым числом, оно будет приведено к типу и возвращено. Иначе - $default.
+ * Т.е. не происходит выделение числа из строки, так же содержащей нечисловые символы. Она считается невалидной.
+ *
  *
  * Значение из массива, приведенное к булевому типу:
  *
- * @method static bool|null getAsBool(string $key)
- * @method static bool|null postAsBool(string $key)
- * @method static bool|null cookieAsBool(string $key)
- * @method static bool|null requestAsBool(string $key)
+ * @method static bool|null getAsBool(string $key, $default = null)
+ * @method static bool|null postAsBool(string $key, $default = null)
+ * @method static bool|null cookieAsBool(string $key, $default = null)
+ * @method static bool|null requestAsBool(string $key, $default = null)
  *
- * Значение true|1|on|yes|checked = TRUE, false|0|off|no|unchecked = FALSE. Любой регистр. В остальных случаях - NULL.
+ * Значение true|1|on|yes|checked = TRUE, false|0|off|no|unchecked = FALSE. Любой регистр. В остальных
+ * случаях - $default.
  *
- * Значение из массива, с валидацией через регулярное выражение. Если параметр не существует или не подходит
- * по регулярке, вернем NULL:
  *
- * @method static string|null getAsRegexp(string $key, string $pattern)
- * @method static string|null postAsRegexp(string $key, string $pattern)
- * @method static string|null cookieAsRegexp(string $key, string $pattern)
- * @method static string|null requestAsRegexp(string $key, string $pattern)
+ * Значение из массива, приведенное к строке:
  *
- * Значение из массива, с проверкой с в списке допустимых значений. Если параметр не существует или его нет в списке
- * вернем NULL:
+ * @method static string|null getAsString(string $key, $default = null)
+ * @method static string|null postAsString(string $key, $default = null)
+ * @method static string|null cookieAsIString(string $key, $default = null)
+ * @method static string|null requestAsString(string $key, $default = null)
  *
- * @method static string|null getAsEnum(string $key, string $expect)
- * @method static string|null postAsEnum(string $key, string $expect)
- * @method static string|null cookieAsEnum(string $key, string $expect)
- * @method static string|null requestAsEnum(string $key, string $expect)
+ * Значением может оказаться массив, когда ожидаем строку. Тогда возвращаем $default. Если значение строковое,
+ * возвращаем его, "как есть".
+ *
+ *
+ * Значение из массива с проверкой через регулярное выражение. Если параметр не существует или не подходит
+ * по регулярке, вернем $default:
+ *
+ * @method static string|null getAsRegexp(string $key, string $pattern, $default = null)
+ * @method static string|null postAsRegexp(string $key, string $pattern, $default = null)
+ * @method static string|null cookieAsRegexp(string $key, string $pattern, $default = null)
+ * @method static string|null requestAsRegexp(string $key, string $pattern, $default = null)
+ *
+ *
+ * Значение из массива с проверкой в списке допустимых значений. Если параметр не существует или его нет в списке
+ * вернем $default:
+ *
+ * @method static string|null getAsEnum(string $key, string $expect, $default = null)
+ * @method static string|null postAsEnum(string $key, string $expect, $default = null)
+ * @method static string|null cookieAsEnum(string $key, string $expect, $default = null)
+ * @method static string|null requestAsEnum(string $key, string $expect, $default = null)
  */
 class Request
 {
+    /**
+     * Методы приведения к типу, ожидающие один обязательный параметр
+     */
+    const SINGLE_PARAM_TYPES = ['String', 'Int', 'Bool',];
+
     /**
      * Получение данных из суперглобальных массивов $_GET, $_POST, $_COOKIE или $_REQUEST. Описание методов
      * см. в комментарии к этому классу.
@@ -73,94 +95,148 @@ class Request
      * @param string $method имя метода
      * @param array  $params параметры метода
      * @return mixed
-     * @throws \RuntimeException
-     * @throws \LogicException
+     * @throws RequestException
      */
     public static function __callStatic($method, $params)
     {
-        if (preg_match('/^(?<verb>get|post|request|cookie)(As(?<type>Int|Bool|Regexp|Enum))?$/', $method, $m)) {
+        if (preg_match('/^(?<verb>get|post|request|cookie)(As(?<type>String|Int|Bool|Regexp|Enum))?$/', $method, $m)) {
             $verb = $m['verb'];
-            $type = isset($m['type']) ? $m['type'] : null;
+            $type = $m['type'] ?? '';
         } else {
-            throw new \RuntimeException('Неизвестный метод ' . __NAMESPACE__ . "\\Request::$method()");
+            throw new RequestException('Неизвестный метод ' . __NAMESPACE__ . "\\Request::$method()");
+        }
+
+        if ($notEnoughParams = self::checkRequiredParamsCount($verb, $type, $params)) {
+            throw new RequestException($notEnoughParams);
         }
 
         // Прим.: нельзя использовать переменные переменных в данном случае. Поэтому - через условие.
         // {@see http://php.net/manual/ru/language.variables.variable.php}, внизу варнинг.
         switch ($verb) {
             case 'get':
-                $arr = &$_GET;
+                $values = &$_GET;
                 break;
             case 'post':
-                $arr = &$_POST;
+                $values = &$_POST;
                 break;
             case 'cookie':
-                $arr = &$_COOKIE;
+                $values = &$_COOKIE;
                 break;
             case 'request':
-                $arr = &$_REQUEST;
+                $values = &$_REQUEST;
                 break;
-            default: $arr = [];
+            default:
+                $values = [];
         }
 
         if (!$params) {
-            if ($type) {
-                $secondParam = $type == 'Regexp' ? ', $pattern' : ($type == 'Enum' ? ', $expect' : '');
-                throw new \RuntimeException(
-                    "Пропущен обязательный параметр функции: имя ключа в массиве \$_{$verb}" . PHP_EOL
-                    . "Сигнатура вызова: {$method}(\$key{$secondParam})");
-            }
-            return $arr;
+            return $values;
         }
+
+        $default = self::getDefaultValue($type, $params);
 
         $key = &$params[0];
-        $val = utils\Arrays::getValue($arr, $key);
+        $value = utils\Arrays::getValue($values, $key);
 
-        if (!$type || $val == '') {
-            return $val;
+        if (!($type && $value)) {
+            return $value ?? $default;
         }
 
-        if (is_array($val)) {
-            throw new \LogicException('Для массива данных проверки содержимого невозможны. Полученное значение:'
-                . utils\Dumper::dumpAsString($val));
+        if (is_array($value)) {
+            return $default;
         }
 
         switch ($type) {
+            case 'String':
+                return $value ?? $default;
             case 'Int':
-                return preg_match('~^-?\d+$~', $val) ? intval($val) : null;
+                return preg_match('~^-?\d+$~', $value) ? intval($value) : $default;
             case 'Bool':
-                return preg_match('~^true|1|on|yes|checked$~i', $val)
+                return preg_match('~^true|1|on|yes|checked$~i', $value)
                     ? true
-                    : (preg_match('~^false|0|off|no|unchecked$~i', $val) ? false : null);
+                    : (preg_match('~^false|0|off|no|unchecked$~i', $value) ? false : $default);
             case 'Regexp':
-                if (!isset($params[1])) {
-                    throw new \RuntimeException(
-                        'Пропущен обязательный параметр функции: шаблон регулярного выражения.' . PHP_EOL
-                        . "Сигнатура вызова: {$verb}AsRegexp(\$key, \$pattern)");
-                }
                 $pattern = &$params[1];
-                return preg_match($pattern, $val) ? $val : null;
+                return preg_match($pattern, $value) ? $value : $default;
             case 'Enum':
-                if (!isset($params[1])) {
-                    throw new \RuntimeException(
-                        'Пропущен обязательный параметр функции: массив допустимых значений.' . PHP_EOL
-                        . "Сигнатура вызова: {$verb}AsEnum(\$key, \$expect)");
-                }
-                return in_array($val, $params[1]) ? $val : null;
-            default: return null;
+                return in_array($value, $params[1]) ? $value : $default;
+            default:
+                return null;
         }
     }
 
     /**
-     * Выяснить, с каким методом (http-глаголом) пришел запрос.
+     * Проверяем количество параметров, переданных в вызов магической функции
+     *
+     * Вспомогательный метод для магии получения значения из суперглобальной переменной (СГП)
+     *
+     * Максимум ожидаем 3 параметра. Если не задан тип, параметров может не быть. Иначе 1й параметр - всегда
+     * обязательный. Необходимость 2го параметра зависит от типа: если тип в списке SINGLE_PARAM_TYPES, то параметр
+     * необязательный. 3й параметр всегда необязательный.
+     *
+     * Сейчас всего два типа, требующих два обязательных параметра - Regexp и Enum. Поэтому выбор сообщения упрощен.
+     *
+     * @param string     $verb   http-глагог, которому соответствует СГП
+     * @param string     $type   тип, к которому нужно привести значение из массива СГП
+     * @param array|null $params переданные параметры
+     * @return string|void
+     */
+    private static function checkRequiredParamsCount(string $verb, string $type, array $params)
+    {
+        $paramsCount = count($params);
+        if (!$type || $paramsCount >= 2 || $paramsCount === 1 && in_array($type, self::SINGLE_PARAM_TYPES)) {
+            return;
+        }
+
+        $message = 'Пропущен обязательный параметр функции: ';
+        $message .= !$paramsCount
+            ? "имя ключа в массиве \$_{$verb}"
+            : ($type == 'Regexp' ? 'шаблон регулярного выражения.' : 'массив допустимых значений.');
+
+        $secondParam = $type == 'Regexp' ? ', $pattern' : ($type == 'Enum' ? ', $expect' : '');
+        $signatureCall = "Сигнатура вызова: {$verb}As{$type}(\$key{$secondParam})";
+
+        return $message . PHP_EOL . $signatureCall;
+    }
+
+    /**
+     * Получаем дефолтное значение, если оно есть
+     *
+     * Вспомогательный метод для магии получения значения из суперглобальной переменной (CГП)
+     *
+     * В параметрах, переданных в магию, может быть указано желаемое дефолтное значение. Количество передаваемых
+     * параметров зависит от вызываемого магического метода, и дефолтное значение может быть вообще в них не указано.
+     * Но если оно есть, то всегда последним параметром.
+     *
+     * @param string     $type   тип, к которому нужно привести значение из массива СГП
+     * @param array|null $params переданные параметры
+     * @return mixed|null
+     */
+    private static function getDefaultValue(string $type, array $params)
+    {
+        $paramsCount = count($params);
+        return $paramsCount == 3 || $paramsCount == 2 && (!$type || in_array($type, self::SINGLE_PARAM_TYPES))
+            ? array_pop($params)
+            : null;
+    }
+
+
+    /**
+     * Выяснить, с каким методом (http-глаголом) пришел запрос ИЛИ проверить, что метод совпадает с переданным
+     * параметре.
      *
      * RESTful методы: GET, POST, DELETE, PUT. Есть еще OPTIONS, HEAD. Может еще какая-то экзотика.
      *
-     * @return string|null
+     * @param string $expect ожидаемый метод
+     * @return null|string|bool
      */
-    public static function method()
+    public static function method(string $expect = '')
     {
-        return isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : null;
+        $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : null;
+        if ($method && $expect) {
+            return $method == strtoupper($expect);
+        }
+        return $method;
     }
 
     /**
@@ -242,7 +318,7 @@ class Request
     public static function isAjax()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
-        && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+            && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
     }
 
     /**
@@ -256,7 +332,8 @@ class Request
     {
         return isset($_SERVER['HTTP_USER_AGENT'])
             ? (bool)(preg_match(
-                    '/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i', $_SERVER['HTTP_USER_AGENT'])
+                    '/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i',
+                    $_SERVER['HTTP_USER_AGENT'])
                 || preg_match('/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i',
                     substr($_SERVER['HTTP_USER_AGENT'], 0, 4))
             )
