@@ -113,12 +113,12 @@ class FS
      * Сделал суровые условия: удалить можно от 1 до 4 уровней каталогов. Это очень опасная функция, нужно вообще
      * избегать ее использования.
      *
-     * @param string $path      каталог для удаления
-     * @param int    $fuseLevel предохранитель: ожидаемый максимальный уровень вложенности каталогов.
+     * @param string $path        каталог для удаления
+     * @param int    $expectLevel предохранитель: ожидаемый максимальный уровень вложенности каталогов.
      * @return true|string
      * @throws FSException
      */
-    public static function removeDir(string $path, int $fuseLevel = 1)
+    public static function removeDir(string $path, int $expectLevel = 1)
     {
         if (!file_exists($path)) {
             return;
@@ -128,11 +128,11 @@ class FS
             throw new FSException($path . ' должно быть каталогом');
         }
 
-        if ($fuseLevel < 1 || $fuseLevel > 4) {
+        if ($expectLevel < 1 || $expectLevel > 4) {
             throw new FSException('удалить можно от 1 до 4 уровней каталогов. Для вашей же пользы.');
         }
 
-        if (!self::checkMaxDepth($path, 0, $fuseLevel)) {
+        if (!self::checkMaxDepth($path, 0, $expectLevel)) {
             throw new FSException('Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.');
         }
 

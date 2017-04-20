@@ -109,20 +109,22 @@ class FSTest extends TestCase
     }
 
     /**
-     * Проверяем работу предохранителя в рекурсивном удалении каталогов
+     * Тест: проверяем работу предохранителя в рекурсивном удалении каталогов
      *
-     * Явно нарушаем условия успешного выполнения метода, ожидаем исключение. При этом удаление не должно быть
-     * выполнено.
+     * Явно нарушаем условия успешного выполнения метода, ожидаем исключение.
+     *
+     * @dataProvider fuseDataProvider
+     *
+     * @param string $path        относительный путь к удаляемому каталогу
+     * @param int    $expectLevel ожидаемый уровень вложенности подкаталогов в удаляемой цели
      */
-    public function test_fuse_removeDir()
+    public function test_fuse_removeDir(string $path, int $expectLevel)
     {
-        $this->expectException(FSException::class);
-
         $dirLevel4 = vfsStream::newDirectory('level4')
             ->at($this->root->getChild('level1/level2/level3'));
 
         vfsStream::newFile('level4.txt')
-            ->withContent('level 4 from [delIt/], but 5 from the root path')
+            ->withContent('4-й уровень от удаляемого каталога, при этом 5-й - от корня')
             ->at($dirLevel4);
 
         $deepestChild = 'level1/level2/level3/level4/level4.txt';
@@ -130,13 +132,29 @@ class FSTest extends TestCase
         $this->assertTrue($this->root->hasChild($deepestChild),
             'Проверка предохранителя. Структура каталогов и файлов создана');
 
-        FS::removeDir($this->rootPath . '/level1', 3);
-        $this->assertTrue($this->root->hasChild($deepestChild),
-            'Проверка предохранителя. Реальная вложенность больше заданной. Удаление не выполнено');
+        $this->expectException(FSException::class);
+        FS::removeDir($this->rootPath . $path, $expectLevel);
+    }
 
-        FS::removeDir($this->rootPath, 5); // от корня вложенность - 5, превышает допустимый максимум
-        $this->assertTrue($this->root->hasChild($deepestChild),
-            'Проверка предохранителя. Требуемая вложенность больше максимально допустимой. Удаление не выполнено');
+    /**
+     * Данные: проверяем работу предохранителя в рекурсивном удалении каталогов
+     * Есть разные ситуации, когда метод должен пробросить исключение вместо удаления каталогов.
+     * @return array
+     */
+    public function fuseDataProvider()
+    {
+        return [
+            // Реальная вложенность больше заданной
+            [
+                'dir'         => '/level1',
+                'expectLevel' => 3,
+            ],
+            // Требуемая вложенность больше максимально допустимой
+            [
+                'dir'         => '',
+                'expectLevel' => 5,
+            ],
+        ];
     }
 
     public function test_dirList()
