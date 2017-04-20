@@ -84,7 +84,7 @@ class FS
             $cnt++;
         }
 
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
 
         try {
             if ($cnt) {
@@ -136,7 +136,7 @@ class FS
             throw new FSException('Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.');
         }
 
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
 
         try {
             self::internalRemoveDir($path);
@@ -212,7 +212,7 @@ class FS
             throw new FSException($path . ' должно быть каталогом');
         }
 
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
         try {
             $dirList = new \DirectoryIterator($path);
             $fileNames = [];
@@ -250,7 +250,7 @@ class FS
     {
         $path = self::normalizePath($path);
         $filesNames = self::dirList($path, $filter);
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
         try {
             foreach ($filesNames as $fileName) {
                 if (!$filter || preg_match($filter, $fileName)) {
@@ -271,7 +271,7 @@ class FS
      */
     public static function copyFile(string $from, string $to, resource $context = null)
     {
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
 
         try {
             if ($context) {
@@ -293,7 +293,7 @@ class FS
      */
     public static function renameFile(string $oldName, string $newName, resource $context = null)
     {
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
 
         try {
             if ($context) {
@@ -319,7 +319,7 @@ class FS
      */
     public static function moveFile(string $from, string $to)
     {
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
 
         try {
             rename($from, $to);
@@ -339,7 +339,7 @@ class FS
             return;
         }
 
-        set_error_handler(['\kira\utils\FS', 'error_handler']);
+        set_error_handler([FS::class, 'error_handler']);
         try {
             unlink($fn);
         } finally {
