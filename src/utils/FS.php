@@ -1,7 +1,7 @@
 <?php
 namespace kira\utils;
 
-use  kira\exceptions\FSException;
+use kira\exceptions\FSException;
 
 /**
  * FileSystem. Утилиты по работе с файловой системой
@@ -84,23 +84,22 @@ class FS
             $cnt++;
         }
 
-        set_error_handler([FS::class, 'error_handler']);
-
-        try {
-            if ($cnt) {
-                mkdir($path, 0777, true);
-                $dirs = array_slice($dirs, 0, $cnt);
-                foreach ($dirs as $d) {
+        System::errorWrapper(
+            FSException::class,
+            function () use ($cnt, $path, $dirs, $mode) {
+                if ($cnt) {
+                    mkdir($path, 0777, true);
+                    $dirs = array_slice($dirs, 0, $cnt);
+                    foreach ($dirs as $d) {
+                        chmod($path, $mode);
+                        $len = mb_strlen($path) - (mb_strlen($d) + 1); // +1 это символ слеша
+                        $path = mb_substr($path, 0, $len);
+                    }
+                } else {
                     chmod($path, $mode);
-                    $len = mb_strlen($path) - (mb_strlen($d) + 1); // +1 это символ слеша
-                    $path = mb_substr($path, 0, $len);
                 }
-            } else {
-                chmod($path, $mode);
             }
-        } finally {
-            restore_error_handler();
-        }
+        );
     }
 
     /**
@@ -136,13 +135,9 @@ class FS
             throw new FSException('Целевой каталог имеет вложенность подкаталогов больше, чем ожидается.');
         }
 
-        set_error_handler([FS::class, 'error_handler']);
-
-        try {
+        System::errorWrapper(FSException::class, function () use ($path) {
             self::internalRemoveDir($path);
-        } finally {
-            restore_error_handler();
-        }
+        });
     }
 
     /**
@@ -197,6 +192,9 @@ class FS
 
     /**
      * Получение списка файлов в указанном каталоге. Не читает вложенные каталоги, только заданный.
+     *
+     * Результат сортируется алгоритмом "natural order" {@link http://php.net/manual/ru/function.natsort.php natsort()}
+     *
      * @param string $path   каталог поиска файлов
      * @param string $filter регулярка для фильтрации. Полностью, включая операторные скобки и модификаторы.
      * @return array список файлов без пути
@@ -212,24 +210,27 @@ class FS
             throw new FSException($path . ' должно быть каталогом');
         }
 
-        set_error_handler([FS::class, 'error_handler']);
-        try {
-            $dirList = new \DirectoryIterator($path);
-            $fileNames = [];
-            foreach ($dirList as $obj) {
-                if ($obj->isDot() || $obj->isDir()) {
-                    continue;
-                }
+        return System::errorWrapper(
+            FSException::class,
+            function () use ($path, $filter) {
+                $dirList = new \DirectoryIterator($path);
+                $fileNames = [];
+                foreach ($dirList as $obj) {
+                    if ($obj->isDot() || $obj->isDir()) {
+                        continue;
+                    }
 
-                $name = $obj->getBasename();
-                if (!$filter || preg_match($filter, $name)) {
-                    $fileNames[] = $name;
+                    $name = $obj->getBasename();
+                    if (!$filter || preg_match($filter, $name)) {
+                        $fileNames[] = $name;
+                    }
                 }
+                if (!natsort($fileNames)) {
+                    trigger_error('Ошибка сортировки массива', E_USER_WARNING);
+                }
+                return $fileNames;
             }
-        } finally {
-            restore_error_handler();
-        }
-        return $fileNames;
+        );
     }
 
     /**
@@ -243,23 +244,22 @@ class FS
      *
      * @param string $path   каталог для очистки
      * @param string $filter регулярка для фильтрации. Полностью, включая операторные скобки и модификаторы.
-     * @return true|string
      * @throws FSException
      */
     public static function clearDir(string $path, string $filter = '')
     {
         $path = self::normalizePath($path);
-        $filesNames = self::dirList($path, $filter);
-        set_error_handler([FS::class, 'error_handler']);
-        try {
-            foreach ($filesNames as $fileName) {
-                if (!$filter || preg_match($filter, $fileName)) {
+        if (!$filesNames = self::dirList($path, $filter)) {
+            return;
+        }
+        System::errorWrapper(
+            FSException::class,
+            function () use ($filesNames, $path) {
+                foreach ($filesNames as $fileName) {
                     unlink($path . $fileName);
                 }
             }
-        } finally {
-            restore_error_handler();
-        }
+        );
     }
 
     /**
@@ -271,17 +271,12 @@ class FS
      */
     public static function copyFile(string $from, string $to, resource $context = null)
     {
-        set_error_handler([FS::class, 'error_handler']);
-
-        try {
-            if ($context) {
-                copy($from, $to, $context);
-            } else {
-                copy($from, $to);
+        System::errorWrapper(
+            FSException::class,
+            function () use ($from, $to, $context) {
+                $context ? copy($from, $to, $context) : copy($from, $to);
             }
-        } finally {
-            restore_error_handler();
-        }
+        );
     }
 
     /**
@@ -293,17 +288,12 @@ class FS
      */
     public static function renameFile(string $oldName, string $newName, resource $context = null)
     {
-        set_error_handler([FS::class, 'error_handler']);
-
-        try {
-            if ($context) {
-                rename($oldName, $newName, $context);
-            } else {
-                rename($oldName, $newName);
+        System::errorWrapper(
+            FSException::class,
+            function () use ($oldName, $newName, $context) {
+                $context ? rename($oldName, $newName, $context) : rename($oldName, $newName);
             }
-        } finally {
-            restore_error_handler();
-        }
+        );
     }
 
     /**
@@ -319,13 +309,7 @@ class FS
      */
     public static function moveFile(string $from, string $to)
     {
-        set_error_handler([FS::class, 'error_handler']);
-
-        try {
-            rename($from, $to);
-        } finally {
-            restore_error_handler();
-        }
+        System::errorWrapper(FSException::class, 'rename', $from, $to);
     }
 
     /**
@@ -338,28 +322,6 @@ class FS
         if (!file_exists($fn)) {
             return;
         }
-
-        set_error_handler([FS::class, 'error_handler']);
-        try {
-            unlink($fn);
-        } finally {
-            restore_error_handler();
-        }
-    }
-
-    /**
-     * Перехватываем ошибки функций PHP и вместо них пробрасываем свое исключение.
-     *
-     * По мотивам {@link http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
-     *
-     * @param int    $errLevel уровень ошибки, {@link http://php.net/manual/ru/errorfunc.constants.php}
-     * @param string $message
-     * @param string $file
-     * @param int    $line
-     * @throws FSException
-     */
-    public static function error_handler(int $errLevel, string $message, string $file, int $line)
-    {
-        throw new FSException("{$message}\nИсточник: {$file}:{$line}", $errLevel);
+        System::errorWrapper(FSException::class, 'unlink', $fn);
     }
 }

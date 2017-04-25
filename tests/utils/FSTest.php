@@ -104,7 +104,7 @@ class FSTest extends TestCase
         $this->assertTrue($this->root->hasChild('level1/level2/deepInside.php'),
             'Структура каталогов и файлов создана');
 
-        FS::removeDir(vfsStream::url('root_path') . '/level1', 3);
+        FS::removeDir($this->rootPath . 'level1', 3);
         $this->assertFalse($this->root->hasChild('delIt'), 'Все каталоги и файлы удалены');
     }
 
@@ -146,7 +146,7 @@ class FSTest extends TestCase
         return [
             // Реальная вложенность больше заданной
             [
-                'dir'         => '/level1',
+                'dir'         => 'level1',
                 'expectLevel' => 3,
             ],
             // Требуемая вложенность больше максимально допустимой
@@ -157,16 +157,35 @@ class FSTest extends TestCase
         ];
     }
 
+    /**
+     * Тест: Получение списка файлов в указанном каталоге.
+     *
+     * Прим: проверяемый метод применяет natsort() к результату. Такая сортировка сохраняет ключи, даже числовые. Но для
+     * теста эти ключи неважны, поэтому сбрасываем их во всех сравниваемых массивах. Если не сбросить, тест не пройдет.
+     */
     public function test_dirList()
     {
         $targetDir = 'level1/level2/level3';
 
-        $phpFiles = ['test.php', 'other.php'];
+        # Тест №1
+
+        $phpFiles = ['other.php', 'test.php',];
         $fileNames = FS::dirList($this->rootPath . $targetDir, '~\.php$~');
+        $fileNames  = array_values($fileNames);
         $this->assertEquals($phpFiles, $fileNames, 'Список php-файлов в указанном каталоге');
 
-        $allFiles = array_merge($phpFiles, ['log.csv', 'justFile.txt',]);
+        # Тест №2
+
+        // Arrange
+        $allFiles = array_merge($phpFiles, ['justFile.txt', 'log.csv',]);
+        natsort($allFiles);
+        $allFiles  = array_values($allFiles);
+
+        // Act
         $fileNames = FS::dirList($this->rootPath . $targetDir);
+        $fileNames  = array_values($fileNames);
+
+        // Assert
         $this->assertEquals($allFiles, $fileNames, 'Список всех файлов в указанном каталоге');
     }
 
