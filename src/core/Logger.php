@@ -5,6 +5,7 @@ use kira\net\Request;
 use kira\db\DbModel;
 use kira\utils\Mailer;
 use kira\html\Render;
+use kira\utils\System;
 use kira\web\Env;
 
 /**
@@ -46,12 +47,12 @@ class Logger extends AbstractLogger
             [
                 'switch_on'    => true,
                 'store'        => self::STORE_IN_FILES,
-                'db_conf_key' => 'db',
+                'db_conf_key'  => 'db',
                 'log_path'     => KIRA_TEMP_PATH,
                 'php_timezone' => '',
                 'table_name'   => 'kira_log',
             ],
-            App::conf('log', false) ? : []
+            App::conf('log', false) ?: []
         );
 
         $conf['_mail'] = App::conf('admin_mail', false);
@@ -252,52 +253,47 @@ class Logger extends AbstractLogger
      * перехватчик.
      *
      * @return bool
-     * @throws \LogicException
      */
     private function writeToFile()
     {
-        $logIt = $this->logIt;
+        $writeFunc = function () {
+            $logIt = &$this->logIt;
+            try {
+                if (!$logPath = $this->conf['log_path']) {
+                    throw new \ErrorException('Не задан каталог ("log_path") для лог-файлов.');
+                }
 
-        if ($customHandler = (error_reporting() == 0)) {
-            set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-                throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-            });
-        }
+                $fn = $logPath . $logIt['ts']->format('Ymd') . '_kira_log.csv';
 
-        try {
-            if (!$logPath = $this->conf['log_path']) {
-                throw new \ErrorException('Не задан каталог ("log_path") для лог-файлов.');
+                if ($file = fopen($fn, 'a')) {
+                    $result = (bool)fputcsv(
+                        $file,
+                        [
+                            $logIt['type'],
+                            $logIt['ts']->format('H:i:s'),
+                            $logIt['timezone'],
+                            $logIt['message'],
+                            $logIt['source'],
+                            $logIt['userIP'],
+                            $logIt['request'],
+                        ],
+                        ';'
+                    );
+                    fclose($file);
+                } else {
+                    throw new \ErrorException('Не могу писать в файл ' . $fn);
+                }
+            } catch (\ErrorException $e) {
+                $logIt['message'] .= PHP_EOL . PHP_EOL
+                    . 'Дополнительно. Не удалось записать это сообщение в файл лога, причина: ' . $e->getMessage();
+                $result = false;
             }
+            return $result;
+        };
 
-            $fn = $logPath . $logIt['ts']->format('Ymd') . '_kira_log.csv';
-
-            if ($file = fopen($fn, 'a')) {
-                $result = (bool)fputcsv(
-                    $file,
-                    [
-                        $logIt['type'],
-                        $logIt['ts']->format('H:i:s'),
-                        $logIt['timezone'],
-                        $logIt['message'],
-                        $logIt['source'],
-                        $logIt['userIP'],
-                        $logIt['request'],
-                    ],
-                    ';'
-                );
-                fclose($file);
-            } else {
-                throw new \ErrorException('Не могу писать в файл ' . $fn);
-            }
-        } catch (\ErrorException $e) {
-            $logIt['message'] .= PHP_EOL . PHP_EOL
-                . 'Дополнительно. Не удалось записать это сообщение в файл лога, причина: ' . $e->getMessage();
-            $result = false;
-        }
-
-        if ($customHandler) {
-            restore_error_handler();
-        }
+        $result = error_reporting() == 0
+            ? System::errorWrapper(\ErrorException::class, $writeFunc)
+            : $writeFunc();
 
         return $result;
     }
