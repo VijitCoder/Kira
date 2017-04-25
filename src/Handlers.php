@@ -5,9 +5,11 @@ use kira\html\Render;
 use kira\net\{
     Request, Response
 };
+use kira\utils\{
+    System, ColorConsole
+};
 use kira\web\Env;
 use kira\core\App;
-use kira\utils\ColorConsole;
 
 /**
  * Перехватчик исключений, обработчики ошибок.
@@ -71,7 +73,7 @@ class Handlers
             );
         }
 
-        if (isConsoleInterface()) {
+        if (System::isConsoleInterface()) {
             if (KIRA_DEBUG) {
                 (new ColorConsole)->setColor('red')->setStyle('bold')
                     ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
@@ -133,7 +135,7 @@ class Handlers
             ->addText($stack['console']);
 
         if (error_reporting() & $code) {
-            if (isConsoleInterface()) {
+            if (System::isConsoleInterface()) {
                 $console_msg->draw($rn);
             } else if (Request::isAjax()) {
                 $stack_ajax = &$stack['ajax'];
@@ -147,7 +149,7 @@ class Handlers
                 );
             }
         } else {
-            if (isConsoleInterface()) {
+            if (System::isConsoleInterface()) {
                 echo 'Произошла ошибка PHP' . $rn;
             } else if (Request::isAjax()) {
                 self::responseForAjax(['message' => 'В ajax-запросе произошла ошибка PHP']);
@@ -282,7 +284,7 @@ class Handlers
     public static function shutdown()
     {
         $error = error_get_last();
-        if ($error && ($error['type'] & (E_ERROR | E_PARSE | E_COMPILE_ERROR))) {
+        if ($error && ($error['type'] & (E_ERROR | E_CORE_ERROR | E_PARSE | E_COMPILE_ERROR))) {
             $output = ob_get_clean();
             echo preg_replace(
                 "~(<br />\r?\n<font size='1'><table class='xdebug-error .*?</table></font>)~s",

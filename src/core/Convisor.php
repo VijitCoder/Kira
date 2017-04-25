@@ -2,9 +2,8 @@
 namespace kira\core;
 
 use kira\utils\{
-    FS, ColorConsole
+    FS, ColorConsole, System
 };
-
 
 /**
  * Сonvisor - менеджер консольного запуска скриптов приложения
@@ -36,7 +35,7 @@ class Convisor
      */
     public function __construct(array $params)
     {
-        if (!isConsoleInterface()) {
+        if (!System::isConsoleInterface()) {
             exit('Ошибка. Допустим запуск только из консоли.');
         }
         $key = $this->parseParams($params);
