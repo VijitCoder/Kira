@@ -30,7 +30,8 @@
             "kira\\": "src/"
         },
         "classmap": [
-            "tests/CallAsPublic.php"
+            "tests/traits/CallAsPublic.php",
+            "tests/traits/VfsGlob.php"
         ],
         "files": [
             "src/bootstrap.php"
