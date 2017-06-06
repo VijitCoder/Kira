@@ -3,7 +3,7 @@ namespace {
 
     use PHPUnit\Framework\TestCase;
     use app\SUTClass;
-    use kira\tests\CallAsPublic;
+    use kira\tests\traits\CallAsPublic;
 
     /**
      * Тестируем метод, позволяющий тестировать непубличные методы классов

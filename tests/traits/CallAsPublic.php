@@ -1,5 +1,5 @@
 <?php
-namespace kira\tests;
+namespace kira\tests\traits;
 
 /**
  * Вызываем непубличные методы для возможности их протестировать
