@@ -209,7 +209,7 @@ class Logger extends AbstractLogger
         try {
             $table = $this->conf['table_name'];
             $sql =
-                "INSERT INTO `{$table}` (`ts`,`timezone`,`logType`,`message`,`userIP`,`request`,`source`)
+                "INSERT INTO `{$table}` (`ts`,`timezone`,`log_type`,`message`,`user_ip`,`request`,`source`)
                 VALUES (?,?,?,?,?,?,?)";
 
             $request = $logIt['request'];
