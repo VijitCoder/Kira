@@ -280,13 +280,17 @@ class Strings
     }
 
     /**
-     * Приведение булева значения к строке
+     * Превращение булева значения в строковое название
+     *
+     * Это не приведение типа. Значение проверяется по очень мягким требованиям, практически как boolval().
+     *
      * @param mixed $value любое значение, об истинности которого можно утверждать
      * @param int   $type  тип строкового представления полученного значения, см. self::BOOL_*
      * @return string
      */
     public static function strBool($value, $type = self::BOOL_EN)
     {
+        $value = Typecast::bool($value);
         switch ($type) {
             case self::BOOL_RU:
                 return $value ? 'истина' : 'ложь';

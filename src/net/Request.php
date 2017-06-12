@@ -2,6 +2,7 @@
 namespace kira\net;
 
 use kira\exceptions\RequestException;
+use kira\utils\Typecast;
 use kira\web\Env;
 use kira\utils;
 
@@ -150,11 +151,9 @@ class Request
             case 'String':
                 return $value ?? $default;
             case 'Int':
-                return preg_match('~^-?\d+$~', $value) ? intval($value) : $default;
+                return Typecast::int($value, $default);
             case 'Bool':
-                return preg_match('~^true|1|on|yes|checked$~i', $value)
-                    ? true
-                    : (preg_match('~^false|0|off|no|unchecked$~i', $value) ? false : $default);
+                return Typecast::bool($value, $default);
             case 'Regexp':
                 $pattern = &$params[1];
                 return preg_match($pattern, $value) ? $value : $default;
