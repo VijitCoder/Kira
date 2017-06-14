@@ -16,10 +16,12 @@ class App
     use Singleton;
 
     /**
-     * Версия движка. Ссылка на оф.сайт движка
+     * Название и версия движка. Ссылка на оф.сайт движка
      */
-    const VERSION = '1.5';
-    const ENGINE_URL = 'https://github.com/VijitCoder/Kira';
+    const
+        ENGINE_NAME = 'Kira Web Engine',
+        VERSION = '1.5',
+        ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /**
      * @var array конфигурация приложения
@@ -143,8 +145,8 @@ class App
      * русский. Для него нет словаря.
      *
      * @param string $key фраза на русском языке
-     * @param array $ins массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб с простым текстом
-     *                   фразы не совпало.
+     * @param array  $ins массив замены/вставки в текстах. Формат ключей - вообще любой, главное чтоб с простым текстом
+     *                    фразы не совпало.
      * @return string фраза в заданном языке
      */
     public static function t($key, $ins = array())
