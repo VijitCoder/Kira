@@ -17,6 +17,15 @@ class System
     }
 
     /**
+     * Проверка, что текущая опрерационная система - Windows
+     * @return bool
+     */
+    public static function isWindows()
+    {
+        return strtolower(substr(PHP_OS, 0, 3)) == 'win';
+    }
+
+    /**
      * Обертка для перехвата PHP ошибок и превращения их в исключение
      *
      * По мотивам {@link http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning}
