@@ -15,16 +15,16 @@ class Controller
     public $defaultAction = 'index';
 
     /**
-     * Расширение файлов представлений
-     * @var string
-     */
-    protected $viewExt = '.htm';
-
-    /**
-     * Макет. Относительный путь в каталоге KIRA_VIEWS_PATH + имя файла без расширения.
+     * Макет. Относительный путь от KIRA_VIEWS_PATH + имя файла без расширения.
      * @var string
      */
     protected $layout = 'layout';
+
+    /**
+     * Расширение файлов шаблонов и макетов
+     * @var string
+     */
+    protected $viewExt = '.htm';
 
     /**
      * Заголовок страницы. Предполагается использование с тегом <title></title>
@@ -42,12 +42,12 @@ class Controller
     /**
      * Шаблонизатор
      *
-     * Заполняем шаблон, отдаем результат в ответ браузеру или возвращаем, как результат функции.
+     * Заполняем шаблон, вписываем его в макет. Отдаем результат в ответ браузеру или возвращаем, как результат функции.
      *
      * Зарезервированная переменная: $CONTENT. В ней текст отрисованного шаблона для вставки в макет. Верхний регистр
      * применен умышленно во избежание случайных совпадений, не принято писать переменные большими буквами.
      *
-     * @param string $view   шаблон для отрисовки
+     * @param string $view   шаблон для отрисовки, относительный путь от KIRA_VIEWS_PATH
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string|null
@@ -58,7 +58,7 @@ class Controller
         $this->beforeRender($view, $data);
 
         if ($view) {
-            $CONTENT = $this->renderFile($view, $data);
+            $CONTENT = $this->renderFile(KIRA_VIEWS_PATH . $view . $this->viewExt, $data);
         }
 
         ob_start();
@@ -76,13 +76,35 @@ class Controller
 
     /**
      * Отрисовка части шаблона, без макета
-     * @param string $view   шаблон для отрисовки
+     * @param string $view   шаблон для отрисовки, относительный путь от KIRA_VIEWS_PATH
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string
      * @throws \Exception
      */
     protected function renderPartial($view, $data = [], $output = true)
+    {
+        $result = $this->renderFile(KIRA_VIEWS_PATH . $view . $this->viewExt, $data);
+        if ($output) {
+            echo $result;
+        } else {
+            return $result;
+        }
+    }
+
+    /**
+     * Отрисовка шаблона, хранящегося вне каталога KIRA_VIEWS_PATH
+     *
+     * Отличие от других методов отрисовки именно в возможности указать шаблон в любом месте файловой системы. Но при
+     * этом путь к нему должен быть абсолютным.
+     *
+     * @param string $view   шаблон для отрисовки, абсолютный путь + имя файла + расширение
+     * @param array  $data   параметры в шаблон
+     * @param bool   $output флаг "выводить в браузер"
+     * @return string
+     * @throws \Exception
+     */
+    protected function renderExternal($view, $data = [], $output = true)
     {
         $result = $this->renderFile($view, $data);
         if ($output) {
@@ -93,9 +115,31 @@ class Controller
     }
 
     /**
+     * Отрисовка виджета
+     * @param string $class  FQN класса виджета
+     * @param array  $params параметры для передачи в виджет
+     * @param bool   $output флаг "выводить в браузер"
+     * @return null|string
+     * @throws \LogicException
+     */
+    public function widget(string $class, array $params = [], $output = true)
+    {
+        $widget = new $class($params);
+        if (!$widget instanceof Widget) {
+            throw new \LogicException('Объект виджета не унаследован от ' . Widget::class . '. Это недопустимо.');
+        }
+        $result = $this->renderExternal($widget->getView(), $widget->getData(), $output);
+        if ($output) {
+            return $result;
+        }
+    }
+
+    /**
      * Собственно функция отрисовки. Включаем буферизацию, заполняем шаблон и возвращаем ответ.
-     * @param string $_view123 шаблон для отрисовки. Имя переменной выбрано специально для уменьшения
-     *                         вероятности совпадения с параметрами шаблона
+     *
+     * Прим.: имя переменной $_view123 выбрано специально для уменьшения вероятности совпадения с параметрами шаблона.
+     *
+     * @param string $_view123 шаблон для отрисовки, абсолютный путь + файл + расширение
      * @param array  $data     параметры в шаблон
      * @return string
      * @throws \InvalidArgumentException
@@ -114,7 +158,7 @@ class Controller
 
         //Отрисованный шаблон буферизируем, в него уйдут распакованные параметры
         ob_start();
-        require KIRA_VIEWS_PATH . $_view123 . $this->viewExt;
+        require $_view123;
         return ob_get_clean();
     }
 
