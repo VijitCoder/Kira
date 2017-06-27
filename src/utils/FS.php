@@ -42,6 +42,9 @@ class FS
 
     /**
      * Проверка: переданный каталог похож на абсолютный в стиле Windows
+     *
+     * Может оказаться полезно при работе с виртуальной ФС типа vfsStream. Там корень начинается с "vfs:\"
+     *
      * @param string $path каталог для проверки
      * @return bool
      */
@@ -326,5 +329,21 @@ class FS
             return;
         }
         System::errorWrapper(FSException::class, 'unlink', $fn);
+    }
+
+    /**
+     * Получение абсолютного пути, где расположен заданный класс. В конце - слеш.
+     *
+     * Прим: не покрыт модульным тестом, не представляю, как его сделать простым и понятным.
+     *
+     * @param string|object $subject FQN класса или экземпляр класса
+     * @return string
+     */
+    public static function getMyDirectory($subject)
+    {
+        $class = is_object($subject) ? get_class($subject) : $subject;
+        $rc = new \ReflectionClass($class);
+        $dir = self::normalizePath(dirname($rc->getFileName()));
+        return System::isWindows() ? $dir : '/' . $dir;
     }
 }
