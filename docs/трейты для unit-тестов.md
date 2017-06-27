@@ -16,7 +16,7 @@ class SomeTest extends TestCase
     use CallAsPublic;
 
     public function test_SomeAction() {
-        $result = $this->callMethod(SUTClass::class, 'someAction', $param1, $param2 ... $paramN);
+        $result = $this->callMethod(SUTClass::class, 'someAction', [$param1, $param2 ... $paramN]);
         $this->assert...
     }
 }
@@ -24,44 +24,11 @@ class SomeTest extends TestCase
 
 `SUTClass` - тестируемый класс
 `someAction` - непубличный метод в нем
-`$param1 ... $paramN` - параметры метода, если ему нужны параметры.
+`[$param1 ... $paramN]` - параметры метода, если ему нужны параметры. Передавать в массиве.
 
 Рядом в подкаталоге лежит тест для проверки этого трейта - `CallAsPublicTest`. Он так же является практическим примером использования трейта.
 
 Трейт подключается через `Composer.classmap`, несмортя на то, что его пространство имен отвечает требованиям PSR-4. Так сделано, потому что в целом каталог с тестами не загружается через Composer, но оттуда нужен этот единственный скрипт.
-
-### Ограничения
-
-Этот трейт не может работать с методами, которые принимают параметры по ссылке. Я не придумал красивого решения. Придется все-таки открывать такие методы в публичную видимость и ставить тег `@ignore` или `@internal`.
-
-Желающим попробовать найти решение - в добрый путь. В тестовом классе есть метод `SUTClass::impossible()`. Ваше решение должно успешно тестировать этот метод.
-
-Очевидная идея - принимать в трейте параметры по ссылке, например так:
-
-```PHP
-protected function callMethod($class, string $methodName, &...$args)
-{
-...
-}
-```
-
-Но тогда **все агрументы для любых тестируемых через трейт функций** придется передавать переменными. Типа:
-
-```PHP
-public function test_impossible()
-{
-    $var = 'some';                      // это действительно нужно
-    $var2 = 12;                         // а это уже лишнее
-    $const = SUTClass::IMPOSSIBLE_VAL;  // и это - лишнее
-    $this->assertEquals(
-        'success',
-        $this->callMethod($class, 'impossible', $var, $var2, SUTClass::IMPOSSIBLE_VAL),
-        'Метод с первым параметром-ссылкой'
-    );
-}
-```
-
-Это - уродливые костыли, имхо.
 
 ## Костылька для VfsStream
 

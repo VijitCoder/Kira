@@ -32,7 +32,7 @@ namespace {
 
             $this->assertEquals(
                 '12-word-end',
-                $this->callMethod($class, 'methodWithArgs', 12, '-word-'),
+                $this->callMethod($class, 'methodWithArgs', [12, '-word-']),
                 'Вызов метода с параметрами'
             );
 
@@ -50,15 +50,10 @@ namespace {
                 'Публичный динамический метод'
             );
 
-            /*
-            // Этот тест не пройдет. Невозможно передать параметр по ссылке.
             $var = 'some';
-            $this->assertEquals(
-                'success12',
-                $this->callMethod($class, 'impossible', $var, 12, SUTClass::IMPOSSIBLE_VAL),
-                'Метод с первым параметром-ссылкой'
-            );
-            */
+            $this->callMethod($class, 'impossible', [&$var, 12, SUTClass::IMPOSSIBLE_VAL]);
+            $this->assertEquals('12impossible', $var, 'Метод с первым параметром-ссылкой');
+
         }
     }
 }
@@ -70,7 +65,7 @@ namespace app {
      */
     class SUTClass
     {
-        const IMPOSSIBLE_VAL = 'success';
+        const IMPOSSIBLE_VAL = 'impossible';
 
         private $state;
 
@@ -99,15 +94,9 @@ namespace app {
             return 'welcome';
         }
 
-        /**
-         * Этот метод невозможно протестировать из-за передачи параметра по ссылке
-         * @param $var
-         * @param $num
-         * @param $const
-         */
         private function impossible(&$var, $num, $const)
         {
-            $var = $const . $num;
+            $var = $num . $const;
         }
     }
 }
