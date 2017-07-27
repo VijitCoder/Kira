@@ -2,7 +2,6 @@
 namespace kira\web;
 
 use kira\utils\FS;
-use kira\utils\System;
 
 /**
  * Супер-класс виджетов, поддерживаемых движком
@@ -47,7 +46,7 @@ abstract class Widget
      */
     public function getView(): string
     {
-        return static::getMyDirectory() . $this->view . $this->viewExt;
+        return FS::getMyDirectory($this) . $this->view . $this->viewExt;
     }
 
     /**
@@ -57,16 +56,5 @@ abstract class Widget
     public function getData(): array
     {
         return [];
-    }
-
-    /**
-     * Получение абсолютного пути, где расположен виджет наследник. В конце - слеш.
-     * @return string
-     */
-    protected function getMyDirectory()
-    {
-        $rc = new \ReflectionClass(get_class($this));
-        $dir = FS::normalizePath(dirname($rc->getFileName()));
-        return System::isWindows() ? $dir : '/' . $dir;
     }
 }
