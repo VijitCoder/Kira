@@ -49,6 +49,8 @@ class FromValidationTest extends TestCase
             ],
 
             'modules' => [' user ', " admin \x00"],
+
+            'IP' => '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d',
         ];
 
         self::$form->load($data);
@@ -87,6 +89,8 @@ class FromValidationTest extends TestCase
             ],
 
             'modules' => ['user', 'admin'], // отличается от исходного. Нормализованная строка
+
+            'IP' => '127.0.0.1',            // IP был не той версии, подставилось дефолтное значение
         ];
 
         $this->assertEquals($expect, self::$form->getValues(), 'Все валидированные данные');
@@ -285,5 +289,16 @@ class FromValidationTest extends TestCase
                 ],
             ],
         ],
+
+        'IP' => [
+            'validators' => [
+                'filter_var' => [
+                    'filter'  => FILTER_VALIDATE_IP,
+                    'options' => ['default' => '127.0.0.1'],
+                    'flags' => FILTER_FLAG_IPV4,
+                    'message' => 'Ожидается IPv4',
+                ],
+            ]
+        ]
     ];
 }

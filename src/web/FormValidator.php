@@ -224,9 +224,10 @@ class FormValidator
             throw new FormException('Не задан обязательный параметр "filter"');
         }
         $filter = $desc['filter'];
-        $options = isset($desc['options']) ? ($desc['options']) : null;
+        $options = $desc['options'] ?? null;
+        $flags = $desc['flags'] ?? null;
 
-        $passed = filter_var($data, $filter, ['options' => $options]);
+        $passed = filter_var($data, $filter, compact('options', 'flags'));
 
         if ($passed === false) {
             $this->isValid = false;
