@@ -188,6 +188,8 @@ class FromValidationTest extends TestCase
      */
     private static $contract = [
         'app_path' => [
+            'some_thing' => 'Что-то левое в контракте. Должно быть проигнорировано',
+
             'validators' => [
                 'required' => ['message' => 'Не указан каталог приложения'],
 
@@ -259,6 +261,7 @@ class FromValidationTest extends TestCase
 
             'base' => [
                 'validators' => [
+                    'expect_array' => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
                     'filter_var' => [
                         'filter'  => FILTER_CALLBACK,
                         'options' => [Validators::class, 'normalizeString'],
@@ -274,8 +277,8 @@ class FromValidationTest extends TestCase
 
         // Пример валидации массива однотипных значений. Запрос типа modules[]=aaa&modules[]=bbb
         'modules' => [
-            'expectArray' => true,
             'validators'  => [
+                'expect_array' => true,
                 'filter_var' => [
                     'filter'  => FILTER_CALLBACK,
                     'options' => [Validators::class, 'normalizeString'],

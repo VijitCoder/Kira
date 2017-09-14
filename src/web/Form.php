@@ -89,7 +89,7 @@ class Form
     {
         $result = [];
         foreach ($arr as $k => $v) {
-            if (in_array($k, ['expectArray', 'validators'])) {
+            if ($k == 'validators') {
                 continue;
             }
 

@@ -67,8 +67,11 @@ class FormValidator
             return;
         }
 
-        $expectArray = isset($contractPart['expectArray']) && $contractPart['expectArray'] == true;
-        if (!$this->checkDataType($data, $expectArray, $error)) {
+        if ($expectArray = isset($contractPart['validators']['expect_array'])) {
+            $expectArray = $contractPart['validators']['expect_array'] == true;
+            unset($contractPart['validators']['expect_array']);
+        }
+        if (!$this->checkDataTypeForArray($data, $expectArray, $error)) {
             return;
         }
 
@@ -89,12 +92,14 @@ class FormValidator
      *
      * Есть две ситуации: ждем массив или любой другой тип данных. Если ожидания не оправдались - ошибка валидации.
      *
+     * Прим: это особый вид валидатора, поэтому его вызов отличается от остальных Функций validator*()
+     *
      * @param mixed $data        проверяемые данные
      * @param bool  $expectArray ожидаем массив?
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    private function checkDataType(&$data, $expectArray, &$error)
+    private function checkDataTypeForArray(&$data, $expectArray, &$error)
     {
         $isArray = is_array($data);
         if ($expectArray && !$isArray) {
