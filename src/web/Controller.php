@@ -129,7 +129,7 @@ class Controller
             throw new \LogicException('Объект виджета не унаследован от ' . Widget::class . '. Это недопустимо.');
         }
         $result = $this->renderExternal($widget->getView(), $widget->getData(), $output);
-        if ($output) {
+        if (!$output) {
             return $result;
         }
     }
