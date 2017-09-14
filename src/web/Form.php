@@ -21,6 +21,12 @@ class Form
     protected $contract;
 
     /**
+     * Доступные поля формы. Кеш для магического геттера
+     * @var array|null
+     */
+    protected $availableFields = null;
+
+    /**
      * Объект класса с валидаторами формы. Создается один раз при первом вызове метода валидации.
      * @var FormValidator
      */
@@ -340,5 +346,45 @@ class Form
         }
 
         return $errors;
+    }
+
+    /**
+     * Геттер поля формы. Значение возращается из массива валидированных данных
+     * @param string $name имя поля формы
+     * @return mixed
+     * @throws FormException
+     */
+    public function __get($name)
+    {
+        if (in_array($name, $this->getAvailableFields())) {
+            return $this->getValues($name);
+        }
+        throw new FormException('Не найдено поле формы - ' . $name);
+    }
+
+    /**
+     * Сеттер поля формы. Значение устанавливается в массиве валидированных данных
+     * @param string $name имя поля формы
+     * @param mixed $value
+     * @throws FormException
+     */
+    public function __set($name, $value)
+    {
+        if (in_array($name, $this->getAvailableFields())) {
+            return $this->setValue([$name => $value]);
+        }
+        throw new FormException('Не найдено поле формы - ' . $name);
+    }
+
+    /**
+     * Получаем список доступных полей формы
+     * @return array
+     */
+    private function getAvailableFields(): array
+    {
+        if (is_null($this->availableFields)) {
+            $this->availableFields = array_keys($this->contract);
+        }
+        return $this->availableFields;
     }
 }
