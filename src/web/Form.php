@@ -103,7 +103,7 @@ class Form
      * @param array $data исходные данные
      * @return $this
      */
-    public function load(&$data)
+    public function load($data)
     {
         $this->rawData = Arrays::merge_recursive($this->rawData, $data);
 

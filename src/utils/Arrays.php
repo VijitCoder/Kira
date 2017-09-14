@@ -119,7 +119,7 @@ class Arrays
      *                              в конец, с новыми числовыми ключами.
      * @return array
      */
-    public static function merge_recursive(array &$array1, array &$array2, bool $numKeyAsString = false)
+    public static function merge_recursive(array $array1, array $array2, bool $numKeyAsString = false)
     {
         $merged = $array1;
 
@@ -175,7 +175,7 @@ class Arrays
      * @param mixed $chain массив ключей или один ключ
      * @return mixed
      */
-    public static function getValue(array &$arr, $chain)
+    public static function getValue(array $arr, $chain)
     {
         if (is_array($chain)) {
             $key = key($chain);
