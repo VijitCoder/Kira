@@ -205,7 +205,7 @@ class DbModel
     public function fetchValue(string $field)
     {
         $row = $this->getStatement()->fetch(\PDO::FETCH_ASSOC);
-        return $row[$field] ?? false;
+        return $row && array_key_exists($field, $row) ? $row[$field] : false;
     }
 
     /**
