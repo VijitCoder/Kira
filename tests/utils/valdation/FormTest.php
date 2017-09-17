@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use kira\web\Form;
+use kira\validation\Form;
 use kira\utils\Validators;
 use kira\utils\FS;
 use kira\utils\Arrays;
@@ -13,7 +13,7 @@ use kira\utils\Arrays;
  *
  * Прим: используемый контракт - это частичный копипаст из мастера приложения. Его модель формы, его кастомный валидатор.
  */
-class FromValidationTest extends TestCase
+class FromTest extends TestCase
 {
     /**
      * Объект формы

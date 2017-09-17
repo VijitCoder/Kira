@@ -1,0 +1,39 @@
+<?php
+namespace kira\validation\validators;
+
+use kira\exceptions\FormException;
+use kira\utils\Typecast;
+
+/**
+ * Валидатор проверяет значение как id: значение должно быть целым положительным числом.
+ *
+ * Название валидатора может быть 'expectId' или 'expect_id'.
+ */
+class ExpectId extends AbstractValidator
+{
+    /**
+     * Дефолтные параметры валидатора
+     * @var array
+     */
+    protected $options = [
+        'message' => 'Неверный id, должно быть целое положительное число',
+    ];
+
+    /**
+     * Валидатор проверяет значение как id: значение должно быть целым положительным числом.
+     * @param mixed $value проверяемое значение
+     * @return bool
+     * @throws FormException
+     */
+    public function validate($value)
+    {
+        $this->value = &$value;
+
+        $value = Typecast::int($value);
+        if (is_null($value) || $value < 0) {
+            $value = null;
+            return false;
+        }
+        return true;
+    }
+}

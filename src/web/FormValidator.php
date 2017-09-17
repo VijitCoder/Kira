@@ -188,9 +188,7 @@ class FormValidator
 
             if ($required) {
                 $this->isValid = false;
-                $error[] = isset($required['message'])
-                    ? $required['message']
-                    : App::t('Поле должно быть заполнено');
+                $error[] = $required['message'] ?? App::t('Поле должно быть заполнено');
             }
         } else {
             $value = $data;
@@ -205,8 +203,9 @@ class FormValidator
      * По заданному описанию вызывает php::filter_var(). Описание:
      * <pre>
      * $desc = [
-     *     'filter' => mixed,    // по правилам filter_var(). Обязательный элемент.
-     *     'options'  => array,  // по правилам filter_var(). По ситуации.
+     *     'filter'   => mixed,  // по правилам filter_var(). Обязательный элемент.
+     *     'options'  => array,  // опции по правилам filter_var(). По ситуации.
+     *     'flags'    => array,  // флаги по правилам filter_var(). По ситуации.
      *     'message'  => string, // свое сообщение об ошибке. Необязательно.
      * ];
      * </pre>
@@ -407,6 +406,30 @@ class FormValidator
         }
 
         return $passed;
+    }
+
+    /**
+     * Вспомогательный валидатор, проверяет значение как id: значение должно быть целым положительным числом.
+     * @param array|bool $desc  описание валидатора. Ожидаем массив или TRUE
+     * @param mixed      $data  проверяемые данные
+     * @param mixed      $value куда писать значение
+     * @param mixed      $error куда писать ошибку
+     * @return bool
+     * @throws FormException
+     */
+    protected function validatorExpect_id(&$desc, &$data, &$value, &$error)
+    {
+        if (!($desc === true || is_array($desc))) {
+            throw new FormException('Неправильное описание валидатора. Ожидаем массив или TRUE');
+        }
+
+        $defaultDesc = [
+            'filter'  => FILTER_VALIDATE_INT,
+            'options' => ['min_range' => 1],
+            'message' => 'Неверный id, должно быть целое положительное число',
+        ];
+        $desc = is_array($desc) ? array_merge($defaultDesc, $desc) : $defaultDesc;
+        return $this->validatorFilter_var($desc, $data, $value, $error);
     }
 
     /**

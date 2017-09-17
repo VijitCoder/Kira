@@ -5,6 +5,8 @@
  * Тут создаем все необходимое, чтобы тестируемые классы приложения могли работать, как ожидается. А вот верны ли
  * ожидания - как раз тесты и покажут.
  */
+use kira\core\App;
+
 mb_internal_encoding('UTF-8');
 
 define('KIRA_APP_NAMESPACE', 'app');
@@ -23,3 +25,5 @@ ini_set('display_startup_errors', (int)KIRA_DEBUG);
 error_reporting(KIRA_DEBUG ? E_ALL : 0);
 
 $composer = require KIRA_ROOT_PATH . 'vendor/autoload.php';
+App::setComposer($composer);
+unset($composer);
