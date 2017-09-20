@@ -1,12 +1,16 @@
 <phpunit bootstrap="bootstrap.php" colors="true" verbose="true" backupGlobals="false">
     <testsuites>
 
+        <testsuite name="Integration tests">
+            <directory suffix="Test.php">integration</directory>
+        </testsuite>
+
         <testsuite name="Utilities unit tests">
             <directory suffix="Test.php">utils</directory>
         </testsuite>
 
-        <testsuite name="Integration tests">
-            <directory suffix="Test.php">integration</directory>
+        <testsuite name="Validation unit tests">
+            <directory suffix="Test.php">validation</directory>
         </testsuite>
 
     </testsuites>
