@@ -90,7 +90,7 @@ class Form
      * Требуется обход всего дерева массивов, чтобы извлечь все имена полей с учетом из уровня вложенности.
      * В результате будет копия с массива контракта, содержащая только имена полей, но без каких-либо данных.
      *
-     * @param array $arr
+     * @param array $arr контракт или его часть
      * @return mixed
      */
     private function initialArray(array $arr)
@@ -133,9 +133,11 @@ class Form
             return false;
         }
 
-        foreach ($this->contract as $key => &$contractPart) {
-            $data = isset($this->rawData[$key]) ? $this->rawData[$key] : null;
-            $this->formValidator->internalValidate($contractPart, $data, $this->values[$key], $this->errors[$key]);
+        foreach ($this->contract as $key => $contractPart) {
+            if (isset($this->rawData[$key])) {
+                $this->values[$key] = $this->rawData[$key];
+            }
+            $this->formValidator->internalValidate($contractPart, $this->values[$key], $this->errors[$key]);
         }
 
         return $this->formValidator->isValid();

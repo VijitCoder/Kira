@@ -1,9 +1,6 @@
 <?php
 namespace kira\validation\validators;
 
-use kira\core\App;
-use kira\exceptions\FormException;
-
 /**
  * Проверка необходимого значения на существование
  *
@@ -13,39 +10,26 @@ use kira\exceptions\FormException;
 class Required extends AbstractValidator
 {
     /**
-     * Проверка необходимого значения на существование
+     * Дефолтные параметры валидатора
+     * @var array
+     */
+    protected $options = ['message' => 'Поле должно быть заполнено'];
+
+    /**
+     * Проверка необходимого значения на существование. Если валидатор умышленно отключен, тогда всегда считать проверку
+     * пройденной.
      *
-     * Если поле пустое, нет смысла его валидировать. При этом нужно проверить, задана ли в контакте его обязательность.
-     * Внутри функции пишем значение поля, возможно клиенту важно, какая именно пустота (строка, массив и т.д.).
-     * Пишем ошибку валидатора "required", если она есть.
+     * Не проверяем значение, как массив, т.к. этим занимается другой валидатор и он гарантирует здесь только
+     * скалярное значение.
      *
-     * Прим: разделение логики этого метода повлечет за собой сильное усложнение основного метода валидации.
+     * Прим: нельзя для проверки использовать php::empty(), т.к. "0", 0 и 0.0 - это допустимые значения.
      *
-     * @param mixed $desc  описание валидатора. Ожидаем массив или TRUE
-     * @param mixed $data  проверяемые данные
-     * @param mixed $value куда писать значение
-     * @param mixed $error куда писать ошибку
+     * @param mixed $value проверяемое значение
      * @return bool
      */
-    public function validate(&$desc, &$data, &$value, &$error)
+    public function validate($value)
     {
-        if (!($desc === true || is_array($desc))) {
-            throw new FormException('Неправильное описание валидатора. Ожидаем массив или TRUE');
-        }
-
-        $passed = !empty($data);
-
-        if (!$passed) {
-            $value = $data;
-
-            if ($desc) {
-                $this->isValid = false;
-                $error[] = isset($desc['message']) ? App::t($desc['message']) : App::t('Поле должно быть заполнено');
-            }
-        } else {
-            $value = $data;
-        }
-
-        return $passed;
+        $this->value = $value;
+        return !$this->options || !is_null($value) && preg_match('/.{1,}/', $value);
     }
 }

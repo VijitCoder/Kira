@@ -70,16 +70,16 @@ class FromValidatorTest extends TestCase
 
         $formValidator = new FormValidator($factory);
 
-        $rawData = 18;
+        $value = 18;
+        $error = null;
         $validators = [
             'required'      => true,
             'bounds'        => [],
             'will_not_call' => true, // допустим, это какой-то валидатор, который уже не будет вызван
             'expect_id'     => true, // и этот тоже
         ];
-        $value = $error = null;
 
-        $isPassed = $this->callMethod($formValidator, 'fireValidators', [$validators, $rawData, &$value, &$error]);
+        $isPassed = $this->callMethod($formValidator, 'fireValidators', [$validators, &$value, &$error]);
 
         $this->assertEquals(20, $value, 'Последнее валидное значение совпадает с ожиданием');
         $this->assertFalse($isPassed);
@@ -104,14 +104,6 @@ class FromValidatorTest extends TestCase
 
         $formValidator = new FormValidator($factory);
 
-        $rawData = [
-            'field1'     => 30,
-            'fields-set' => [
-                'c1' => 12,
-                'c3' => 2,
-            ],
-        ];
-
         $contract = [
             'field1'     => [
                 'validators' => [
@@ -128,8 +120,16 @@ class FromValidatorTest extends TestCase
             ],
         ];
 
-        $value = $error = null;
-        $formValidator->internalValidate($contract, $rawData, $value, $error);
+        $value = [
+            'field1'     => 30,
+            'fields-set' => [
+                'c1' => 12,
+                'c3' => 2,
+            ],
+        ];
+
+        $error = null;
+        $formValidator->internalValidate($contract, $value, $error);
 
         $expect = [
             'field1'     => 33,

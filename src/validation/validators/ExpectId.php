@@ -1,7 +1,6 @@
 <?php
 namespace kira\validation\validators;
 
-use kira\exceptions\FormException;
 use kira\utils\Typecast;
 
 /**
@@ -15,16 +14,13 @@ class ExpectId extends AbstractValidator
      * Дефолтные параметры валидатора
      * @var array
      */
-    protected $options = [
-        'message' => 'Неверный id, должно быть целое положительное число',
-    ];
+    protected $options = ['message' => 'Неверный id, должно быть целое положительное число'];
 
     /**
      * Валидатор проверяет значение как id: значение должно быть целым положительным числом. Преобразованное значение
      * сохраняется в свойстве валидатора.
      * @param mixed $value проверяемое значение
      * @return bool
-     * @throws FormException
      */
     public function validate($value)
     {

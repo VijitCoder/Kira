@@ -19,7 +19,7 @@ use kira\validation\validators\AbstractValidator;
 class FormValidator
 {
     /**
-     * Флаг результата валидации, успешно или нет
+     * Флаг результата валидации, успешно или нет. По умолчанию - TRUE, но любая проваленная проверка изменит значение.
      * @var bool
      */
     protected $isValid = true;
@@ -53,35 +53,35 @@ class FormValidator
      * Узел может быть равен нулю, только если он конечный и в контракте заявлено принять поле "как есть". Тогда пишем
      * полученные данные без валидации и выходим.
      *
+     * Проверяемое значение может быть преобразовано в любом валидаторе и в таком виде будет передаваться дальше.
+     *
      * Если узел не конечный (является веткой), тогда в нем не может быть валидаторов, есть только дочерний массив
      * узлов. Для каждого такого узла рекурсивно вызываем этот же метод.
      *
      * @param array|null $contractPart описательная часть контракта по конкретному узлу
-     * @param mixed      $data         проверяемые данные. Соответствуют узлу в массиве {@see Form::$rawData}
-     * @param mixed      $value        куда писать валидированное значение. Соответствует узлу в {@see Form::$values}
+     * @param mixed      $value        проверяемое значение. Соответствует узлу в {@see Form::$values}
      * @param mixed      $error        куда писать ошибку. Соответствует узлу в {@see Form::$errors}
      * @throws FormException через магический FormValidator::__call()
      */
-    public function internalValidate(&$contractPart, &$data, &$value, &$error)
+    public function internalValidate($contractPart, &$value, &$error)
     {
         if (!$contractPart) {
-            $value = $data;
             return;
         }
 
         if (!isset($contractPart['validators'])) {
             foreach ($contractPart as $k => $cp) {
-                $d = isset($data[$k]) ? $data[$k] : null;
-                $this->internalValidate($cp, $d, $value[$k], $error[$k]);
+                $this->internalValidate($cp, $value[$k], $error[$k]);
             }
             return;
         }
 
         if ($expectArray = isset($contractPart['validators']['expect_array'])) {
-            $expectArray = $contractPart['validators']['expect_array'] == true;
+            $expectArray = (bool)$contractPart['validators']['expect_array'];
             unset($contractPart['validators']['expect_array']);
         }
-        if (!$this->checkDataTypeForArray($data, $expectArray, $error)) {
+        if (!$this->checkDataTypeForArray($expectArray, $value, $error)) {
+            $this->isValid = false;
             return;
         }
 
@@ -89,11 +89,11 @@ class FormValidator
         $this->popupRequired($validators);
 
         if ($expectArray) {
-            foreach ($data as $k => $d) {
-                $this->isValid = $this->fireValidators($validators, $d, $value[$k], $error[$k]) && $this->isValid;
+            foreach (array_keys($value) as $k) {
+                $this->isValid = $this->fireValidators($validators, $value[$k], $error[$k]) && $this->isValid;
             }
         } else {
-            $this->isValid = $this->fireValidators($validators, $data, $value, $error) && $this->isValid;
+            $this->isValid = $this->fireValidators($validators, $value, $error) && $this->isValid;
         }
     }
 
@@ -102,26 +102,25 @@ class FormValidator
      *
      * Есть две ситуации: ждем массив или любой другой тип данных. Если ожидания не оправдались - ошибка валидации.
      *
-     * Прим: это особый вид валидатора, поэтому его вызов отличается от остальных Функций validator*()
+     * Прим: это особый вид валидатора, поэтому его вызов отличается от остальных классов-валидаторов.
      *
-     * @param mixed $data        проверяемые данные
      * @param bool  $expectArray ожидаем массив?
+     * @param mixed $value       проверяемые данные
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    private function checkDataTypeForArray(&$data, bool $expectArray, &$error): bool
+    private function checkDataTypeForArray(bool $expectArray, &$value, &$error): bool
     {
-        $isArray = is_array($data);
+        $passed = true;
+        $isArray = is_array($value);
         if ($expectArray && !$isArray) {
-            $this->isValid = false;
-            $error[] = App::t('По контракту ожидаем массив данных. Получили :type.', [':type' => gettype($data)]);
-            return false;
+            $error[] = App::t('Ожидаем массив данных. Получили :type.', [':type' => gettype($value)]);
+            $passed = false;
         } elseif (!$expectArray && $isArray) {
-            $this->isValid = false;
-            $error[] = App::t('Данные в массиве. В контракте не заявлено.');
-            return false;
+            $error[] = App::t('Значение - массив, но ожидаем скалярный тип данных.');
+            $passed = false;
         }
-        return true;
+        return $passed;
     }
 
     /**
@@ -152,26 +151,31 @@ class FormValidator
      * Последовательный вызов всех заявленных валидаторов для конкретного значения
      *
      * Каждый последующий валидатор должен работать с данными, обработанными предыдущим. Если какой-то валидатор
-     * забракует значение, прерываем проверки.
+     * забракует значение, прерываем проверки, а в $value останется значение в последнем успешном состоянии.
+     *
+     * Если значение отсутствует (NULL), но оно необязательное, нет смысла вызывать для него валидаторы, оно должно
+     * восприниматься, как правильное.
      *
      * @param array $validators валидаторы данных
-     * @param mixed $data       проверяемые данные
-     * @param mixed $value      куда писать значение
+     * @param mixed $value      проверяемые данные
      * @param mixed $error      куда писать ошибку
      * @return bool
      */
-    private function fireValidators(array $validators, $data, &$value, &$error): bool
+    private function fireValidators(array $validators, &$value, &$error): bool
     {
         $passed = true;
         foreach ($validators as $name => $options) {
+            if ($name != 'required' && is_null($value)) {
+                break;
+            }
+
             $validator = $this->getValidator($name, $options);
 
-            if (!$passed = $validator->validate($data)) {
+            if (!$passed = $validator->validate($value)) {
                 $error[] = $validator->error;
                 break;
             }
 
-            $data =
             $value = $validator->value;
         }
         return $passed;
