@@ -79,24 +79,37 @@ class StringCase
     }
 
     /**
-     * Замена любых проблельных символов на подчеркивание
+     * Замена любых не буквенно-числовых символов на подчеркивание
      * some string > some_string
      * @param string $str
      * @return string
      */
     public static function toSnake(string $str): string
     {
-        return preg_replace('\s', '_', $str);
+        return preg_replace(self::getPatternForReplace(), '_', $str);
     }
 
     /**
-     * Замена любых проблельных символов на дефис
+     * Замена любых не буквенно-числовых символов на дефис
      * some string > some-string
      * @param string $str
      * @return string
      */
     public static function toKebab(string $str): string
     {
-        return preg_replace('\s', '-', $str);
+        return preg_replace(self::getPatternForReplace(), '-', $str);
+    }
+
+    /**
+     * Регулярка для замены символов на заданный кейс
+     *
+     * Не заменять только латинские буквы и цифры. Последовательность неподходящих символов заменять на один символ
+     * кейса.
+     *
+     * @return string
+     */
+    private static function getPatternForReplace(): string
+    {
+        return '/[^a-z0-9]+/i';
     }
 }

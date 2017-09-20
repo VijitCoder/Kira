@@ -20,20 +20,16 @@ class ExpectId extends AbstractValidator
     ];
 
     /**
-     * Валидатор проверяет значение как id: значение должно быть целым положительным числом.
+     * Валидатор проверяет значение как id: значение должно быть целым положительным числом. Преобразованное значение
+     * сохраняется в свойстве валидатора.
      * @param mixed $value проверяемое значение
      * @return bool
      * @throws FormException
      */
     public function validate($value)
     {
-        $this->value = &$value;
-
         $value = Typecast::int($value);
-        if (is_null($value) || $value < 0) {
-            $value = null;
-            return false;
-        }
-        return true;
+        $this->value = $value;
+        return !is_null($value) && $value >= 0;
     }
 }

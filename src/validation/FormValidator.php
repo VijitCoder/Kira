@@ -3,12 +3,14 @@ namespace kira\validation;
 
 use kira\core\App;
 use kira\exceptions\FormException;
-use kira\utils\StringCase;
 use kira\validation\validators\AbstractValidator;
 
 /**
- * Служебный класс для модели формы. Содержит только методы валидации. Готовые данные и ошибки передаются в клиентский
- * класс и тут не хранятся.
+ * Служебный класс для модели формы
+ *
+ * Это вспомогательный класс, который отвечает за сам процесс вызова валидаторов в правильной последовательности, сбор
+ * результатов, останов валидации конкретного поля, если оно будет забраковано каким-то валидатором в цепи проверки.
+ * Готовые данные и ошибки передаются в клиентский класс и тут не хранятся.
  *
  * См. документацию, "Модель формы"
  *
@@ -23,10 +25,25 @@ class FormValidator
     protected $isValid = true;
 
     /**
+     * Фабрика для получения классов валидаторов
+     * @var ValidationFactory
+     */
+    private $factory;
+
+    /**
      * Экземпляры инстациированных валидаторов. Внутренний кеш класса
-     * @var array [md5() настроек валидатора => объект валидатора]
+     * @var array [название валидатора + md5() его настроек => объект валидатора]
      */
     private $validatorsInstances = [];
+
+    /**
+     * Внедряем зависимость от фабрики валидаторов
+     * @param IValidationFactory $factory реализация интерфейса фабрики
+     */
+    public function __construct(IValidationFactory $factory)
+    {
+        $this->factory = $factory;
+    }
 
     /**
      * Валидация одного узла дерева контракта. Рекурсия.
@@ -73,10 +90,10 @@ class FormValidator
 
         if ($expectArray) {
             foreach ($data as $k => $d) {
-                $this->fireValidators($validators, $d, $value[$k], $error[$k]);
+                $this->isValid = $this->fireValidators($validators, $d, $value[$k], $error[$k]) && $this->isValid;
             }
         } else {
-            $this->fireValidators($validators, $data, $value, $error);
+            $this->isValid = $this->fireValidators($validators, $data, $value, $error) && $this->isValid;
         }
     }
 
@@ -92,7 +109,7 @@ class FormValidator
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    private function checkDataTypeForArray(&$data, $expectArray, &$error)
+    private function checkDataTypeForArray(&$data, bool $expectArray, &$error): bool
     {
         $isArray = is_array($data);
         if ($expectArray && !$isArray) {
@@ -117,14 +134,14 @@ class FormValidator
      *
      * @param array $validators
      */
-    private function popupRequired(&$validators)
+    private function popupRequired(array &$validators)
     {
         if (isset($validators['required'])) {
             if (key($validators) !== 'required') {
-                $tmp = ['required' => $validators['required']];
+                $atFirstPlace = ['required' => $validators['required']];
                 unset($validators['required']);
-                $validators = array_merge($tmp, $validators);
-                unset($tmp);
+                $validators = array_merge($atFirstPlace, $validators);
+                unset($atFirstPlace);
             }
         } else {
             $validators = array_merge(['required' => false], $validators);
@@ -141,24 +158,23 @@ class FormValidator
      * @param mixed $data       проверяемые данные
      * @param mixed $value      куда писать значение
      * @param mixed $error      куда писать ошибку
+     * @return bool
      */
-    private function fireValidators(&$validators, &$data, &$value, &$error)
+    private function fireValidators(array $validators, $data, &$value, &$error): bool
     {
-        $newData = $data;
+        $passed = true;
         foreach ($validators as $name => $options) {
             $validator = $this->getValidator($name, $options);
 
-            if (!$passed = $validator->validate($newData)) {
+            if (!$passed = $validator->validate($data)) {
                 $error[] = $validator->error;
-            }
-            $value = $validator->value;
-
-            if (!$passed) {
                 break;
             }
 
-            $newData = $value;
+            $data =
+            $value = $validator->value;
         }
+        return $passed;
     }
 
     /**
@@ -175,7 +191,7 @@ class FormValidator
             return $this->validatorsInstances[$cacheKey];
         }
 
-        $validator = ValidationFactory::makeValidator($name, $options);
+        $validator = $this->factory->makeValidator($name, $options);
         if (is_null($validator)) {
             throw new FormException("Не найден класс валидатора для '{$name}'" . PHP_EOL
                 . 'Проверьте правильность контракта формы.');
@@ -190,7 +206,7 @@ class FormValidator
      * Результат проведенной валидации. Геттер.
      * @return bool
      */
-    public function isValid()
+    public function isValid(): bool
     {
         return $this->isValid;
     }

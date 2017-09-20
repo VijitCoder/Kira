@@ -8,7 +8,7 @@ use kira\exceptions\FormException;
 /**
  * Супер-класс моделей форм (валидации форм).
  *
- * Класс хранит сырые данные с формы и проверенные данные, контроллирует процесс валидации, хранит ошибки.
+ * Класс хранит сырые данные с формы и проверенные данные, инициирует процесс валидации, хранит ошибки.
  *
  * См. документацию, "Модель формы"
  */
@@ -49,13 +49,13 @@ class Form
      * Данные с формы. По умолчанию массив заполнен ключами, но без данных.
      * @var array
      */
-    protected $rawData;
+    protected $rawData = [];
 
     /**
      * Данные с формы после очередного валидатора. По умолчанию массив заполнен ключами, но без данных.
      * @var array
      */
-    protected $values;
+    protected $values = [];
 
     /**
      * Ошибки валидации
@@ -64,7 +64,7 @@ class Form
      * там всего одно сообщение. Это необходимо для единообразия: клиентский код всегда может расчитывать на массив.
      * @var array
      */
-    protected $errors;
+    protected $errors = [];
 
     /**
      * Перегружаем дефолтный контракт создаваемой модели, если он передан в параметре. Инициализируем массивы для данных
@@ -80,6 +80,8 @@ class Form
         $this->rawData =
         $this->errors =
         $this->values = $this->initialArray($this->contract);
+
+        $this->formValidator = new FormValidator(new ValidationFactory);
     }
 
     /**
@@ -91,7 +93,7 @@ class Form
      * @param array $arr
      * @return mixed
      */
-    private function initialArray($arr)
+    private function initialArray(array $arr)
     {
         $result = [];
         foreach ($arr as $k => $v) {
@@ -109,7 +111,7 @@ class Form
      * @param array $data исходные данные
      * @return $this
      */
-    public function load($data)
+    public function load(array $data)
     {
         $this->rawData = Arrays::merge_recursive($this->rawData, $data);
 
@@ -119,16 +121,12 @@ class Form
     /**
      * Валидация. Рекурсивный обход контракта
      * @return bool
-     * @throws FormException из checkСsrfToken()
+     * @throws FormException из checkСsrfToken() и валидаторов
      */
-    public function validate()
+    public function validate(): bool
     {
         if (!$this->checkСsrfToken()) {
             return false;
-        }
-
-        if (!$this->formValidator) {
-            $this->formValidator = new FormValidator;
         }
 
         if (!$this->rawData) {
@@ -148,11 +146,11 @@ class Form
      *
      * Если поле с токеном не задано, не выполнять проверку. Если не пройдет проверку, пробрасываем исключение.
      *
-     * @return true
+     * @return bool
      * @throws FormException
      * @throws FormException с кодом 400, если токен неверный
      */
-    private function checkСsrfToken()
+    private function checkСsrfToken(): bool
     {
         if (!$this->csrfField) {
             return true;
@@ -196,7 +194,7 @@ class Form
      *
      * @param array $value ключ => начение
      */
-    public function setValue($value)
+    public function setValue(array $value)
     {
         $this->values = Arrays::merge_recursive($this->values, $value);
     }
@@ -209,12 +207,17 @@ class Form
      *
      * @return bool
      */
-    public function hasErrors()
+    public function hasErrors(): bool
     {
         return $this->internalHasErrors($this->errors);
     }
 
-    private function internalHasErrors($errors)
+    /**
+     * Проверка наличия ошибок. Рекурсивный обход всего дерева ошибок, отражающего контракт формы.
+     * @param array $errors
+     * @return bool
+     */
+    private function internalHasErrors(array $errors): bool
     {
         foreach ($errors as $k => $v) {
             if (is_string($k) && is_array($v)) {
@@ -239,7 +242,7 @@ class Form
      *
      * @param array $message ключ => сообщение
      */
-    public function addError($message)
+    public function addError(array $message)
     {
         $key = key($message);
         $this->internalAddError($this->errors[$key], $message[$key]);
@@ -299,7 +302,7 @@ class Form
      * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array [поле => массив ошибок]
      */
-    public function getErrors($key = null)
+    public function getErrors($key = null): array
     {
         return $this->getData($this->errors, $key);
     }
@@ -335,7 +338,7 @@ class Form
      * @param string $eol  клей между соседними подмассивами
      * @return array
      */
-    public function getErrorsAsString($key = null, $glue = ' ', $eol = '')
+    public function getErrorsAsString($key = null, string $glue = ' ', string $eol = ''): array
     {
         $errors = $this->getErrors($key);
 
@@ -354,7 +357,7 @@ class Form
      * @return mixed
      * @throws FormException
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         if (in_array($name, $this->getAvailableFields())) {
             return $this->getValues($name);
@@ -368,7 +371,7 @@ class Form
      * @param mixed $value
      * @throws FormException
      */
-    public function __set($name, $value)
+    public function __set(string $name, $value)
     {
         if (in_array($name, $this->getAvailableFields())) {
             return $this->setValue([$name => $value]);
