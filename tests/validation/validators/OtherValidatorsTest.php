@@ -49,13 +49,25 @@ class OtherValidatorsTest extends TestCase
         $this->assertTrue($validator->validate(0.0));
         $this->assertTrue($validator->validate('0'));
 
-        $this->assertFalse($validator->validate(null));
-        $this->assertFalse($validator->validate(''));
-
         // Отключаем валидатор. Тогда проверка должна быть всегда пройдена.
         $validator = new validators\Required(false);
 
         $this->assertTrue($validator->validate('0'));
         $this->assertTrue($validator->validate(null));
+    }
+
+    public function test_password()
+    {
+        $validator = new validators\Password([
+            'min_length' => 6,
+            'min_combination' => 4,
+            'glue' => ' | '
+        ]);
+
+        $this->assertTrue($validator->validate('`12Qwe'));
+
+        $this->assertFalse($validator->validate('`1 q'));
+        $errors = explode(' | ', $validator->error);
+        $this->assertEquals(3, count($errors));
     }
 }

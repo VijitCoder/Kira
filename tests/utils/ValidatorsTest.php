@@ -7,16 +7,6 @@ use kira\utils\Validators;
  */
 class ValidatorsTest extends TestCase
 {
-    public function test_password()
-    {
-        $result = Validators::password('`12Qwe', ['min_len' => 6, 'min_comb' => 4]);
-        $this->assertEquals(['value' => '`12Qwe'], $result, 'Валидный пароль');
-
-        $result = Validators::password('`1 q', ['min_len' => 6, 'min_comb' => 4]);
-        $this->assertArrayHasKey('error', $result, 'Есть ошибки');
-        $this->assertEquals(3, count($result['error']), 'Все ошибки сразу');
-    }
-
     public function test_mail()
     {
         $options = ['black_servers' => ['server.com',]];
