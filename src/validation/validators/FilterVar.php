@@ -20,10 +20,10 @@ use kira\exceptions\FormException;
 class FilterVar extends AbstractValidator
 {
     /**
-     * Дефолтные параметры валидатора
-     * @var array
+     * Сообщение об ошибке валидации
+     * @var string
      */
-    protected $options = ['message' => 'Ошибка валидации поля'];
+    protected $error = 'Ошибка валидации поля';
 
     /**
      * Проверяем необходимые настройки валидатора

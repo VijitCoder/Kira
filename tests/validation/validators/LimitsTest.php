@@ -69,7 +69,6 @@ class LimitsTest extends TestCase
         $this->assertFalse($validator->validate(12));
 
         // Валидация границ с такими настройками не имеет смысла, но не должна падать.
-        $this->assertTrue((new Limits(false))->validate(234));
         $this->assertTrue((new Limits)->validate(100500));
     }
 

@@ -44,7 +44,7 @@ class External extends AbstractValidator
      */
     public function validate($value)
     {
-        $validatorOptions = &$this->options;
+        $validatorOptions = $this->options;
 
         $function = $validatorOptions['function'];
         $options = $validatorOptions['options'] ?? [];
@@ -53,8 +53,8 @@ class External extends AbstractValidator
 
         if (isset($result['error'])) {
             $passed = false;
-            if (!$validatorOptions['message']) {
-                $validatorOptions['message'] = $result['error'];
+            if (!$this->error) {
+                $this->error = $result['error'];
             }
         } else if (isset($result['value'])) {
             $passed = true;

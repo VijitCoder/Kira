@@ -93,7 +93,7 @@ class Password extends AbstractValidator
         }
 
         if ($errors) {
-            $this->options['message'] = implode($this->options['glue'], $errors);
+            $this->error = implode($this->options['glue'], $errors);
             return false;
         }
 

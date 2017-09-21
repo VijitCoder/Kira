@@ -52,12 +52,12 @@ class Limits extends AbstractValidator
      * зато позволяет обобщить код.
      *
      * @param mixed $options
+     * @throws FormException
      */
     public function __construct($options = [])
     {
         if (!is_array($options)) {
-            $this->options = false;
-            return;
+            throw new FormException('Неправильно описаны настройки валидатора. Ожидается только массив.');
         }
 
         $options['min'] = isset($options['min']) ? (float)$options['min'] : null;
@@ -109,10 +109,6 @@ class Limits extends AbstractValidator
     {
         $this->value = $value;
 
-        if ($this->options === false) {
-            return true;
-        }
-
         if (is_string($value)) {
             $value = mb_strlen(strval($value));
             $messageSet = $this->messageLibrary[self::TYPE_STRING];
@@ -129,10 +125,10 @@ class Limits extends AbstractValidator
         $passed = true;
         if (!is_null($min) && $value < $min) {
             $passed = false;
-            $this->options['message'] = $messageSet['min'];
+            $this->error = $messageSet['min'];
         } else if (!is_null($max) && $value > $max) {
             $passed = false;
-            $this->options['message'] = $messageSet['max'];
+            $this->error = $messageSet['max'];
         }
 
         return $passed;

@@ -10,10 +10,24 @@ namespace kira\validation\validators;
 class Required extends AbstractValidator
 {
     /**
-     * Дефолтные параметры валидатора
-     * @var array
+     * Сообщение об ошибке валидации
+     * @var string
      */
-    protected $options = ['message' => 'Поле должно быть заполнено'];
+    protected $error = 'Поле должно быть заполнено';
+
+    /**
+     * Единственный валидатор, который может быть выключен через настройки (options = FALSE). Нужно корректно обработать
+     * ситуацию, т.к. родительский класс не допускает такое состояние.
+     * @param array $options
+     */
+    public function __construct($options = [])
+    {
+        if ($isRequired = (bool)$options) {
+            parent::__construct($options);
+        } else {
+            $this->options = false;
+        }
+    }
 
     /**
      * Проверка необходимого значения на существование. Если валидатор умышленно отключен, тогда всегда считать проверку

@@ -30,6 +30,12 @@ abstract class AbstractValidator
     protected $value;
 
     /**
+     * Сообщение об ошибке валидации. Кастомное значение задается через $options['message']
+     * @var string
+     */
+    protected $error;
+
+    /**
      * Запоминаем настройки валидатора
      *
      * Если в настройках есть сообщение, используемое при ошибке валидации, прогоняем его через переводчик. Сообщение
@@ -40,19 +46,21 @@ abstract class AbstractValidator
      */
     public function __construct($options = [])
     {
-        if (!(is_bool($options) || is_array($options))) {
-            throw new FormException(
-                'Неправильно описаны настройки валидатора. Ожидается либо булевое значение, либо массив.');
-        };
-
         if ($options === true) {
             $options = [];
         }
 
-        if (is_array($options)) {
-            $options = array_merge($this->options, $options);
-            $options['message'] = isset($options['message']) ? App::t($options['message']) : '';
+        if (!is_array($options)) {
+            throw new FormException(
+                'Неправильно описаны настройки валидатора. Ожидается либо массив, либо TRUE.');
+        };
+
+        $options = array_merge($this->options, $options);
+        if (isset($options['message'])) {
+            $this->error = $options['message'];
         }
+        $this->error = App::t($this->error);
+
         $this->options = $options;
     }
 
@@ -65,36 +73,13 @@ abstract class AbstractValidator
     public function __get(string $name)
     {
         if ($name == 'error') {
-            return $this->getErrorMessage();
+            return $this->error;
         } else if ($name == 'value') {
             return $this->value;
         } else {
             throw new FormException('Неизвестное свойство класса валидатора - ' . $name);
         }
 
-    }
-
-    /**
-     * Получение валидированного значения
-     * @return mixed
-     */
-    public function getValidatedValue()
-    {
-        return $this->value;
-    }
-
-    /**
-     * Получение сообщения об ошибке
-     *
-     * Прим: это сообщение вычисляется при создании объекта валидатора, т.е. еще до проверки. Поэтому нельзя
-     * использовать вызов этого метода для выяснения, как прошла валидация. Более того, сообщение может быть пустым,
-     * зависит от настроек валидатора.
-     *
-     * @return string
-     */
-    public function getErrorMessage(): string
-    {
-        return $this->options ? $this->options['message'] : '';
     }
 
     /**
