@@ -18,3 +18,14 @@ if (!function_exists('dd')) {
         }
     }
 }
+
+if (!function_exists('dde')) {
+    /**
+     * Shortcut: дамп переменных и выход из приложения
+     */
+    function dde()
+    {
+        call_user_func_array('dd', func_get_args());
+        exit;
+    }
+}
