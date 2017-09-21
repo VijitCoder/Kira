@@ -56,7 +56,7 @@ class Limits extends AbstractValidator
     public function __construct($options = [])
     {
         if (!is_array($options)) {
-            $this->options = null;
+            $this->options = false;
             return;
         }
 
@@ -107,7 +107,9 @@ class Limits extends AbstractValidator
      */
     public function validate($value)
     {
-        if (is_null($this->options)) {
+        $this->value = $value;
+
+        if ($this->options === false) {
             return true;
         }
 

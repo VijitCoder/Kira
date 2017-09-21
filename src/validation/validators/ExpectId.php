@@ -24,6 +24,10 @@ class ExpectId extends AbstractValidator
      */
     public function validate($value)
     {
+        if ($this->options === false) {
+            $this->value = $value;
+            return true;
+        }
         $value = Typecast::int($value);
         $this->value = $value;
         return !is_null($value) && $value >= 0;

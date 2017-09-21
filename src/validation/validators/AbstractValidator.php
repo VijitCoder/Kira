@@ -36,12 +36,19 @@ abstract class AbstractValidator
      * может быть задано в классе валидатора (дефолтное) или установлено при указании валидатора в контакте (кастомное).
      *
      * @param mixed $options настройки валидатора
+     * @throws FormException
      */
     public function __construct($options = [])
     {
+        if (!(is_bool($options) || is_array($options))) {
+            throw new FormException(
+                'Неправильно описаны настройки валидатора. Ожидается либо булевое значение, либо массив.');
+        };
+
         if ($options === true) {
             $options = [];
         }
+
         if (is_array($options)) {
             $options = array_merge($this->options, $options);
             $options['message'] = isset($options['message']) ? App::t($options['message']) : '';

@@ -18,7 +18,7 @@ class Form
      * Контракт. Описание полей и правил валидации
      * @var array
      */
-    protected $contract;
+    protected static $contract;
 
     /**
      * Доступные поля формы. Кеш для магического геттера
