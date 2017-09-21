@@ -19,11 +19,11 @@ class ArraysTest extends TestCase
 
         $result = Arrays::arrObject($arr);
 
-        $this->assertCount(2, $result, 'Корневой массив сохранил количество элементов');
-        $this->assertInstanceOf(\ArrayObject::class, $result[0], 'Ассоциативный массив превращен в объект');
-        $this->assertArraySubset([1 => [14, 46, 63]], $result, 'Неассоциативный массив не изменился');
-        $this->assertObjectHasAttribute('prop1', $result[0], 'Найдено свойство "prop1"');
-        $this->assertEquals($result[0]->prop1, 234, 'prop1 равно ожидаемому значению');
+        $this->assertCount(2, $result, 'Корневой массив не сохранил количество элементов');
+        $this->assertInstanceOf(\ArrayObject::class, $result[0], 'Ассоциативный массив не превращен в объект');
+        $this->assertArraySubset([1 => [14, 46, 63]], $result, 'Неассоциативный массив изменился');
+        $this->assertObjectHasAttribute('prop1', $result[0], 'Не найдено свойство "prop1"');
+        $this->assertEquals($result[0]->prop1, 234, 'prop1 не равно ожидаемому значению');
     }
 
     /**
@@ -45,7 +45,7 @@ class ArraysTest extends TestCase
             [15, 16],
             3 => ['stay', 2 => 'stay1'],
         ];
-        $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация пустых значений в массиве');
+        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация пустых значений в массиве');
     }
 
     /**
@@ -75,7 +75,7 @@ class ArraysTest extends TestCase
             3 => [19],
         ];
 
-        $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация значений массива через callback-функцию');
+        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация значений массива через callback-функцию');
     }
 
     /**
@@ -103,7 +103,7 @@ class ArraysTest extends TestCase
             1 => [1 => 16, 3 => 18],
         ];
 
-        $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация ключей массива через callback-функцию');
+        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация ключей массива через callback-функцию');
     }
 
     /**
@@ -141,7 +141,8 @@ class ArraysTest extends TestCase
             3 => [19],
         ];
 
-        $this->assertEquals($expect, $arr, 'Рекурсивная фильтрация ключей и значений массива через callback-функцию');
+        $this->assertEquals($expect, $arr,
+            'Не верная рекурсивная фильтрация ключей и значений массива через callback-функцию');
     }
 
     public function test_merge_recursive()
@@ -177,7 +178,7 @@ class ArraysTest extends TestCase
             'key4' => 'unique value',
         ];
 
-        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Не сохраняем числовые ключи.');
+        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Числовые ключи не сбросились.');
 
         $arr = Arrays::merge_recursive($arr1, $arr2, true);
         $expect = [
@@ -195,7 +196,7 @@ class ArraysTest extends TestCase
             ],
             'key4' => 'unique value',
         ];
-        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Сохраняем числовые ключи.');
+        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Не сохранились числовые ключи.');
     }
 
     public function test_implode_recursive()
@@ -208,14 +209,14 @@ class ArraysTest extends TestCase
 
         $expect = Arrays::implode_recursive($arr, ' + ', ' rn ');
         $this->assertEquals($expect, 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5',
-            'Слияние многомерного массива в строку');
+            'Ошибка слияния многомерного массива в строку');
     }
 
     public function test_getValue()
     {
         $arr = ['path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],];
         $expect = Arrays::getValue($arr, ['path' => ['app' => 'level2']]);
-        $this->assertEquals($expect, '/www', 'Получение значения массива по заданной цепочке ключей');
+        $this->assertEquals($expect, '/www', 'Получено неверное значение массива по заданной цепочке ключей');
     }
 
     /**
@@ -283,7 +284,7 @@ class ArraysTest extends TestCase
 
         $tree = Arrays::buildTree($source);
 
-        $this->assertEquals($expect, $tree, 'Иерахический массив');
+        $this->assertEquals($expect, $tree, 'Ошибка построения иерахического массива');
     }
 
     /**
@@ -336,7 +337,7 @@ class ArraysTest extends TestCase
 
         $tree = Arrays::buildTree($array, $getParentId);
 
-        $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию');
+        $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию получен неправильно');
     }
 
     /**
@@ -351,17 +352,17 @@ class ArraysTest extends TestCase
         ];
 
         $value = Arrays::value_extract($array, 'two');
-        $this->assertEquals('два', $value, 'Извлеченное значение массива');
+        $this->assertEquals('два', $value, 'Извлечено неверное значение массива');
         $this->assertEquals(
             [
                 'one'   => 'раз',
                 'three' => 'три',
             ],
             $array,
-            'Массив без извлеченного значения'
+            'Массив без извлеченного значения не соответствует ожиданиям'
         );
 
         $notExistValue =  Arrays::value_extract($array, 'four');
-        $this->assertNull($notExistValue, 'Попытка добыть несуществующий элемент');
+        $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
 }

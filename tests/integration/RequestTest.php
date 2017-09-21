@@ -34,35 +34,40 @@ class RequestTest extends TestCase
         // показать, что именно ожидаем.
 
         // Просто получение значений, без приведения к типу
-        $this->assertEquals($_POST, Request::post(), 'Вообще все значения');
-        $this->assertEquals($arrValue, Request::post('deep'), 'Значение-массив, без приведения к типу');
-        $this->assertEquals('', Request::post('empty', 'этого теста не будет'), 'Пустая строка не есть NULL');
-        $this->assertEquals(null, Request::post('nop'), 'Не найдено значение');
-        $this->assertEquals('200', Request::post('nop', '200'), 'Не найдено значение, есть дефолтное');
+        $this->assertEquals($_POST, Request::post(), 'Ошибка получения всех значений');
+        $this->assertEquals($arrValue, Request::post('deep'),
+            'Ошибка получения значения-массива, без приведения к типу');
+        $this->assertEquals('', Request::post('empty', 'этой фразы не будет'), 'Неверное значение для пустой строки');
+        $this->assertEquals(null, Request::post('nop'), 'Найдено несуществующе значение');
+        $this->assertEquals('200', Request::post('nop', '200'), 'Подстановка дефолтного значения не выполнена');
 
         // Приведение к типу INTEGER
-        $this->assertEquals(33, Request::postAsInt('int'), 'Приведение к INTEGER');
-        $this->assertEquals(null, Request::postAsInt('wrong_int'), 'Неверное INTEGER значение');
-        $this->assertEquals(100, Request::postAsInt('wrong_int', 100), 'Неверное INTEGER значение, выдать дефолтное');
+        $this->assertEquals(33, Request::postAsInt('int'), 'Приведение к INTEGER не выполнено');
+        $this->assertEquals(null, Request::postAsInt('wrong_int'), 'Неожиданно верное INTEGER значение');
+        $this->assertEquals(100, Request::postAsInt('wrong_int', 100), 'Подстановка дефолтного значения не выполнена');
 
-        $this->assertEquals(false, Request::postAsBool('bool'), 'Приведение к BOOLEAN');
+        $this->assertEquals(false, Request::postAsBool('bool'), 'Приведение к BOOLEAN не выполнено');
 
         // Проверка по регулярному выражению
-        $this->assertEquals('12/2017', Request::postAsRegexp('regex', '~^\d{2}/\d{4}$~'), 'Проверка по регулярке');
-        $this->assertEquals(null, Request::postAsRegexp('regex', '~^[a-z]+$~'), 'Не прошло регулярку, нет дефолта');
+        $this->assertEquals('12/2017', Request::postAsRegexp('regex', '~^\d{2}/\d{4}$~'),
+            'Проверка по регулярке  не выполнена');
+        $this->assertEquals(null, Request::postAsRegexp('regex', '~^[a-z]+$~'), 'Не прошло регулярку, ожидали NULL');
 
         // Массив допустимых значений
-        $this->assertEquals('3F', Request::postAsEnum('enum', ['FF', '3F', '2C']), 'Проверка по списку');
-        $this->assertEquals('ED', Request::postAsEnum('enum', ['FF', '2C'], 'ED'), 'Нет в списке, есть дефолт');
+        $this->assertEquals('3F', Request::postAsEnum('enum', ['FF', '3F', '2C']), 'Проверка по списку не выполнена');
+        $this->assertEquals('ED', Request::postAsEnum('enum', ['FF', '2C'], 'ED'),
+            'Подстановка дефолтного значения не выполнена');
 
         // Получение значения из вложенного массива данных, с приведением к типу
-        $this->assertEquals(2, Request::postAsInt(['deep' => 'nested']), 'Вложенное INTEGER значение');
-        $this->assertEquals(null, Request::postAsInt(['deep' => 'nop']), 'Не найдено вложенное значение');
+        $this->assertEquals(2, Request::postAsInt(['deep' => 'nested']),
+            'Не удалось получить вложенное INTEGER значение');
+        $this->assertEquals(null, Request::postAsInt(['deep' => 'nop']), 'Найдено вложенное значение там, где его нет');
         $this->assertEquals(10, Request::postAsInt(['deep' => 'nop'], 10),
-            'Не найдено вложенное значение, есть дефолт');
+            'Подстановка дефолтного значения не выполнена');
 
         // Приведение к типу STRING
-        $this->assertEquals('33', Request::postAsString('int'), 'Число в строковом формате');
-        $this->assertEquals(null, Request::postAsString('deep'), 'Значение-массив, проверка приведением к типу');
+        $this->assertEquals('33', Request::postAsString('int'), 'Приведение к типу STRING не выполнено');
+        $this->assertEquals(null, Request::postAsString('deep'),
+            'Значение-массив, ожидали NULL после приведения к типу');
     }
 }

@@ -17,7 +17,7 @@ namespace {
             $this->assertEquals(
                 'dynamic',
                 $this->callMethod(SUTClass::class, 'privateDynamic'),
-                'Приватный динамический метод'
+                'Не удался вызов приватного динамического метода'
             );
 
             $class = new SUTClass;
@@ -25,15 +25,19 @@ namespace {
             $this->assertEquals(
                 'dynamic',
                 $this->callMethod($class, 'privateDynamic'),
-                'Приватный динамический метод + объект класса'
+                'Не удался вызов приватного динамического метода из объекта класса'
             );
 
-            $this->assertEquals('static', $this->callMethod($class, 'privateStatic'), 'Приватный статический метод');
+            $this->assertEquals(
+                'static',
+                $this->callMethod($class, 'privateStatic'),
+                'Не удался вызов приватного статического метода'
+            );
 
             $this->assertEquals(
                 '12-word-end',
                 $this->callMethod($class, 'methodWithArgs', [12, '-word-']),
-                'Вызов метода с параметрами'
+                'Не удался вызов метода с параметрами'
             );
 
             $class = new SUTClass(' glory');
@@ -41,18 +45,18 @@ namespace {
             $this->assertEquals(
                 'dynamic glory',
                 $this->callMethod($class, 'privateDynamic'),
-                'Приватный динамический метод + объект класса + инициализация через конструктор'
+                'Не удался вызов приватного динамического метода из объекта класса с инициализацией через конструктор'
             );
 
             $this->assertEquals(
                 'welcome',
                 $this->callMethod(SUTClass::class, 'init'),
-                'Публичный динамический метод'
+                'Не удался вызов публичного динамического метода'
             );
 
             $var = 'some';
             $this->callMethod($class, 'impossible', [&$var, 12, SUTClass::IMPOSSIBLE_VAL]);
-            $this->assertEquals('12impossible', $var, 'Метод с первым параметром-ссылкой');
+            $this->assertEquals('12impossible', $var, 'Не удался вызов метода с первым параметром-ссылкой');
 
         }
     }

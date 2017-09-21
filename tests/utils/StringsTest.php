@@ -22,13 +22,13 @@ class StringsTest extends TestCase
         $this->assertEquals(
             'shodni korablya mokryie ot rosyi',
             Strings::rus2eng('сходни корабля мокрые от росы'),
-            'Транслит русский > английский'
+            'Неверный транслит русский > английский'
         );
 
         $this->assertEquals(
             'ёжик по травке бежит и хохочет, ежику травка пузик щекочет',
             Strings::eng2rus('jojik po travke bejit i hohochet, ejiku travka puzik schekochet'),
-            'Транслит английский > русский'
+            'Неверный транслит английский > русский'
         );
     }
 
@@ -37,13 +37,14 @@ class StringsTest extends TestCase
      */
     public function test_firstLetter()
     {
-         $this->assertEquals('Русский', Strings::mb_ucfirst('русский'), 'Заглавная первая буква');
-         $this->assertEquals('пРОБЕЛ', Strings::mb_lcfirst('ПРОБЕЛ'), 'Строчная первая буква');
+         $this->assertEquals('Русский', Strings::mb_ucfirst('русский'), 'Ошибка приведения к заглавной первой букве');
+         $this->assertEquals('пРОБЕЛ', Strings::mb_lcfirst('ПРОБЕЛ'), 'Ошибка приведения к строчной первой букве');
     }
 
     public function test_word_chunk()
     {
-        $this->assertEquals('рус + ски + й', Strings::word_chunk('русский', 3, ' + '), 'Мультибайтное разбиение строки');
+        $this->assertEquals('рус + ски + й', Strings::word_chunk('русский', 3, ' + '),
+            'Не верное мультибайтное разбиение строки');
     }
 
     /**
@@ -54,12 +55,12 @@ class StringsTest extends TestCase
         $text = "неэкранированный \\' <- символ кавычки";
         $pos = mb_strpos($text, '"');
         $result = Strings::isShielded(mb_substr($text, 0, $pos));
-        $this->assertFalse($result, 'Неэкранированный символ');
+        $this->assertFalse($result, 'Ошибочно обнаружен неэкранированный символ');
 
         $text = "экранированный \\\\\[[\d+] <- символ скобки";
         $pos = mb_strpos($text, '[');
         $result = Strings::isShielded(mb_substr($text, 0, $pos));
-        $this->assertTrue($result, 'Экранированный символ');
+        $this->assertTrue($result, 'Не обнаружен экранированный символ');
     }
 
     /**
@@ -67,10 +68,13 @@ class StringsTest extends TestCase
      */
     public function test_strBool()
     {
-        $this->assertEquals('true', Strings::strBool(true), 'Булевое "true"');
-        $this->assertEquals('ложь', Strings::strBool('false', Strings::BOOL_RU), 'Булевое "ложь"');
-        $this->assertEquals('yes', Strings::strBool(true, Strings::BOOL_YESNO_EN), 'Булевое "yes"');
-        $this->assertEquals('нет', Strings::strBool(false, Strings::BOOL_YESNO_RU), 'Булевое "нет"');
-        $this->assertEquals('1', Strings::strBool(true, Strings::BOOL_DIGIT), 'Булевое "1"');
+        $this->assertEquals('true', Strings::strBool(true), 'Неверное превращение в булевое "true"');
+        $this->assertEquals('ложь', Strings::strBool('false', Strings::BOOL_RU),
+            'Неверное превращение в булевое "ложь"');
+        $this->assertEquals('yes', Strings::strBool(true, Strings::BOOL_YESNO_EN),
+            'Неверное превращение в булевое "yes"');
+        $this->assertEquals('нет', Strings::strBool(false, Strings::BOOL_YESNO_RU),
+            'Неверное превращение в булевое "нет"');
+        $this->assertEquals('1', Strings::strBool(true, Strings::BOOL_DIGIT), 'Неверное превращение в булевое "1"');
     }
 }

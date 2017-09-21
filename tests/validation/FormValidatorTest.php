@@ -32,7 +32,7 @@ class FromValidatorTest extends TestCase
             'one' => true,
             'two' => [],
         ];
-        $this->assertEquals($expect, $validators, 'Валидатор "required" поднят на первое место');
+        $this->assertEquals($expect, $validators, 'Валидатор "required" не поднят на первое место');
     }
 
     /**
@@ -54,7 +54,8 @@ class FromValidatorTest extends TestCase
             'one' => true,
             'two' => [],
         ];
-        $this->assertEquals($expect, $validators, 'Валидатор "required" на первом месте со значением FALSE');
+        $this->assertEquals($expect, $validators,
+            'Валидатор "required" должен быть на первом месте со значением FALSE');
     }
 
     /**
@@ -81,7 +82,7 @@ class FromValidatorTest extends TestCase
 
         $isPassed = $this->callMethod($formValidator, 'fireValidators', [$validators, &$value, &$error]);
 
-        $this->assertEquals(20, $value, 'Последнее валидное значение совпадает с ожиданием');
+        $this->assertEquals(20, $value, 'Последнее валидное значение не совпадает с ожиданием');
         $this->assertFalse($isPassed);
     }
 
@@ -140,7 +141,7 @@ class FromValidatorTest extends TestCase
         ];
 
         $this->assertTrue($formValidator->isValid());
-        $this->assertEquals($expect, $value, 'Получили ожидаемые валированные значения');
+        $this->assertEquals($expect, $value, 'Не получили ожидаемые валидированные значения');
     }
 
     /**

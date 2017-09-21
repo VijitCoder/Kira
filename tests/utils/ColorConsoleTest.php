@@ -20,7 +20,7 @@ class ColorConsoleTest extends TestCase
             ->getText()
         ;
         $expect = "Какой-то \033[32m\033[44m\033[1mтекст на\033[40m черном фоне\033[0m. Хвост";
-        $this->assertEquals($expect, $result, 'Произвольный текст с управлящими последовательностями');
+        $this->assertEquals($expect, $result, 'Неверный произвольный текст с управлящими последовательностями');
     }
 
     /**
@@ -39,6 +39,6 @@ class ColorConsoleTest extends TestCase
             ->getClearText()
         ;
         $expect = 'Какой-то текст на синем фоне. Хвост';
-        $this->assertEquals($expect, $result, 'Чистый произвольный текст');
+        $this->assertEquals($expect, $result, 'Неверный чистый произвольный текст');
     }
 }

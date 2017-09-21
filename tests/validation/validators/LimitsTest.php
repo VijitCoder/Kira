@@ -114,7 +114,8 @@ class LimitsTest extends TestCase
             'max'     => 10,
         ]);
 
-        $this->assertTrue($validator->validate('77'), 'Значение, как строка, верное');
-        $this->assertFalse($validator->validate(77), 'Значение, как число, не входит в разрешенный диапазон');
+        $this->assertTrue($validator->validate('77'), 'Ошибка валидации верного значения, как строки');
+        $this->assertFalse($validator->validate(77),
+            'Ошибка валидации: значение, как число, не должно входить в заданный диапазон');
     }
 }
