@@ -49,4 +49,29 @@ class OtherValidatorsTest extends TestCase
         $errors = explode(' | ', $validator->error);
         $this->assertEquals(3, count($errors));
     }
+
+    /**
+     * Тест валидатора Email с дефолтными сообщениями об ошибках
+     */
+    public function test_email_default()
+    {
+        $validator = new validators\Email(true);
+        $this->assertTrue($validator->validate('user@mail.com'));
+
+        $badEmails = [
+            '@mail.com',
+            'any@',
+            'my mail.com',
+            'first@level',
+        ];
+        foreach ($badEmails as $email) {
+            $this->assertFalse($validator->validate($email));
+        }
+
+        $validator = new validators\Email([
+            'black_servers' =>  ['server.com', 'dummy.ru'],
+        ]);
+        $this->assertFalse($validator->validate('user@server.com'));
+    }
 }
+

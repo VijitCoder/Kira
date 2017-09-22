@@ -7,26 +7,6 @@ use kira\utils\Validators;
  */
 class ValidatorsTest extends TestCase
 {
-    public function test_mail()
-    {
-        $options = ['black_servers' => ['server.com',]];
-        $result = Validators::mail('валидный@mail.com', $options);
-        $this->assertEquals(['value' => 'валидный@mail.com'], $result, 'Валидный email');
-
-        $result = Validators::mail('black@server.com', $options);
-        $this->assertEquals(1, count($result['error']), 'Черный сервер email');
-
-        $badEmails = [
-            '@mail.com',
-            'any@',
-            'my mail.com',
-            'first@level',
-        ];
-        foreach ($badEmails as $email) {
-            $this->assertEquals(1, count($result['error']), 'Неверный email: ' . $email);
-        }
-    }
-
     public function test_date()
     {
         $result = Validators::date('22.10.2016');

@@ -19,49 +19,6 @@ use kira\core\App;
 class Validators
 {
     /**
-     * Валидатор email
-     *
-     * Проверка на корректность и черный список серверов.
-     *
-     * Доп. настройки валидатора могут быть:
-     * <pre>
-     * [
-     *   'regexp' => '~.+@.+\..+~', // значение по умолчанию
-     *   'black_servers' => array | NULL
-     * ]
-     * </pre>
-     *
-     * Проверка на корректность. Если настройка не задана, проверяем по своей регулярке (см. в примере - она самая).
-     * Почему такая простая регулярка? :) {@link http://habrahabr.ru/post/175375/}
-     *
-     * Проверка на черный список серверов необязательна. Нет списка - нет проверки.
-     *
-     * @param string $mail
-     * @param array  $options доп.настройки валидатора
-     * @return array
-     */
-    public static function mail($mail, $options = [])
-    {
-        $options = array_merge(['regexp' => '~.+@.+\..+~', 'black_servers' => null], $options);
-
-        if (!preg_match($options['regexp'], $mail)) {
-            return ['error' => App::t('Неверный формат почтового адреса')];
-        }
-
-        if ($black = $options['black_servers']) {
-            $server = mb_substr($mail, mb_strpos($mail, '@') + 1);
-            if (in_array($server, $black)) {
-                return [
-                    'error' => App::t('Почтовый сервер вашего email в черном списке. '
-                        . 'Пожалуйста укажите другой адрес.'),
-                ];
-            }
-        }
-
-        return ['value' => $mail];
-    }
-
-    /**
      * Валидатор даты
      *
      * Проверяется соответствие формату и реальность даты. Решил не мудрить с настройками. Валидатор разрешает только
