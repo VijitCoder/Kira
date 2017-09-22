@@ -299,7 +299,7 @@ class Form
      *
      * Важно помнить, что по умолчанию массив заполнен ключами, но без данных. Это обеспечено конструктором модели формы.
      *
-     * {@see Form::getErrorsAsString()}
+     * {@see Form::getErrorsAsStringPerField()}
      *
      * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array [поле => массив ошибок]
@@ -340,7 +340,7 @@ class Form
      * @param string $eol  клей между соседними подмассивами
      * @return array
      */
-    public function getErrorsAsString($key = null, string $glue = ' ', string $eol = ''): array
+    public function getErrorsAsStringPerField($key = null, string $glue = ' ', string $eol = ''): array
     {
         $errors = $this->getErrors($key);
 

@@ -107,7 +107,7 @@ class FromTest extends TestCase
 
         $errBaseMessage = 'Неизвестная БД';
         $form->addError(['db' => ['base' => $errBaseMessage]]);
-        $allDbErrors = Arrays::array_filter_recursive($form->getErrorsAsString('db'));
+        $allDbErrors = Arrays::array_filter_recursive($form->getErrorsAsStringPerField('db'));
         $expect = [
             'server' => $errServerMessage,
             'base'   => $errBaseMessage,
