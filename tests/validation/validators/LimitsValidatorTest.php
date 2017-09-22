@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Тестируем валидатор Limits
  */
-class LimitsTest extends TestCase
+class LimitsValidatorTest extends TestCase
 {
     /**
      * Проверка диапазона числа. Дефолтные сообщения, оба предела
