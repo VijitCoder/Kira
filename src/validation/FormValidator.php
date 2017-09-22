@@ -26,7 +26,7 @@ class FormValidator
 
     /**
      * Фабрика для получения классов валидаторов
-     * @var ValidationFactory
+     * @var IValidationFactory
      */
     private $factory;
 
@@ -50,7 +50,7 @@ class FormValidator
      *
      * Функция не предполагает прямой вызов из кода приложения. Это часть логики движка.
      *
-     * Узел может быть равен нулю, только если он конечный и в контракте заявлено принять поле "как есть". Тогда пишем
+     * Узел может быть равен NULL, только если он конечный и в контракте заявлено принять поле "как есть". Тогда пишем
      * полученные данные без валидации и выходим.
      *
      * Проверяемое значение может быть преобразовано в любом валидаторе и в таком виде будет передаваться дальше.
@@ -125,25 +125,19 @@ class FormValidator
 
     /**
      * Ставим валидатор "required" на первое место
-     *
-     * Валидатор "required" имеет особое значение: соответствующий ему метод так же проверяет, можно ли в принципе
-     * пропустить  проверки, если поле пустое. Т.о. вызов валидатора "required" необходим в любом случае. Чтобы
-     * не перегружать логику основного метода валидации, делаем так, чтобы "required" всегда присутствовал в списке
-     * валидаторов. Если он не описан в контракте, тогда просто ставим его в FALSE.
-     *
      * @param array $validators
      */
     private function popupRequired(array &$validators)
     {
-        if (isset($validators['required'])) {
-            if (key($validators) !== 'required') {
-                $atFirstPlace = ['required' => $validators['required']];
-                unset($validators['required']);
-                $validators = array_merge($atFirstPlace, $validators);
-                unset($atFirstPlace);
-            }
-        } else {
-            $validators = array_merge(['required' => false], $validators);
+        if (!isset($validators['required'])) {
+            return;
+        }
+
+        if (key($validators) !== 'required') {
+            $atFirstPlace = ['required' => $validators['required']];
+            unset($validators['required']);
+            $validators = array_merge($atFirstPlace, $validators);
+            unset($atFirstPlace);
         }
     }
 
@@ -153,8 +147,8 @@ class FormValidator
      * Каждый последующий валидатор должен работать с данными, обработанными предыдущим. Если какой-то валидатор
      * забракует значение, прерываем проверки, а в $value останется значение в последнем успешном состоянии.
      *
-     * Если значение отсутствует (NULL), но оно необязательное, нет смысла вызывать для него валидаторы, оно должно
-     * восприниматься, как правильное.
+     * Если значение отсутствует (NULL), нет смысла вызывать для него валидаторы. Оно будет считаться правильным, если
+     * не является обязательным.
      *
      * @param array $validators валидаторы данных
      * @param mixed $value      проверяемые данные
@@ -165,7 +159,7 @@ class FormValidator
     {
         $passed = true;
         foreach ($validators as $name => $options) {
-            if ($name != 'required' && is_null($value)) {
+            if (is_null($value) && $name != 'required') {
                 break;
             }
 

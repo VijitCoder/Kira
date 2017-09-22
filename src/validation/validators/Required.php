@@ -3,9 +3,6 @@ namespace kira\validation\validators;
 
 /**
  * Проверка необходимого значения на существование
- *
- * Валидатор с особым поведением. Он вызывается раньше любого другого валидатора независимо от их очередности,
- * т.к. в нем выясняем, можно ли пропустить остальные проверки.
  */
 class Required extends AbstractValidator
 {
@@ -16,22 +13,7 @@ class Required extends AbstractValidator
     protected $error = 'Поле должно быть заполнено';
 
     /**
-     * Единственный валидатор, который может быть выключен через настройки (options = FALSE). Нужно корректно обработать
-     * ситуацию, т.к. родительский класс не допускает такое состояние.
-     * @param array $options
-     */
-    public function __construct($options = [])
-    {
-        if ($isRequired = (bool)$options) {
-            parent::__construct($options);
-        } else {
-            $this->options = false;
-        }
-    }
-
-    /**
-     * Проверка необходимого значения на существование. Если валидатор умышленно отключен, тогда всегда считать проверку
-     * пройденной.
+     * Проверка необходимого значения на существование
      *
      * Не проверяем значение, как массив, т.к. этим занимается другой валидатор и он гарантирует здесь только
      * скалярное значение.
@@ -44,6 +26,6 @@ class Required extends AbstractValidator
     public function validate($value)
     {
         $this->value = $value;
-        return !$this->options || !is_null($value) && preg_match('/.{1,}/', $value);
+        return !is_null($value) && preg_match('/.{1,}/', $value);
     }
 }
