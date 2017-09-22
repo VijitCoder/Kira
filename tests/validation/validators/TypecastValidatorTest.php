@@ -26,21 +26,6 @@ class TypecastValidatorTest extends TestCase
     }
 
     /**
-     * Свое сообщение в валидаторе приведения к типу
-     */
-    public function test_typecast_with_custom_message()
-    {
-        $message = 'Должно быть целое число';
-        $validator = new Typecast([
-            'type'    => Typecast::INT,
-            'message' => $message,
-        ]);
-
-        $this->assertFalse($validator->validate('x123'));
-        $this->assertEquals($message, $validator->error);
-    }
-
-    /**
      * Пропустим обязательную настройку валидатора
      */
     public function test_without_required_options()
@@ -56,6 +41,6 @@ class TypecastValidatorTest extends TestCase
     public function test_typecast_to_wrong_type()
     {
         $this->expectException(FormException::class);
-        (new Typecast)->validate('unknown_type');
+        (new Typecast('unknown_type'))->validate('some_value');
     }
 }

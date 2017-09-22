@@ -27,22 +27,6 @@ class ExternalValidatorTest extends TestCase
     }
 
     /**
-     * Тест: передача своего сообщения об ошибке во внешний валидатор
-     */
-    public function test_custom_message()
-    {
-        $validator = new External([
-            'class'   => CustomValidator::class,
-            'options' => [
-                'message' => 'не угадал',
-            ],
-        ]);
-
-        $this->assertFalse($validator->validate(5));
-        $this->assertEquals('не угадал', $validator->error);
-    }
-
-    /**
      * Тест External с пропущенным параметром options. Это неправильная ситуация, т.к. супер-класс AbstractValidator
      * требует указания options для любого валидатора. Но если в данном случае для кастомного валидатора забыть
      * про options, трудно будет разобраться, где именно ошибка. Поэтому External подставляет пустой массив для
