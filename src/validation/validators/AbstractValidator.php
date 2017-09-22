@@ -41,10 +41,10 @@ abstract class AbstractValidator
      * Если в настройках есть сообщение, используемое при ошибке валидации, прогоняем его через переводчик. Сообщение
      * может быть задано в классе валидатора (дефолтное) или установлено при указании валидатора в контакте (кастомное).
      *
-     * @param mixed $options настройки валидатора
+     * @param array|true $options настройки валидатора
      * @throws FormException
      */
-    public function __construct($options = [])
+    public function __construct($options)
     {
         if ($options === true) {
             $options = [];

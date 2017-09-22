@@ -27,7 +27,7 @@ class External extends AbstractValidator
      * @param array $options настройки валидатора
      * @throws FormException
      */
-    public function __construct($options = [])
+    public function __construct($options)
     {
         if (!isset($options['function'])) {
             throw new FormException('Не задан обязательный параметр "function"');

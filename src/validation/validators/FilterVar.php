@@ -30,7 +30,7 @@ class FilterVar extends AbstractValidator
      * @param array $options настройки валидатора
      * @throws FormException
      */
-    public function __construct($options = [])
+    public function __construct($options)
     {
         if (!isset($options['filter'])) {
             throw new FormException('Не задан обязательный параметр "filter"');

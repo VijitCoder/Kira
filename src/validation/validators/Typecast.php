@@ -27,13 +27,16 @@ class Typecast extends AbstractValidator
     protected $error = 'Неверный тип значения';
 
     /**
+     * Приведение к типу
+     *
      * В настройках валидатора ожидаем либо строку, и тогда ее значение будет принято за требуемый тип валидаци,
      * либо настройки должны быть массивом с обязательным элементом 'type'. В любом случае заданный тип должен
      * соответствовать какой-то из констант этого класса.
-     * @param array $options
+     *
+     * @param array $options настройки валидатора
      * @throws FormException
      */
-    public function __construct($options = [])
+    public function __construct($options)
     {
         if (is_string($options)) {
             $options = ['type' => $options,];

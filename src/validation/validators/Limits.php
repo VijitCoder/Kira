@@ -51,10 +51,10 @@ class Limits extends AbstractValidator
      * Приведение к FLOAT шире, чем нужно для длины строки, там достаточно INT. Но это не нарушит логику проверки,
      * зато позволяет обобщить код.
      *
-     * @param mixed $options
+     * @param mixed $options настройки валидатора
      * @throws FormException
      */
-    public function __construct($options = [])
+    public function __construct($options)
     {
         if (!is_array($options)) {
             throw new FormException('Неправильно описаны настройки валидатора. Ожидается только массив.');
