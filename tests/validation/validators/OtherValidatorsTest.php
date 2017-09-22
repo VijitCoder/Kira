@@ -51,9 +51,9 @@ class OtherValidatorsTest extends TestCase
     }
 
     /**
-     * Тест валидатора Email с дефолтными сообщениями об ошибках
+     * Тест валидатора Email
      */
-    public function test_email_default()
+    public function test_email()
     {
         $validator = new validators\Email(true);
         $this->assertTrue($validator->validate('user@mail.com'));
@@ -72,6 +72,17 @@ class OtherValidatorsTest extends TestCase
             'black_servers' =>  ['server.com', 'dummy.ru'],
         ]);
         $this->assertFalse($validator->validate('user@server.com'));
+    }
+
+    /**
+     * Тест нормализации строки
+     */
+    public function test_normalize_string()
+    {
+        $str = " test  one<script>console.log('hit!')</script> \\ \n \r \t \v \x0B \x00";
+        $validator = new validators\NormalizeString(true);
+        $validator->validate($str);
+        $this->assertEquals('test one&lt;script&gt;console.log(&#039;hit!&#039;)&lt;/script&gt;', $validator->value);
     }
 }
 

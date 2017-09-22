@@ -43,26 +43,4 @@ class Validators
 
         return ['value' => sprintf('%d-%d-%d', $y, $m, $d)];
     }
-
-    /**
-     * Дезинфекция и нормализация строки
-     *
-     * <ul>
-     * <li>удаляем начальные и конечные пробельные пробелы, а так же "\n, \r, \t, \v, \0" <b>из любого места
-     * в строке</b></li>
-     * <li>Удаляем лишние пробелы внутри строки</li>
-     * <li>Преобразуем html-сущности, кодировка 'UTF-8'</li>
-     * <li>Удаляем обратные слеши для исключения возможности написания скриптов на Perl</li>
-     * </ul>
-     *
-     * @param string $phrase
-     * @return string вызов валидатора предполагается по правилам filter_var(FILTER_CALLBACK). Результат соответствующий
-     */
-    public static function normalizeString($phrase)
-    {
-        $phrase = preg_replace(['~\s{2,}~', '~\t|\n|\r|\x0B|\0|\x00~'], [' ', ''], $phrase);
-        $phrase = htmlspecialchars(stripslashes($phrase), ENT_QUOTES, 'UTF-8');
-        $phrase = trim($phrase);
-        return $phrase;
-    }
 }
