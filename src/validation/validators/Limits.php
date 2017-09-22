@@ -29,10 +29,11 @@ class Limits extends AbstractValidator
         TYPE_STRING = 'string';
 
     /**
-     * Дефолтные сообщения об ошибках. Библиотека
+     * Библиотека возможных сообщений об ошибках. У этого валидатора особая библиотека, с более сложной организацией,
+     * чем у родителя.
      * @var array
      */
-    private $messageLibrary = [
+    protected $messageLibrary = [
         self::TYPE_NUMBER => [
             'min' => 'Значение меньше допустимого, минимум :min',
             'max' => 'Значение больше допустимого, максимум :max',
@@ -44,7 +45,9 @@ class Limits extends AbstractValidator
     ];
 
     /**
-     * Нормализация настроек валидатора. Полностью переопределяем родительский конструктор.
+     * Нормализация настроек валидатора
+     *
+     * Полностью переопределяем родительский конструктор.
      *
      * Если настройки заданы не массивом, очевидно нечего проверять. Ставим заглушку и выходим из метода.
      *
@@ -63,9 +66,11 @@ class Limits extends AbstractValidator
         $options['min'] = isset($options['min']) ? (float)$options['min'] : null;
         $options['max'] = isset($options['max']) ? (float)$options['max'] : null;
 
+        $this->prepareMessages($options);
+        unset($options['message']);
+
         $this->options = $options;
 
-        $this->prepareMessages();
     }
 
     /**
@@ -75,13 +80,15 @@ class Limits extends AbstractValidator
      * сообщений [min, max] либо одно и тоже сообщение ставим на обе ошибки.
      *
      * Замена подстановок min/max на значения, заданные в настройках валидатора.
+     *
+     * @param array $options настройки валидатора
      */
-    private function prepareMessages()
+    protected function prepareMessages(array $options)
     {
-        $minSubstitute = $this->options['min'] ?? 'NULL';
-        $maxSubstitute = $this->options['max'] ?? 'NULL';
+        $minSubstitute = $options['min'] ?? 'NULL';
+        $maxSubstitute = $options['max'] ?? 'NULL';
 
-        $customMessage = $this->options['message'] ?? null;
+        $customMessage = $options['message'] ?? null;
 
         foreach ($this->messageLibrary as &$set) {
             if (!is_null($customMessage)) {

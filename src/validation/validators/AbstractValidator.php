@@ -12,9 +12,8 @@ use kira\exceptions\FormException;
 abstract class AbstractValidator
 {
     /**
-     * Дефолтные параметры валидатора. После создания объекта тут хранятся запрошенные настройки валидатора. Значение
-     * может быть любого типа. Так же валидатор может быть объявлен но умышленно отключен (FALSE|NULL). Если это может
-     * сломать класс-наследник, следует переопределить его конструктор, добавив обработку исключений.
+     * Дефолтные параметры валидатора. После создания объекта тут хранятся запрошенные настройки валидатора, которые
+     * могут переопределить дефолтные.
      * @var mixed
      */
     protected $options = [];
@@ -30,16 +29,19 @@ abstract class AbstractValidator
     protected $value;
 
     /**
-     * Сообщение об ошибке валидации. Кастомное значение задается через $options['message']
+     * Окончательное сообщение об ошибке валидации, переведенное и выбранное из библиотеки возможных сообщений.
      * @var string
      */
     protected $error;
 
     /**
+     * Библиотека возможных сообщений об ошибках, если валидатор их поддерживает несколько
+     * @var array одномерный ассоциативный массив
+     */
+    protected $messageLibrary = [];
+
+    /**
      * Запоминаем настройки валидатора
-     *
-     * Если в настройках есть сообщение, используемое при ошибке валидации, прогоняем его через переводчик. Сообщение
-     * может быть задано в классе валидатора (дефолтное) или установлено при указании валидатора в контакте (кастомное).
      *
      * @param array|true $options настройки валидатора
      * @throws FormException
@@ -51,17 +53,53 @@ abstract class AbstractValidator
         }
 
         if (!is_array($options)) {
-            throw new FormException(
-                'Неправильно описаны настройки валидатора. Ожидается либо массив, либо TRUE.');
+            throw new FormException('Неправильно описаны настройки валидатора. Ожидается либо массив, либо TRUE.');
         };
 
         $options = array_merge($this->options, $options);
-        if (isset($options['message'])) {
-            $this->error = $options['message'];
-        }
-        $this->error = App::t($this->error);
+
+        $this->prepareMessageLibrary($options['message'] ?? '');
+        unset($options['message']);
 
         $this->options = $options;
+    }
+
+    /**
+     * Подготовка сообщений об ошибках
+     *
+     * Валидатор может иметь дефолтное сообщение, которое можно заменить. У некоторых валидаторов может быть несколько
+     * сообщений по принципу или-или в результате проверки. Такие сообщения тоже можно заменить один-к-одному или
+     * на одно общее сообщение на все случаи ошибок. Любая замена делается через $options['message'].
+     *
+     * Прогоняем через переводчик всё, что есть. Если в итоге сообщений несколько - пишем их в библиотеку, валидатор
+     * должен сам брать оттуда нужное. Если сообщение в валидаторе может быть только одно, сразу присваиваем его
+     * в self::$error.
+     *
+     * @param string|array $message сообщение, заданное в self::$options['message'] или переопределенное через настройку
+     */
+    protected function prepareMessageLibrary($message)
+    {
+        $this->messageLibrary = array_map([App::class, 't'], $this->messageLibrary);
+
+        if (!$message) {
+            return;
+        }
+
+        $message = App::t($message);
+        $library = $this->messageLibrary;
+
+        if ($library) {
+            if (is_array($message)) {
+                $library = array_merge($library, $message);
+            } else {
+                foreach ($library as &$item) {
+                    $item = $message;
+                }
+            }
+            $this->messageLibrary = $library;
+        } else {
+            $this->error = $message;
+        }
     }
 
     /**
