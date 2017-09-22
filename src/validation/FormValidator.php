@@ -26,7 +26,7 @@ class FormValidator
 
     /**
      * Фабрика для получения классов валидаторов
-     * @var IValidationFactory
+     * @var ValidatorFactory
      */
     private $factory;
 
@@ -38,9 +38,9 @@ class FormValidator
 
     /**
      * Внедряем зависимость от фабрики валидаторов
-     * @param IValidationFactory $factory реализация интерфейса фабрики
+     * @param ValidatorFactory $factory реализация интерфейса фабрики
      */
-    public function __construct(IValidationFactory $factory)
+    public function __construct(ValidatorFactory $factory)
     {
         $this->factory = $factory;
     }

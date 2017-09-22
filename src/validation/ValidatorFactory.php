@@ -5,9 +5,9 @@ use kira\core\App;
 use kira\utils\StringCase;
 
 /**
- * Фабрика получения экземпляров классов, задействованных в валидации.
+ * Фабрика получения экземпляров классов валидаторов
  */
-class ValidationFactory implements IValidationFactory
+class ValidatorFactory
 {
     /**
      * Пространство имен классов валидаторов

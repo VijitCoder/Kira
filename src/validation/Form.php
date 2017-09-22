@@ -81,7 +81,7 @@ class Form
         $this->errors =
         $this->values = $this->initialArray($this->contract);
 
-        $this->formValidator = new FormValidator(new ValidationFactory);
+        $this->formValidator = new FormValidator(new ValidatorFactory);
     }
 
     /**

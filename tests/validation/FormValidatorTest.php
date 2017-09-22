@@ -1,7 +1,7 @@
 <?php
 use kira\tests\traits\CallAsPublic;
 use kira\validation\FormValidator;
-use kira\validation\ValidationFactory;
+use kira\validation\ValidatorFactory;
 use kira\validation\validators\AbstractValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -17,45 +17,22 @@ class FromValidatorTest extends TestCase
      */
     public function test_popupRequired()
     {
-        $factory = $this->createMock(ValidationFactory::class);
+        $factory = $this->createMock(ValidatorFactory::class);
         $formValidator = new FormValidator($factory);
 
         $validators = [
-            'one' => true,
+            'one'      => true,
             'required' => ['message' => 'some'],
-            'two' => [],
+            'two'      => [],
         ];
 
         $this->callMethod($formValidator, 'popupRequired', [&$validators]);
         $expect = [
             'required' => ['message' => 'some'],
-            'one' => true,
-            'two' => [],
+            'one'      => true,
+            'two'      => [],
         ];
         $this->assertEquals($expect, $validators, 'Валидатор "required" не поднят на первое место');
-    }
-
-    /**
-     * Тест: когда явно не указан валидатор "required", он должен появиться на первом месте со значением FALSE
-     */
-    public function test_popupRequired_default()
-    {
-        $factory = $this->createMock(ValidationFactory::class);
-        $formValidator = new FormValidator($factory);
-
-        $validators = [
-            'one' => true,
-            'two' => [],
-        ];
-
-        $this->callMethod($formValidator, 'popupRequired', [&$validators]);
-        $expect = [
-            'required' => false,
-            'one' => true,
-            'two' => [],
-        ];
-        $this->assertEquals($expect, $validators,
-            'Валидатор "required" должен быть на первом месте со значением FALSE');
     }
 
     /**
@@ -65,9 +42,9 @@ class FromValidatorTest extends TestCase
      */
     public function test_fireValidators()
     {
-        $factory = $this->createMock(ValidationFactory::class);
+        $factory = $this->createMock(ValidatorFactory::class);
         $factory->method('makeValidator')
-            ->willReturn($this->getFalseIf20Validator());
+            ->willReturn(new FalseIf20Validator(true));
 
         $formValidator = new FormValidator($factory);
 
@@ -75,7 +52,7 @@ class FromValidatorTest extends TestCase
         $error = null;
         $validators = [
             'required'      => true,
-            'bounds'        => [],
+            'limits'        => [],
             'will_not_call' => true, // допустим, это какой-то валидатор, который уже не будет вызван
             'expect_id'     => true, // и этот тоже
         ];
@@ -99,9 +76,9 @@ class FromValidatorTest extends TestCase
      */
     public function test_internalValidate()
     {
-        $factory = $this->createMock(ValidationFactory::class);
+        $factory = $this->createMock(ValidatorFactory::class);
         $factory->method('makeValidator')
-            ->willReturn($this->getAlwaysTrueValidator());
+            ->willReturn(new AlwaysTrueValidator(true));
 
         $formValidator = new FormValidator($factory);
 
@@ -109,14 +86,14 @@ class FromValidatorTest extends TestCase
             'field1'     => [
                 'validators' => [
                     'required'  => true,
-                    'bounds'    => [],
+                    'limits'    => [],
                     'expect_id' => true,
                 ],
             ],
             'fields-set' => [
                 'validators' => [
                     'expect_array' => true,
-                    'length'       => ['max' => 12,],
+                    'limits'       => ['max' => 12,],
                 ],
             ],
         ];
@@ -135,56 +112,44 @@ class FromValidatorTest extends TestCase
         $expect = [
             'field1'     => 33,
             'fields-set' => [
-                'c1' => 14,
-                'c3' => 4,
+                'c1' => 13,
+                'c3' => 3,
             ],
         ];
 
         $this->assertTrue($formValidator->isValid());
         $this->assertEquals($expect, $value, 'Не получили ожидаемые валидированные значения');
     }
+}
 
-    /**
-     * Класс-валидатор, который всегда вернет TRUE и увеличит проверяемое значение на единицу
-     *
-     * Это нужно для подмены любого класса валидатора
-     *
-     * @return AbstractValidator
-     */
-    private function getAlwaysTrueValidator()
+# --- Никаких методов ниже этой линии. Причина: test_internalValidate() должен быть последним тестом -----
+
+/**
+ * Класс-валидатор, который всегда вернет TRUE и увеличит проверяемое значение на единицу
+ * Это нужно для подмены любого класса валидатора
+ */
+class AlwaysTrueValidator extends AbstractValidator
+{
+    public function validate($value)
     {
-        return new class() extends AbstractValidator
-        {
-            public function validate($value)
-            {
-                $this->value = ++$value;
-                return true;
-            }
-        };
+        $this->value = ++$value;
+        return true;
     }
+}
 
-    /**
-     * Класс-валидатор, который всегда FALSE если проверяемое значение равно 20, иначе возвращает TRUE и увеличивает
-     * проверяемое значение на единицу.
-     *
-     * Это нужно для имитации неверного значения для какого-нибудь валидатора.
-     *
-     * @return AbstractValidator
-     */
-    private function getFalseIf20Validator()
+/**
+ * Класс-валидатор, который всегда FALSE если проверяемое значение равно 20, иначе возвращает TRUE и увеличивает
+ * проверяемое значение на единицу.
+ * Это нужно для имитации неверного значения для какого-нибудь валидатора.
+ */
+class FalseIf20Validator extends AbstractValidator
+{
+    public function validate($value)
     {
-        return new class() extends AbstractValidator
-        {
-            public function validate($value)
-            {
-                if ($value != 20) {
-                    $this->value = ++$value;
-                    return true;
-                }
-                return false;
-            }
-        };
+        if ($value != 20) {
+            $this->value = ++$value;
+            return true;
+        }
+        return false;
     }
-
-    # --- Никаких методов ниже этой линии. Причина: test_internalValidate() должен быть последним тестом -----
 }

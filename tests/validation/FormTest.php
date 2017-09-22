@@ -1,17 +1,12 @@
 <?php
 use PHPUnit\Framework\TestCase;
 use kira\validation\Form;
-use kira\utils\Validators;
 use kira\utils\FS;
 use kira\utils\Arrays;
 
 /**
- * Тестируем валидатор форм. Это скорее интеграционный тест, нежели unit.
- *
- * Прогоняем все этапы работы с моделью формы, от загрузки данных, до получения значений. Поэтому важен порядок
- * выполнения тестов.
- *
- * Прим: используемый контракт - это частичный копипаст из мастера приложения. Его модель формы, его кастомный валидатор.
+ * Тестируем валидатор форм. Это скорее интеграционный тест, нежели unit, конечные валидаторы не подменяются. Но в этом
+ * и смысл теста - убедиться, что вся фича работает в целом.
  */
 class FromTest extends TestCase
 {
@@ -19,17 +14,17 @@ class FromTest extends TestCase
      * Объект формы
      * @var Form
      */
-    private static $form;
+    private $form;
 
-    // private static $contract Контракт описан внизу класса. Он большой.
+    // private $data Данные описаны внизу класса
+    // private $contract Контракт описан внизу класса. Он большой.
 
     /**
      * Создание модели формы. Явно задаем контракт валидации, т.к. у данной модели нет своего контракта.
      */
-    public static function setUpBeforeClass()
+    public function setUp()
     {
-        parent::setUpBeforeClass();
-        self::$form = new Form(self::$contract);
+        $this->form = new Form($this->contract);
     }
 
     /**
@@ -37,26 +32,8 @@ class FromTest extends TestCase
      */
     public function test_load()
     {
-        $data = [
-            'app_path'      => '\valid\path', // прим.: максимум 12 символов, задано в контракте
-            'app_namespace' => 'some_ns',
-            'email'         => 'admin@site.com',
-
-            'db' => [
-                'switch' => 'on',
-                'server' => '127.0.0.1',
-                'base'   => ' my_base ',
-            ],
-
-            'modules' => [' user ', " admin \x00"],
-            'IP'      => '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d',
-            'id'      => '345',
-            'page'    => '5',
-        ];
-
-        self::$form->load($data);
-
-        $this->assertEquals($data, self::$form->getRawData(), 'Сырые данные загружены в модель формы');
+        $this->form->load($this->data);
+        $this->assertEquals($this->data, $this->form->getRawData(), 'Сырые данные неверно загружены в модель формы');
     }
 
     /**
@@ -67,10 +44,13 @@ class FromTest extends TestCase
      */
     public function test_validate()
     {
-        $result = self::$form->validate();
-        $this->assertTrue($result, 'Успешная валидация');
-        $this->assertTrue(self::$form->isValid(), 'Результат проведенной валидации - данные валидные');
-        $this->assertFalse(self::$form->hasErrors(), 'Ошибок нет');
+        $result = $this
+            ->form
+            ->load($this->data)
+            ->validate();
+        $this->assertTrue($result, 'Валидация правильного набора данных провалена');
+        $this->assertTrue($this->form->isValid());
+        $this->assertFalse($this->form->hasErrors());
     }
 
     /**
@@ -95,7 +75,13 @@ class FromTest extends TestCase
             'page'    => 5,
         ];
 
-        $this->assertEquals($expect, self::$form->getValues(), 'Все валидированные данные');
+        $this->form
+            ->load($this->data)
+            ->validate();
+
+        $validatedValues = $this->form->getValues();
+
+        $this->assertEquals($expect, $validatedValues, 'Валидированные данные не совпадают с ожиданием');
     }
 
     /**
@@ -104,19 +90,20 @@ class FromTest extends TestCase
      */
     public function test_addCustomError()
     {
-        $form = self::$form;
+        $form = $this->form;
+        $form->load($this->data)->validate();
 
-        $this->assertFalse($form->hasErrors(), 'Пока ошибок нет');
-        $this->assertTrue(self::$form->isValid(), 'Результат проведенной ранее валидации - данные валидные');
+        $this->assertFalse($form->hasErrors(), 'Найдены ошибки, хотя данные должны быть абсолютно валидные');
+        $this->assertTrue($this->form->isValid());
 
         $errServerMessage = 'Этот сервер отключен';
         $form->addError(['db' => ['server' => $errServerMessage]]);
 
-        $this->assertTrue(self::$form->isValid(),
-            'Добавление кастомной ошибки не влияет на результат проведенной валидации');
-        $this->assertTrue($form->hasErrors(), 'Теперь есть ошибка. Добавлена вручную');
+        $this->assertTrue($this->form->isValid(),
+            'Добавление кастомной ошибки повлияло на результат проведенной валидации');
+        $this->assertTrue($form->hasErrors(), 'Все еще нет ошибок, хотя одна была добавлена вручную');
         $this->assertEquals([$errServerMessage], $form->getErrors(['db' => 'server']),
-            'Кастомная ошибка добавлена к нужному полю');
+            'Кастомная ошибка не добавлена к нужному полю');
 
         $errBaseMessage = 'Неизвестная БД';
         $form->addError(['db' => ['base' => $errBaseMessage]]);
@@ -125,54 +112,18 @@ class FromTest extends TestCase
             'server' => $errServerMessage,
             'base'   => $errBaseMessage,
         ];
-        $this->assertEquals($expect, $allDbErrors, 'Кастомные ошибки, собранные по каждому полю.');
+        $this->assertEquals(
+            $expect,
+            $allDbErrors,
+            'Кастомные ошибки, собранные по каждому полю, не соответствуют ожиданиям'
+        );
     }
 
     /**
-     * Пробуем пробить валидаторы
+     * Пример валидатора с вызовом через filter_var(FILTER_CALLBACK)
      *
-     * Результаты можно получить несколькими способами, аналогично с self::test_validate()
-     *
-     * Прим.: пересоздаем модель формы, т.к. ее повторное использование не предусмотрено.
-     */
-    public function test_invalid_data()
-    {
-        self::setUpBeforeClass();
-
-        $form = self::$form;
-        $data = [
-            'app_path'      => '\valid\path\tooLong', // слишком длинная строка
-            'app_namespace' => null,                  // необходимо значение
-            'email'         => 'admin@server.com',    // сервер в черном списке
-
-            'db' => [
-                'switch' => 'on',
-                //'server' => '127.0.0.1',
-                'base'   => [' my_base ', 'base2'],   // массив значений там, где ждем строку
-            ],
-
-            'modules' => ' user ',                    // строка там, где ждем массив
-            'id'      => -23,
-            'page'      => 'qwerty',
-        ];
-
-        $result = $form->load($data)->validate();
-
-        $this->assertFalse($result, 'Валидация не прошла');
-        $this->assertFalse($form->isValid(), 'Результат проведенной валидации - неверные данные');
-        $this->assertTrue($form->hasErrors(), 'Есть ошибки валидации');
-
-        $errorsByField = Arrays::array_filter_recursive($form->getErrorsAsString());
-        $this->assertEquals(7, count($errorsByField), 'Есть ошибки по 5 полям');
-    }
-
-    /**
-     * Пример кастомного валидатора
-     *
-     * Дезинфекция каталога. Валидатор для типа "filter_var".
-     *
-     * Заменяем слеши на прямые, в конце ставим слеш. Проверяем каталог на попытки переходов типа "../path/"
-     * или "some/../../path/". Это недопустимо.
+     * Дезинфекция каталога. Заменяем слеши на прямые, в конце ставим слеш. Проверяем каталог на попытки переходов типа
+     * "../path/" или "some/../../path/". Это недопустимо.
      *
      * @param string $value проверяемое значение
      * @return false|string
@@ -191,10 +142,31 @@ class FromTest extends TestCase
     }
 
     /**
+     * Некоторые данные, подлежащие валидации
+     * @var array
+     */
+    private $data = [
+        'app_path'      => '\valid\path', // прим.: максимум 12 символов, задано в контракте
+        'app_namespace' => 'some_ns',
+        'email'         => 'admin@site.com',
+
+        'db' => [
+            'switch' => 'on',
+            'server' => '127.0.0.1',
+            'base'   => ' my_base ',
+        ],
+
+        'modules' => [' user ', " admin \x00"],
+        'IP'      => '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d',
+        'id'      => '345',
+        'page'    => '5',
+    ];
+
+    /**
      * Контракт на поля формы. Описание валидаторов.
      * @var array
      */
-    private static $contract = [
+    private $contract = [
         'app_path' => [
             'some_thing' => 'Что-то левое в контракте. Должно быть проигнорировано',
 
@@ -203,11 +175,11 @@ class FromTest extends TestCase
 
                 'filter_var' => [
                     'filter'  => FILTER_CALLBACK,
-                    'options' => [FromValidationTest::class, 'normalizePath'],
+                    'options' => [self::class, 'normalizePath'],
                     'message' => 'Каталог должен быть в пределах сайта',
                 ],
 
-                'length' => [
+                'limits' => [
                     'max'     => 12, // утрировано, для удобства тестирования
                     'message' => 'Каталог приложения: очень длинный путь. Максимум 12 символов',
                 ],
@@ -224,7 +196,7 @@ class FromTest extends TestCase
                     'message' => 'Недопустимые символы в корне пространства имен. Ожидается [a-z\_-]',
                 ],
 
-                'length' => [
+                'limits' => [
                     'max'     => 100,
                     'message' => 'Очень длинный корень пространства имен. Максимум 100 символов',
                 ],
@@ -235,14 +207,9 @@ class FromTest extends TestCase
             'validators' => [
                 'required' => ['message' => 'Нужен адрес админа'],
 
-                'external' => [
-                    'function' => [Validators::class, 'mail'],
-                    'options'  => [
-                        'black_servers' => ['server.com'],
-                    ],
-                ],
+                'email' => ['black_servers' => ['server.com'],],
 
-                'length' => [
+                'limits' => [
                     'max'     => 50,
                     'message' => 'Очень длинный email. Максимум 50 символов',
                 ],
@@ -255,12 +222,8 @@ class FromTest extends TestCase
 
             'server' => [
                 'validators' => [
-                    'filter_var' => [
-                        'filter'  => FILTER_CALLBACK,
-                        'options' => [Validators::class, 'normalizeString'],
-                    ],
-
-                    'length' => [
+                    'normalizeString' => true,
+                    'limits'          => [
                         'max'     => 100,
                         'message' => 'Сервер[порт]. Максимум 100 символов',
                     ],
@@ -269,13 +232,9 @@ class FromTest extends TestCase
 
             'base' => [
                 'validators' => [
-                    'expect_array' => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
-                    'filter_var'   => [
-                        'filter'  => FILTER_CALLBACK,
-                        'options' => [Validators::class, 'normalizeString'],
-                    ],
-
-                    'length' => [
+                    'expect_array'    => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
+                    'normalizeString' => true,
+                    'limits'          => [
                         'max'     => 50,
                         'message' => 'Имя базы. Максимум 50 символов',
                     ],
@@ -286,11 +245,8 @@ class FromTest extends TestCase
         // Пример валидации массива однотипных значений. Запрос типа modules[]=aaa&modules[]=bbb
         'modules' => [
             'validators' => [
-                'expect_array' => true,
-                'filter_var'   => [
-                    'filter'  => FILTER_CALLBACK,
-                    'options' => [Validators::class, 'normalizeString'],
-                ],
+                'expect_array'    => true,
+                'normalizeString' => true,
             ],
         ],
 
