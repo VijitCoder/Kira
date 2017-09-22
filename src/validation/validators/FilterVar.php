@@ -16,6 +16,7 @@ use kira\exceptions\FormException;
  * ];
  * </pre>
  *
+ * Название валидатора 'filter_var'.
  */
 class FilterVar extends AbstractValidator
 {

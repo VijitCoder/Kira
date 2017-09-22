@@ -12,7 +12,7 @@ namespace kira\validation\validators;
  * <li>удаляем обратные слеши для исключения возможности написания скриптов на Perl</li>
  * </ul>
  *
- * Название валидатора может быть 'normalizeString' или 'normalize_string'.
+ * Название валидатора 'normalize_string'.
  */
 class NormalizeString extends AbstractValidator
 {

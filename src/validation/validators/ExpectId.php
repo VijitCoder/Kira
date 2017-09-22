@@ -6,7 +6,7 @@ use kira\utils\Typecast;
 /**
  * Валидатор проверяет значение как id: значение должно быть целым положительным числом.
  *
- * Название валидатора может быть 'expectId' или 'expect_id'.
+ * Название валидатора 'expect_id'.
  */
 class ExpectId extends AbstractValidator
 {

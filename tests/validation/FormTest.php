@@ -222,7 +222,7 @@ class FromTest extends TestCase
 
             'server' => [
                 'validators' => [
-                    'normalizeString' => true,
+                    'normalize_string' => true,
                     'limits'          => [
                         'max'     => 100,
                         'message' => 'Сервер[порт]. Максимум 100 символов',
@@ -233,7 +233,7 @@ class FromTest extends TestCase
             'base' => [
                 'validators' => [
                     'expect_array'    => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
-                    'normalizeString' => true,
+                    'normalize_string' => true,
                     'limits'          => [
                         'max'     => 50,
                         'message' => 'Имя базы. Максимум 50 символов',
@@ -246,7 +246,7 @@ class FromTest extends TestCase
         'modules' => [
             'validators' => [
                 'expect_array'    => true,
-                'normalizeString' => true,
+                'normalize_string' => true,
             ],
         ],
 
