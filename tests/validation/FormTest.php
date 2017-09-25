@@ -39,16 +39,15 @@ class FromTest extends TestCase
     /**
      * Валидация
      *
-     * Результат валидации можно проверить, как минимум тремя способами. Разумеется, вызовы методов необязательно делать
-     * сразу после валидации.
+     * Результат валидации можно проверить, как минимум тремя способами, тестируем их все.
      */
     public function test_validate()
     {
-        $result = $this
+        $isValid = $this
             ->form
             ->load($this->data)
             ->validate();
-        $this->assertTrue($result, 'Валидация правильного набора данных провалена');
+        $this->assertTrue($isValid, 'Валидация правильного набора данных провалена');
         $this->assertTrue($this->form->isValid());
         $this->assertFalse($this->form->hasErrors());
     }
@@ -59,9 +58,10 @@ class FromTest extends TestCase
     public function test_getValues()
     {
         $expect = [
-            'app_path'      => 'valid/path/', // отличается от исходного. Нормализованный путь
-            'app_namespace' => 'some_ns',     // отличается от исходного. Нормализованная строка
-            'email'         => 'admin@site.com',
+            'path'        => 'valid/path/', // отличается от исходного. Нормализованный путь
+            'namespace'   => 'some_ns',     // отличается от исходного. Нормализованная строка
+            'do_not_validate' => 'что-нибудь без валидации',
+            'email'           => 'admin@site.com',
 
             'db' => [
                 'switch' => 'on',
@@ -70,9 +70,10 @@ class FromTest extends TestCase
             ],
 
             'modules' => ['user', 'admin'], // отличается от исходного. Нормализованная строка
-            'IP'      => '127.0.0.1',            // IP был не той версии, подставилось дефолтное значение
-            'id'      => 345,
+            'IP'      => '127.0.0.1',       // IP был не той версии, подставилось дефолтное значение
             'page'    => 5,
+
+            'required_array' => ['any value'],
         ];
 
         $this->form
@@ -82,6 +83,46 @@ class FromTest extends TestCase
         $validatedValues = $this->form->getValues();
 
         $this->assertEquals($expect, $validatedValues, 'Валидированные данные не совпадают с ожиданием');
+    }
+
+    /**
+     * Тест успешной валидации неполного набора данных, тут же проверяем подстановку данных по умолчанию.
+     */
+    public function test_validate_with_default()
+    {
+        $d = $this->data;
+        unset($d['db']['switch'], $d['db']['server'], $d['db']['base'], $d['modules']);
+
+        $form = $this->form;
+        $form->load($d)->validate();
+
+        $this->assertTrue($form->isValid(), 'Валидация правильного набора данных провалена');
+
+        $this->assertEquals(
+            [
+                'switch' => 3,
+                'server' => 'what ever',
+                'base'   => null,
+            ],
+            $form->getValues('db'),
+            'Неверно заданы значения по умолчанию'
+        );
+        $this->assertNull($form->getValues('modules'), 'Неверное пустое значение для ожидаемого массива данных');
+    }
+
+    /**
+     * Проверка на ошибку валидации обязательных, но не переданных значений. Особый интерес к обязательному массиву
+     * данных.
+     */
+    public function test_required_invalid()
+    {
+        $form = $this->form;
+        $isValid = $form->load([])->validate();
+        $errors = Arrays::array_filter_recursive($form->getErrors());
+        $this->assertFalse($isValid, 'Заведомо неправильный набор данных неожиданно прошел валидацию');
+        $this->assertEquals(2, count($errors), 'Количество полей с ошибками не равно ожидаемому');
+        $this->assertArrayHasKey('path', $errors, 'Нет ошибки в ожидаемом поле');
+        $this->assertArrayHasKey('required_array', $errors, 'Нет ошибки в ожидаемом поле');
     }
 
     /**
@@ -146,9 +187,10 @@ class FromTest extends TestCase
      * @var array
      */
     private $data = [
-        'app_path'      => '\valid\path', // прим.: максимум 12 символов, задано в контракте
-        'app_namespace' => 'some_ns',
-        'email'         => 'admin@site.com',
+        'path'        => '\valid\path',
+        'namespace'   => 'some_ns',
+        'do_not_validate' => 'что-нибудь без валидации',
+        'email'           => 'admin@site.com',
 
         'db' => [
             'switch' => 'on',
@@ -158,86 +200,70 @@ class FromTest extends TestCase
 
         'modules' => [' user ', " admin \x00"],
         'IP'      => '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d',
-        'id'      => '345',
         'page'    => '5',
+
+        'required_array' => ['any value'],
     ];
 
     /**
      * Контракт на поля формы. Описание валидаторов.
+     *
+     * Не задаю свои сообщения об ошибках, эта возможность проверяется другим тестом.
+     *
      * @var array
      */
     private $contract = [
-        'app_path' => [
-            'some_thing' => 'Что-то левое в контракте. Должно быть проигнорировано',
-
+        'path' => [
             'validators' => [
-                'required' => ['message' => 'Не указан каталог приложения'],
+                'required' => true,
 
                 'filter_var' => [
                     'filter'  => FILTER_CALLBACK,
                     'options' => [self::class, 'normalizePath'],
-                    'message' => 'Каталог должен быть в пределах сайта',
                 ],
 
-                'limits' => [
-                    'max'     => 12, // утрировано, для удобства тестирования
-                    'message' => 'Каталог приложения: очень длинный путь. Максимум 12 символов',
-                ],
+                'limits' => ['max' => 12,],
             ],
         ],
 
-        'app_namespace' => [
+        'namespace'   => [
             'validators' => [
-                'required' => ['message' => 'Необходимо указать корень пространства имен приложения'],
-
                 'filter_var' => [
                     'filter'  => FILTER_VALIDATE_REGEXP,
                     'options' => ['regexp' => '~^[0-9a-z\_-]+$~i'],
-                    'message' => 'Недопустимые символы в корне пространства имен. Ожидается [a-z\_-]',
-                ],
-
-                'limits' => [
-                    'max'     => 100,
-                    'message' => 'Очень длинный корень пространства имен. Максимум 100 символов',
                 ],
             ],
         ],
 
+        // Принять, как есть, без валидации
+        'do_not_validate' => null,
+
         'email'   => [
             'validators' => [
-                'required' => ['message' => 'Нужен адрес админа'],
-
                 'email' => ['black_servers' => ['server.com'],],
-
-                'limits' => [
-                    'max'     => 50,
-                    'message' => 'Очень длинный email. Максимум 50 символов',
-                ],
             ],
         ],
 
         // Вложенные именования полей формы. Запрос типа db[server]=xxx&db[base]=yyy
+        // Тут же - набор дефолтных значений
         'db'      => [
-            'switch' => null, // поле принять без проверок
+             // поле принять без проверок. Установить дефолтное значение, если тут NULL
+            'switch' => [
+                'default' => 3,
+            ],
 
             'server' => [
-                'validators' => [
-                    'normalize_string' => true,
-                    'limits'          => [
-                        'max'     => 100,
-                        'message' => 'Сервер[порт]. Максимум 100 символов',
-                    ],
-                ],
+                'default'    => 'what ever',
+                'validators' => ['normalize_string' => true,],
             ],
 
             'base' => [
+                // Такое значение по умолчанию не имеет практического смысла, но не должно ронять приложение
+                'default'    => null,
                 'validators' => [
-                    'expect_array'    => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
+                    'expect_array'     => false, // умышленно добавил, чтобы проверить, что функционал не отвалится
                     'normalize_string' => true,
-                    'limits'          => [
-                        'max'     => 50,
-                        'message' => 'Имя базы. Максимум 50 символов',
-                    ],
+                    'limits'           => ['max' => 50,],
                 ],
             ],
         ],
@@ -245,28 +271,32 @@ class FromTest extends TestCase
         // Пример валидации массива однотипных значений. Запрос типа modules[]=aaa&modules[]=bbb
         'modules' => [
             'validators' => [
-                'expect_array'    => true,
+                'expect_array'     => true,
                 'normalize_string' => true,
             ],
         ],
 
-        'IP' => [
+        // Подстановка дефолтного значения через валидатор filter_var(). При этом ошибка валидации никогда не возникнет.
+        'IP'      => [
             'validators' => [
                 'filter_var' => [
                     'filter'  => FILTER_VALIDATE_IP,
                     'options' => ['default' => '127.0.0.1'],
                     'flags'   => FILTER_FLAG_IPV4,
-                    'message' => 'Ожидается IPv4',
                 ],
             ],
         ],
 
-        'id' => [
-            'validators' => ['expect_id' => true,],
+        'page'           => [
+            'validators' => ['expect_id' => ['message' => 'Неверный номер страницы'],],
         ],
 
-        'page' => [
-            'validators' => ['expect_id' => ['message' => 'Неверный номер страницы'],],
+        // Ожидаем непустой массив. Значения не важны.
+        'required_array' => [
+            'validators' => [
+                'expect_array' => true,
+                'required'     => true,
+            ],
         ],
     ];
 }

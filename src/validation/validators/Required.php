@@ -15,10 +15,8 @@ class Required extends AbstractValidator
     /**
      * Проверка необходимого значения на существование
      *
-     * Не проверяем значение, как массив, т.к. этим занимается другой валидатор и он гарантирует здесь только
-     * скалярное значение.
-     *
-     * Прим: нельзя для проверки использовать php::empty(), т.к. "0", 0 и 0.0 - это допустимые значения.
+     * Прим: для проверки скалярного значения нельзя использовать php::empty(), т.к. "0", 0 и 0.0 - это допустимые
+     * значения.
      *
      * @param mixed $value проверяемое значение
      * @return bool
@@ -26,6 +24,9 @@ class Required extends AbstractValidator
     public function validate($value)
     {
         $this->value = $value;
+        if (is_array($value)) {
+            return !empty($value);
+        }
         return !is_null($value) && preg_match('/.{1,}/', $value);
     }
 }

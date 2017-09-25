@@ -30,6 +30,11 @@ class OtherValidatorsTest extends TestCase
         $this->assertTrue($validator->validate(0));
         $this->assertTrue($validator->validate(0.0));
         $this->assertTrue($validator->validate('0'));
+        $this->assertTrue($validator->validate([1, 3, 5]));
+
+        $this->assertFalse($validator->validate([]));
+        $this->assertFalse($validator->validate(''));
+        $this->assertFalse($validator->validate(null));
 
         $this->expectException(FormException::class);
         new validators\Required(null);

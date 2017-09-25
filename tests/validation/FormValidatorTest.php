@@ -120,9 +120,9 @@ class FromValidatorTest extends TestCase
         $this->assertTrue($formValidator->isValid());
         $this->assertEquals($expect, $value, 'Не получили ожидаемые валидированные значения');
     }
-}
 
-# --- Никаких методов ниже этой линии. Причина: test_internalValidate() должен быть последним тестом -----
+    # --- Никаких методов ниже этой линии. Причина: test_internalValidate() должен быть последним тестом -----
+}
 
 /**
  * Класс-валидатор, который всегда вернет TRUE и увеличит проверяемое значение на единицу

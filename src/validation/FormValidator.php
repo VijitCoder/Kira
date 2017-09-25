@@ -50,13 +50,13 @@ class FormValidator
      *
      * Функция не предполагает прямой вызов из кода приложения. Это часть логики движка.
      *
-     * Узел может быть равен NULL, только если он конечный и в контракте заявлено принять поле "как есть". Тогда пишем
-     * полученные данные без валидации и выходим.
-     *
-     * Проверяемое значение может быть преобразовано в любом валидаторе и в таком виде будет передаваться дальше.
+     * Контракт может быть равен NULL, если узел конечный, требуется принять его значение без проверок и для него
+     * не задано дефолтное значение.
      *
      * Если узел не конечный (является веткой), тогда в нем не может быть валидаторов, есть только дочерний массив
      * узлов. Для каждого такого узла рекурсивно вызываем этот же метод.
+     *
+     * Проверяемое значение может быть преобразовано в любом валидаторе и в таком виде будет передаваться дальше.
      *
      * @param array|null $contractPart описательная часть контракта по конкретному узлу
      * @param mixed      $value        проверяемое значение. Соответствует узлу в {@see Form::$values}
@@ -65,36 +65,70 @@ class FormValidator
      */
     public function internalValidate($contractPart, &$value, &$error)
     {
+        if ($contractPart && key_exists('default', $contractPart)) {
+            $default = $contractPart['default'];
+            unset($contractPart['default']);
+        } else {
+            $default = null;
+        }
+
         if (!$contractPart) {
+            $this->afterValidationOfValue(true, $value, $default);
             return;
         }
 
-        if (!isset($contractPart['validators'])) {
+        if (isset($contractPart['validators'])) {
+            $validators = $contractPart['validators'];
+        } else {
             foreach ($contractPart as $k => $cp) {
                 $this->internalValidate($cp, $value[$k], $error[$k]);
             }
             return;
         }
 
-        if ($expectArray = isset($contractPart['validators']['expect_array'])) {
-            $expectArray = (bool)$contractPart['validators']['expect_array'];
-            unset($contractPart['validators']['expect_array']);
+        if ($expectArray = isset($validators['expect_array'])) {
+            $expectArray = (bool)$validators['expect_array'];
+            unset($validators['expect_array']);
         }
-        if (!$this->checkDataTypeForArray($expectArray, $value, $error)) {
+        if (!is_null($value) && !$this->checkDataTypeForArray($expectArray, $value, $error)) {
             $this->isValid = false;
             return;
         }
 
-        $validators = &$contractPart['validators'];
         $this->popupRequired($validators);
 
-        if ($expectArray) {
+        $passed = $expectArray
+            ? $this->validateAsArray($validators, $value, $error)
+            : $this->fireValidators($validators, $value, $error);
+
+        $this->afterValidationOfValue($passed, $value, $default);
+    }
+
+    /**
+     * Поверить значение, как массив однотипных данных
+     *
+     * В контракте заявлено, что в значении ожидается массив. Нужно примерить набор валидаторов к каждому его
+     * значению. При этом, если задан валидатор `required`,то массив в целом должен быть не пустым и ни один его элемент
+     * не пустой.
+     *
+     * @param array $validators валидаторы данных
+     * @param mixed $value      проверяемые данные
+     * @param mixed $error      куда писать ошибку
+     * @return bool
+     */
+    private function validateAsArray(array $validators, &$value, &$error)
+    {
+        $passed = true;
+        if ($value) {
             foreach (array_keys($value) as $k) {
-                $this->isValid = $this->fireValidators($validators, $value[$k], $error[$k]) && $this->isValid;
+                $passed = $this->fireValidators($validators, $value[$k], $error[$k]) && $passed;
             }
-        } else {
-            $this->isValid = $this->fireValidators($validators, $value, $error) && $this->isValid;
+        } else if (isset($validators['required'])) {
+            $passed = false;
+            $this->fireValidators($validators, $value, $error);
         }
+
+        return $passed;
     }
 
     /**
@@ -109,7 +143,7 @@ class FormValidator
      * @param mixed $error       куда писать ошибку
      * @return bool
      */
-    private function checkDataTypeForArray(bool $expectArray, &$value, &$error): bool
+    private function checkDataTypeForArray(bool $expectArray, $value, &$error): bool
     {
         $passed = true;
         $isArray = is_array($value);
@@ -184,7 +218,7 @@ class FormValidator
      */
     private function getValidator(string $name, $options): AbstractValidator
     {
-        $cacheKey = $name . '_' . serialize($options);
+        $cacheKey = $name . '_' . md5(serialize($options));
         if (isset($this->validatorsInstances[$cacheKey])) {
             return $this->validatorsInstances[$cacheKey];
         }
@@ -198,6 +232,24 @@ class FormValidator
         $this->validatorsInstances[$cacheKey] = $validator;
 
         return $validator;
+    }
+
+    /**
+     * Метод вызывается после проверки каждого узла контракта
+     *
+     * Если значение валидное и при этом пустое (NULL), присваиваем значение по умолчанию.
+     * Если значение не валидное, сбрасываем флаг общей успешной валидации.
+     *
+     * @param bool  $passed  TRUE - проверяемое значение валидное
+     * @param mixed $value   проверяемое значение
+     * @param mixed $default значение по умолчанию
+     */
+    private function afterValidationOfValue(bool $passed, &$value, $default)
+    {
+        if ($passed && is_null($value)) {
+            $value = $default;
+        }
+        $this->isValid = $passed && $this->isValid;
     }
 
     /**
