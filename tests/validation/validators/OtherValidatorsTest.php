@@ -49,10 +49,14 @@ class OtherValidatorsTest extends TestCase
         ]);
 
         $this->assertTrue($validator->validate('`12Qwe'));
+        $this->assertTrue($validator->validate('[`12Qwe]>', 'Пароль с не учитываемыми символами оказался невалидным'));
 
         $this->assertFalse($validator->validate('`1 q'));
         $errors = explode(' | ', $validator->error);
-        $this->assertEquals(3, count($errors));
+        $this->assertEquals(2, count($errors));
+
+        $this->assertFalse($validator->validate('[12Qwe]>',
+            'Пароль с не учитываемыми символами увеличил счетчик комбинаций'));
     }
 
     /**
