@@ -408,15 +408,14 @@ class DbModel
      * Метод сокращает количество писанины, когда нужно к каждому ключу ассоциативного массива данных приписать
      * двоеточие для передачи его в качестве массива подстановок.
      *
-     * @var array $keys массив заготовок ключей, без ":" в начале.
-     * @var array $data массив данных. По заготовкам ключей в нем ищем подходящие данные
+     * @var array $data ассоциативный массив данных. Ключи будут переименованы в такие же, но с преффиксом ":"
      * @return array
      */
-    protected function valueSet(array $keys, array $data)
+    protected function valueSet(array $data): array
     {
-        $values = array();
-        foreach ($keys as $k) {
-            $values[':' . $k] = isset($data[$k]) ? $data[$k] : null;
+        $values = [];
+        foreach ($data as $k => $v) {
+            $values[':' . $k] = $v;
         }
         return $values;
     }
@@ -450,11 +449,12 @@ class DbModel
                 }
 
                 if (is_int($placeholder)) {
-                    $placeholder = '\?';
+                    $pattern = '/\?/';
+                    $sql = preg_replace($pattern, $value, $sql, 1);
+                } else {
+                    $pattern = "/$placeholder/";
+                    $sql = preg_replace($pattern, $value, $sql);
                 }
-
-                $placeholder = "/$placeholder/";
-                $sql = preg_replace($placeholder, $value, $sql, 1);
             }
         }
 
