@@ -77,4 +77,13 @@ class StringsTest extends TestCase
             'Неверное превращение в булевое "нет"');
         $this->assertEquals('1', Strings::strBool(true, Strings::BOOL_DIGIT), 'Неверное превращение в булевое "1"');
     }
+
+    /**
+     * Тест: преобразование html-тега [br] в перенос строки, принятый в текущей ОС
+     */
+    public function test_br2nl()
+    {
+        $rn = PHP_EOL;
+        $this->assertEquals("some{$rn}string{$rn}here{$rn}", Strings::br2nl('some<br />string<br>here<BR>'));
+    }
 }

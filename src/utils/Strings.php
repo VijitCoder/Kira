@@ -304,4 +304,17 @@ class Strings
                 return $value ? 'true' : 'false';
         }
     }
+
+    /**
+     * Преобразование html-тега [br] в перенос строки, принятый в текущей ОС
+     *
+     * Это обратная замена результата функции php::nl2br()
+     *
+     * @param string $text текст для обработки
+     * @return string
+     */
+    public static function br2nl(string $text): string
+    {
+        return preg_replace('~<br\s*/?>~i', PHP_EOL, $text);
+    }
 }
