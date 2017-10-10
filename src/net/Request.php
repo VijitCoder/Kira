@@ -316,8 +316,7 @@ class Request
      */
     public static function isAjax()
     {
-        return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
-            && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+        return self::headers('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest';
     }
 
     /**
@@ -356,6 +355,8 @@ class Request
         }
 
         $key = strtolower($key);
+        // Обычно интересуют добавленные заголовки, а не базовые. А они - в конце списка. Поднимаем их наверх.
+        $headers = array_reverse($headers);
         foreach ($headers as $k => $v) {
             if (strtolower($k) == $key) {
                 return $v;
