@@ -50,27 +50,20 @@ class Session
 
     /**
      * Читаем значение из сессии
-     *
-     * Не задан ключ - вернуть все содержимое при режиме отладки; на боевом ничего без ключа не получим.
-     *
      * @param string $key    ключ в сессии
      * @param bool   $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
      * @return string | null
      * @throws SessionException
      */
-    public static function read($key = null, $strict = false)
+    public static function read($key, $strict = false)
     {
         self::init();
-        if ($key) {
-            if (isset($_SESSION[$key])) {
-                return $_SESSION[$key];
-            } elseif (!$strict) {
-                return null;
-            } else {
-                throw new SessionException("В сессии не найдено значение с ключом '{$key}'");
-            }
+        if (isset($_SESSION[$key])) {
+            return $_SESSION[$key];
+        } elseif (!$strict) {
+            return null;
         } else {
-            return KIRA_DEBUG ? $_SESSION : null;
+            throw new SessionException("В сессии не найдено значение с ключом '{$key}'");
         }
     }
 
