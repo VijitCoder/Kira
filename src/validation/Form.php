@@ -15,6 +15,11 @@ use kira\exceptions\FormException;
 class Form
 {
     /**
+     * Как должно называться поле формы, если потребуется передача CSRF-токена
+     */
+    const CSRF_FIELD = 'csrf-token';
+
+    /**
      * Контракт. Описание полей и правил валидации
      * @var array
      */
@@ -33,17 +38,13 @@ class Form
     protected $formValidator;
 
     /**
-     * Защита от CSRF атак
+     * Защита от CSRF атак. Если токен не пройдет проверку, будет проброшено исключение.
      *
-     * Если задано имя поля, то форма должна передать CSRF-токен в соответствующем параметре. Чтобы получить токен,
-     * используйте методы Request::getCsrfToken() или Request::createCsrfToken().
-     *
-     * Не нужно объявлять это поле в контракте полей. Тем не менее проверка токена выполняется при валидации формы. Если
-     * токен не пройдет проверку, будет проброшено исключение.
+     * Токен ищем среди данных по ключу "csrf-token" или в заголовке запроса "X-Csrf-Token"
      *
      * @var string
      */
-    protected $csrfField = '';
+    protected $checkCsrf = false;
 
     /**
      * Данные с формы. По умолчанию массив заполнен ключами, но без данных.
@@ -121,15 +122,15 @@ class Form
     /**
      * Валидация. Рекурсивный обход контракта
      * @return bool
-     * @throws FormException из checkСsrfToken() и валидаторов
+     * @throws FormException из checkCsrfToken() и валидаторов
      */
     public function validate(): bool
     {
-        if (!$this->checkСsrfToken()) {
+        if (!$this->rawData) {
             return false;
         }
 
-        if (!$this->rawData) {
+        if (!$this->checkCsrfToken()) {
             return false;
         }
 
@@ -146,28 +147,22 @@ class Form
     /**
      * Проверка CSRF-токена
      *
-     * Если поле с токеном не задано, не выполнять проверку. Если не пройдет проверку, пробрасываем исключение.
+     * Токен ищем среди данных по ключу "csrf-token" или в заголовке запроса "X-Csrf-Token". Если не пройдет проверку,
+     * пробрасываем исключение.
      *
      * @return bool
      * @throws FormException
      * @throws FormException с кодом 400, если токен неверный
      */
-    private function checkСsrfToken(): bool
+    private function checkCsrfToken(): bool
     {
-        if (!$this->csrfField) {
+        if (!$this->checkCsrf) {
             return true;
         }
 
-        $method = Request::method();
-        if (!in_array($method, ['GET', 'POST'])) {
-            throw new FormException('Проверка CSRF токена возможна только при передаче формы методами GET или POST'
-                . PHP_EOL . 'Текущий метод определен, как ' . $method);
-        }
-        $method = strtolower($method);
+        $token = $this->getRawData(self::CSRF_FIELD) ?? Request::headers(CsrfProtection::HEADER_NAME);
 
-        $token = Request::$method($this->csrfField);
-
-        if (!Request::validateCsrfToken($token)) {
+        if (!$token || !CsrfProtection::validate($token)) {
             throw new FormException('Неверный CSRF токен', 400);
         }
 
@@ -190,9 +185,6 @@ class Form
      * уровне. Старое значение будет переписано, если оно есть.
      *
      * Наличие поля не проверяется, что дает больше возможностей для управления массивом итоговых данных.
-     *
-     * TODO это плохо или хорошо? С одной стороны, можно добавить что-то после валидации, например, спец.данные,
-     * нужные программисту. С другой же стороны, ошибка кодера в имени поля может оказаться незамеченной.
      *
      * @param array $value ключ => начение
      */
@@ -374,6 +366,6 @@ class Form
      */
     public function __set(string $name, $value)
     {
-        return $this->setValue([$name => $value]);
+        $this->setValue([$name => $value]);
     }
 }

@@ -55,6 +55,8 @@ class OtherValidatorsTest extends TestCase
         $errors = explode(' | ', $validator->error);
         $this->assertEquals(2, count($errors));
 
+        $this->assertFalse($validator->validate('12345!'));
+
         $this->assertFalse($validator->validate('[12Qwe]>',
             'Пароль с не учитываемыми символами увеличил счетчик комбинаций'));
     }
