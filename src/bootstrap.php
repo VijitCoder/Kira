@@ -1,4 +1,10 @@
 <?php
+/**
+ * Начальный загрузчик движка
+ *
+ * Его вызов гарантирован Composer, см. в composer.json секцию autoload > files
+ */
+
 // Глобальный перехватчик для исключений, которые не будут пойманы в контексте
 set_exception_handler(['kira\Handlers', 'exceptionHandler']);
 

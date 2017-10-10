@@ -47,6 +47,12 @@ class StringsTest extends TestCase
             'Не верное мультибайтное разбиение строки');
     }
 
+    public function test_randomString()
+    {
+        $this->assertEquals(10, strlen(Strings::randomString(10)));
+        $this->assertEquals('', Strings::randomString(-2));
+    }
+
     /**
      * Тест: проверка экранированности символа
      */

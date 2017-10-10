@@ -266,6 +266,24 @@ class Strings
     }
 
     /**
+     * Генерация пвсевдо-случайной строки из читабельных символов
+     *
+     * Генератор случайностей - openssl
+     *
+     * @param int $bytes
+     * @return string
+     */
+    public static function randomString(int $bytes): string
+    {
+        if ($bytes < 1) {
+            return '';
+        }
+        $str = openssl_random_pseudo_bytes($bytes);
+        $str = base64_encode($str);
+        return substr($str, 0, $bytes);
+    }
+
+    /**
      * Проверка: символ экранирован
      *
      * Сюда нужно передавать весь текст, идущий ДО проверяемого символа. Идея проверки: считаем обратные слеши с конца
