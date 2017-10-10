@@ -340,50 +340,27 @@ class Request
     }
 
     /**
-     * Создание токена для защиты от CSRF-атаки
+     * Получение заголовков запроса
      *
-     * Генерируем случайное значение, пишем его в печеньку.
+     * Если требуется значение из конкретного заголовка, нужно указывать его в параметре. Будет выполнен
+     * регистронезависимый поиск по заданному заголовку.
      *
-     * <pre>
-     * Время жизни - до конца сессии
-     * Видимость - по всему сайту
-     * Отключить передачу "только по HTTPS"
-     * Разрешить доступ из скриптов клиента (javascript, например).
-     * </pre>
-     *
-     * @param bool $force обновить токен, даже если он уже существует
-     * @return string
+     * @param null|string $key название заголовка
+     * @return array|string|null
      */
-    public static function createCsrfToken($force = true)
+    public static function headers(?string $key = null)
     {
-        $name = 'CSRF_TOKEN';
-        $value = self::cookie($name);
-        if ($force || !$value) {
-            $value = crypt(uniqid('', true), mt_rand());
-            setcookie($name, $value, 0, '/', '', false, false);
+        $headers = apache_request_headers();
+        if (!$key) {
+            return $headers;
         }
-        return $value;
-    }
 
-    /**
-     * Получение токена защиты от CSRF-атаки
-     *
-     * Новый токен будет создан, только если его еще не существует. Иначе получим текущий.
-     *
-     * @return string
-     */
-    public static function getCsrfToken()
-    {
-        return self::createCsrfToken(false);
-    }
-
-    /**
-     * Проверка токена защиты от CSRF-атаки
-     * @param string $token
-     * @return bool
-     */
-    public static function validateCsrfToken($token)
-    {
-        return $token === self::getCsrfToken();
+        $key = strtolower($key);
+        foreach ($headers as $k => $v) {
+            if (strtolower($k) == $key) {
+                return $v;
+            }
+        }
+        return null;
     }
 }
