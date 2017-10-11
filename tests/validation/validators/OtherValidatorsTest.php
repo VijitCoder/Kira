@@ -1,5 +1,4 @@
 <?php
-use kira\exceptions\FormException;
 use kira\validation\validators;
 use PHPUnit\Framework\TestCase;
 
@@ -20,24 +19,6 @@ class OtherValidatorsTest extends TestCase
         $validator = new validators\ExpectId(['message' => 'Неверный id']);
         $this->assertFalse($validator->validate('34key'));
         $this->assertEquals('Неверный id', $validator->error);
-    }
-
-    public function test_required()
-    {
-        $validator = new validators\Required(true);
-
-        $this->assertTrue($validator->validate('some'));
-        $this->assertTrue($validator->validate(0));
-        $this->assertTrue($validator->validate(0.0));
-        $this->assertTrue($validator->validate('0'));
-        $this->assertTrue($validator->validate([1, 3, 5]));
-
-        $this->assertFalse($validator->validate([]));
-        $this->assertFalse($validator->validate(''));
-        $this->assertFalse($validator->validate(null));
-
-        $this->expectException(FormException::class);
-        new validators\Required(null);
     }
 
     public function test_password()
