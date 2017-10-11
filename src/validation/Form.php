@@ -187,10 +187,12 @@ class Form
      * Наличие поля не проверяется, что дает больше возможностей для управления массивом итоговых данных.
      *
      * @param array $value ключ => начение
+     * @return $this
      */
     public function setValue(array $value)
     {
         $this->values = Arrays::merge_recursive($this->values, $value);
+        return $this;
     }
 
     /**
