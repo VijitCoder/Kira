@@ -107,7 +107,7 @@ class FromValidatorTest extends TestCase
         ];
 
         $error = null;
-        $formValidator->internalValidate($contract, $value, $error);
+        $formValidator->validate($contract, $value, $error);
 
         $expect = [
             'field1'     => 33,

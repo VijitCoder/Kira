@@ -63,7 +63,7 @@ class FormValidator
      * @param mixed      $error        куда писать ошибку. Соответствует узлу в {@see Form::$errors}
      * @throws FormException через магический FormValidator::__call()
      */
-    public function internalValidate($contractPart, &$value, &$error)
+    public function validate($contractPart, &$value, &$error)
     {
         if ($contractPart && key_exists('default', $contractPart)) {
             $default = $contractPart['default'];
@@ -81,7 +81,7 @@ class FormValidator
             $validators = $contractPart['validators'];
         } else {
             foreach ($contractPart as $k => $cp) {
-                $this->internalValidate($cp, $value[$k], $error[$k]);
+                $this->validate($cp, $value[$k], $error[$k]);
             }
             return;
         }

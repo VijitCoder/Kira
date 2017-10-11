@@ -138,7 +138,7 @@ class Form
             if (isset($this->rawData[$key])) {
                 $this->values[$key] = $this->rawData[$key];
             }
-            $this->formValidator->internalValidate($contractPart, $this->values[$key], $this->errors[$key]);
+            $this->formValidator->validate($contractPart, $this->values[$key], $this->errors[$key]);
         }
 
         return $this->formValidator->isValid();
@@ -179,7 +179,8 @@ class Form
     }
 
     /**
-     * Свое значение в массив валидированных данных.
+     * Свое значение в массив валидированных данных. Можно установить несколько значений либо одиним вызовом или по
+     * цепочке несколько раз вызвать этот метод.
      *
      * Если значение нужно разместить в многоуровневом массиве, пишем всю вложенность ключей и новое значение на нужном
      * уровне. Старое значение будет переписано, если оно есть.
