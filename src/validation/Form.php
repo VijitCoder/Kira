@@ -350,6 +350,9 @@ class Form
 
     /**
      * Геттер поля формы. Значение возращается из массива валидированных данных.
+     *
+     * Получить значение можно только из одномерного массива данных или из верхнего уровня многомерного массива данных
+     *
      * @param string $name имя поля формы
      * @return mixed
      * @throws FormException
@@ -357,7 +360,7 @@ class Form
     public function __get(string $name)
     {
         if (array_key_exists($name, $this->values)) {
-            return $this->getValues($name);
+            return $this->values[$name];
         }
         throw new FormException('Не найдено поле формы - ' . $name);
     }
