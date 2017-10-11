@@ -73,7 +73,7 @@ class FormValidator
         }
 
         if (!$contractPart) {
-            $this->afterValidationOfValue(true, $value, $default);
+            $this->afterValueValidation(true, $value, $default);
             return;
         }
 
@@ -101,7 +101,7 @@ class FormValidator
             ? $this->validateAsArray($validators, $value, $error)
             : $this->fireValidators($validators, $value, $error);
 
-        $this->afterValidationOfValue($passed, $value, $default);
+        $this->afterValueValidation($passed, $value, $default);
     }
 
     /**
@@ -244,7 +244,7 @@ class FormValidator
      * @param mixed $value   проверяемое значение
      * @param mixed $default значение по умолчанию
      */
-    private function afterValidationOfValue(bool $passed, &$value, $default)
+    private function afterValueValidation(bool $passed, &$value, $default)
     {
         if ($passed && is_null($value)) {
             $value = $default;
