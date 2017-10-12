@@ -55,7 +55,7 @@ namespace {
             );
 
             $var = 'some';
-            $this->callMethod($class, 'impossible', [&$var, 12, SUTClass::IMPOSSIBLE_VAL]);
+            $this->callMethod($class, 'referencedParam', [&$var, 12, SUTClass::IMPOSSIBLE_VAL]);
             $this->assertEquals('12impossible', $var, 'Не удался вызов метода с первым параметром-ссылкой');
 
         }
@@ -98,7 +98,7 @@ namespace app {
             return 'welcome';
         }
 
-        private function impossible(&$var, $num, $const)
+        private function referencedParam(&$var, $num, $const)
         {
             $var = $num . $const;
         }
