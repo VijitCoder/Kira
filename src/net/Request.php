@@ -53,7 +53,7 @@ use kira\utils;
  *
  * @method static string|null getAsString(string $key, $default = null)
  * @method static string|null postAsString(string $key, $default = null)
- * @method static string|null cookieAsIString(string $key, $default = null)
+ * @method static string|null cookieAsString(string $key, $default = null)
  * @method static string|null requestAsString(string $key, $default = null)
  *
  * Значением может оказаться массив, когда ожидаем строку. Тогда возвращаем $default. Если значение строковое,
@@ -226,7 +226,7 @@ class Request
      *
      * RESTful методы: GET, POST, DELETE, PUT. Есть еще OPTIONS, HEAD. Может еще какая-то экзотика.
      *
-     * @param string $expect ожидаемый метод
+     * @param string $expect ожидаемый метод, без соблюдения регистра
      * @return null|string|bool
      */
     public static function method(string $expect = '')

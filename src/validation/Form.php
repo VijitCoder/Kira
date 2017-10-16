@@ -290,7 +290,7 @@ class Form
     /**
      * Вернуть сообщения об ошибках. Весь массив или конкретный элемент.
      *
-     * Если ошибки нет, будет пустой элемент, иначе возвращаем массив, даже если сообщение всего одно.
+     * Если ошибки нет, будет NULL, иначе возвращаем массив, даже если сообщение всего одно.
      *
      * Важно помнить, что по умолчанию массив заполнен ключами, но без данных. Это обеспечено конструктором модели формы.
      *
@@ -299,7 +299,7 @@ class Form
      * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @return array [поле => массив ошибок]
      */
-    public function getErrors($key = null): array
+    public function getErrors($key = null): ?array
     {
         return $this->getData($this->errors, $key);
     }
@@ -324,24 +324,29 @@ class Form
     }
 
     /**
-     * Получение всех ошибок по каждому полю, склееных в строку.
+     * Получение всех ошибок по каждому полю или по конкретному полю. Ошибки поля склеваются в строку.
      *
-     * Если контракт - сложный многомерный массив, то ошибки склеиваются из всех подмассивов для каждого старшего ключа.
-     * На выходе всегда получается простой ассоциативный массив [поле => ошибки]. В случае сложного контракта полями
-     * будут его старшие ключи.
+     * На выходе получаем: если поле задано - будет просто строка, все ошибки поля в ней; если поле не задано, будет
+     * одномерный массив, где ключи - имена полей, значения - все ошибки в строку по каждому полю отдельно.
      *
      * @param null   $key  ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @param string $glue клей между соседними элементами одного массива
      * @param string $eol  клей между соседними подмассивами
-     * @return array
+     * @return array|string|null
      */
-    public function getErrorsAsStringPerField($key = null, string $glue = ' ', string $eol = ''): array
+    public function getErrorsAsStringPerField($key = null, string $glue = ' ', string $eol = '')
     {
-        $errors = $this->getErrors($key);
+        if (!$errors = $this->getErrors($key)) {
+            return $errors;
+        }
 
-        foreach ($errors as &$v) {
-            if (is_array($v)) {
-                $v = Arrays::implode_recursive($v, $glue, $eol);
+        if ($key) {
+            $errors = Arrays::implode_recursive($errors, $glue, $eol);
+        } else {
+            foreach ($errors as &$v) {
+                if (is_array($v)) {
+                    $v = Arrays::implode_recursive($v, $glue, $eol);
+                }
             }
         }
 
@@ -350,9 +355,6 @@ class Form
 
     /**
      * Геттер поля формы. Значение возращается из массива валидированных данных.
-     *
-     * Получить значение можно только из одномерного массива данных или из верхнего уровня многомерного массива данных
-     *
      * @param string $name имя поля формы
      * @return mixed
      * @throws FormException
