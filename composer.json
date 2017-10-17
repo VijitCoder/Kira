@@ -18,7 +18,8 @@
         "source": "https://github.com/VijitCoder/Kira"
     },
     "require": {
-        "php": ">=7.1"
+        "php": ">=7.1",
+        "donatj/phpuseragentparser": "^0.7.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^5.6",
