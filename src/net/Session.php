@@ -16,7 +16,7 @@ class Session
     /**
      * Открываем сессию, если не сделали этого раньше
      */
-    public static function init()
+    public static function init(): void
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
@@ -29,7 +29,7 @@ class Session
      * Обычно это не требуется, но могут возникнуть проблемы при параллельной работе скриптов с одним файлом сессии.
      * Подробнее тут {@link http://php.net/manual/ru/function.session-write-close.php}, комменты тоже полезны.
      */
-    public static function close()
+    public static function close(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
@@ -40,9 +40,8 @@ class Session
      * Пишем значение в сессию. Перезапись существующего значения.
      * @param string $key  ключ в сессии
      * @param mixed  $data данные для записи
-     * @return void
      */
-    public static function write($key, $data)
+    public static function write(string $key, $data): void
     {
         self::init();
         $_SESSION[$key] = $data;
@@ -55,7 +54,7 @@ class Session
      * @return string | null
      * @throws SessionException
      */
-    public static function read($key, $strict = false)
+    public static function read(string $key, bool $strict = false): ?string
     {
         self::init();
         if (isset($_SESSION[$key])) {
@@ -70,12 +69,24 @@ class Session
     /**
      * Удаление значения из сессии
      * @param string $key ключ в сессии
-     * @return void
      */
-    public static function delete($key)
+    public static function delete(string $key): void
     {
         self::init();
         unset($_SESSION[$key]);
+    }
+
+    /**
+     * Извлечение значения из сессии. Сочетание чтения с удалением
+     * @param string $key    ключ в сессии
+     * @param bool   $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
+     * @return string|null
+     */
+    public static function pop(string $key, bool $strict = false): ?string
+    {
+        $value = self::read($key, $strict);
+        self::delete($key);
+        return $value;
     }
 
     /**
@@ -87,9 +98,8 @@ class Session
      * @param string $key   ключ в сессии
      * @param mixed  $data  данные для записи
      * @param bool   $force флаг перезаписи
-     * @return void
      */
-    public static function addFlash($key, $data, $force = false)
+    public static function addFlash(string $key, $data, bool $force = false): void
     {
         self::init();
 
@@ -111,26 +121,26 @@ class Session
     /**
      * Алиас функции addFlash() с поднятым флагом перезаписи. Для удобства использования.
      * @param string $key  ключ в сессии
-     * @param string $data данные для записи
+     * @param mixed  $data данные для записи
      */
-    public static function newFlash($key, $data)
+    public static function newFlash(string $key, $data): void
     {
         self::addFlash($key, $data, true);
     }
 
     /**
      * Чтение конкретного flash-сообщения из сессии
-     * @param string $key ключ в сессии
-     * @param bool   $del удалить запись из сессии
+     * @param string $key    ключ в сессии
+     * @param bool   $delete удалить запись из сессии
      * @return mixed | null
      */
-    public static function readFlash($key, $del = true)
+    public static function readFlash(string $key, bool $delete = true)
     {
         self::init();
 
         if (isset($_SESSION['flash'][$key])) {
             $result = $_SESSION['flash'][$key];
-            if ($del) {
+            if ($delete) {
                 unset($_SESSION['flash'][$key]);
             }
         } else {
@@ -142,14 +152,14 @@ class Session
 
     /**
      * Чтение всех flash-сообщений из сессии
-     * @param bool $del удалить запись из сессии
+     * @param bool $delete удалить запись из сессии
      * @return mixed | null
      */
-    public static function readFlashes($del = true)
+    public static function readFlashes(bool $delete = true)
     {
         self::init();
         $result = isset($_SESSION['flash']) ? $_SESSION['flash'] : null;
-        if ($del) {
+        if ($delete) {
             unset($_SESSION['flash']);
         }
         return $result;
@@ -158,7 +168,7 @@ class Session
     /**
      * Очистка flash-сообщений. Полезно в процессе разработки.
      */
-    public static function dropFlashes()
+    public static function dropFlashes(): void
     {
         self::init();
         unset($_SESSION['flash']);
