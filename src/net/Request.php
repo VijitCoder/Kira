@@ -277,33 +277,39 @@ class Request
      *
      * @return string|null
      */
-    public static function absoluteURL()
+    public static function absoluteURL(): ?string
     {
         if (!isset($_SERVER['HTTP_HOST'])) {
-            return false;
+            return null;
         }
 
         $user = isset($_SERVER['PHP_AUTH_USER'])
             ? $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@'
             : '';
 
-        $url = Env::scheme() . $user . $_SERVER['HTTP_HOST'] . Env::port();
+        return Env::scheme() . $user . $_SERVER['HTTP_HOST'] . Env::port() . self::relatedURL();
 
+    }
+
+    /**
+     * Относительный адрес текущей страницы
+     * @return string
+     */
+    public static function relatedURL(): string
+    {
         $relatedUrl = '';
 
         if (isset($_SERVER['X_ORIGINAL_URL'])) {
             $relatedUrl = $_SERVER['X_ORIGINAL_URL'];
         } else if (isset($_SERVER['X_REWRITE_URL'])) {
             $relatedUrl = $_SERVER['X_REWRITE_URL'];
-        } else if (isset($_SERVER['IIS_WasUrlRewritten']) && $_SERVER['IIS_WasUrlRewritten'] == '1'
+        } else if (isset($_SERVER['IIS_WasUrlRewritten'])
+            && $_SERVER['IIS_WasUrlRewritten'] == '1'
             && !empty($_SERVER['UNENCODED_URL'])
         ) {
             $relatedUrl = $_SERVER['UNENCODED_URL'];
         } else if (isset($_SERVER['REQUEST_URI'])) {
             $relatedUrl = $_SERVER['REQUEST_URI'];
-            if (strpos($relatedUrl, $url) === 0) {
-                $relatedUrl = substr($relatedUrl, strlen($url));
-            }
         } else if (isset($_SERVER['ORIG_PATH_INFO'])) {
             $relatedUrl = $_SERVER['ORIG_PATH_INFO'];
             if (!empty($_SERVER['QUERY_STRING'])) {
@@ -313,7 +319,7 @@ class Request
             $relatedUrl = $_SERVER['PHP_SELF'];
         }
 
-        return $url . $relatedUrl;
+        return $relatedUrl;
     }
 
     /**
