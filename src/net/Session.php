@@ -67,16 +67,6 @@ class Session
     }
 
     /**
-     * Удаление значения из сессии
-     * @param string $key ключ в сессии
-     */
-    public static function delete(string $key): void
-    {
-        self::init();
-        unset($_SESSION[$key]);
-    }
-
-    /**
      * Извлечение значения из сессии. Сочетание чтения с удалением
      * @param string $key    ключ в сессии
      * @param bool   $strict Реакция на "не найдено значение", пробросить исключение или просто вернуть null.
@@ -87,6 +77,49 @@ class Session
         $value = self::read($key, $strict);
         self::delete($key);
         return $value;
+    }
+
+    /**
+     * Получение всех значений из сессии, за исключением flash-сообщений
+     * @return array|null
+     */
+    public static function all(): ?array
+    {
+        self::init();
+        $values = $_SESSION;
+        unset($values['flash']);
+        return $values;
+    }
+
+    /**
+     * Удаление значения из сессии
+     * @param string $key ключ в сессии
+     */
+    public static function delete(string $key): void
+    {
+        self::init();
+        unset($_SESSION[$key]);
+    }
+
+    /**
+     * Очистка сессии
+     *
+     * Важно: очистка не удаляет cookie сессии (если id вообще хранится в печеньке). Тут выполняется только удаление
+     * данных из сессии.
+     *
+     * Использование этого метода может привести к состоянию гонки, см. мануал по session_regenerate_id().
+     * Но пока не столкнулся - не усложняю.
+     *
+     * @param bool $resetId TRUE - обновить id сессии после очистки
+     */
+    public static function clear($resetId = false): void
+    {
+        self::init();
+        session_unset();
+
+        if ($resetId) {
+            session_regenerate_id();
+        }
     }
 
     /**
