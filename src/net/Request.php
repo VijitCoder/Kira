@@ -1,8 +1,8 @@
 <?php
 namespace kira\net;
 
-use kira\exceptions\ReadException;
 use kira\exceptions\RequestException;
+use kira\utils\System;
 use kira\utils\Typecast;
 use kira\web\Env;
 use kira\utils;
@@ -235,6 +235,11 @@ class Request
      */
     public static function headers(?string $key = null)
     {
+        // В php-cli нет функции apache_request_headers(), как и самого веб-сервера
+        if (System::isConsoleInterface()) {
+            return null;
+        }
+
         $headers = apache_request_headers();
         if (!$key) {
             return $headers;
