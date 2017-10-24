@@ -16,15 +16,6 @@ use kira\exceptions\DbException;
 class DbModel
 {
     /**
-     * Имя таблицы, сразу в обратных кавычках.
-     *
-     * Если явно не задано, вычисляем от FQN имени класса. Суффикс "Model" будет отброшен, регистр букв сохраняется.
-     *
-     * @var string
-     */
-    protected $table;
-
-    /**
      * Первичный ключ
      *
      * TODO Составной описывать, как массив. Или строкой? Пока не знаю.
@@ -58,12 +49,6 @@ class DbModel
      */
     public function __construct(string $confKey = 'db')
     {
-        if (!$this->table) {
-            $reflect = new \ReflectionClass($this);
-            $name = $reflect->getShortName();
-            $this->table = '`' . preg_replace('~Model$~i', '', $name) . '`';
-        }
-
         $this->dbh = DbConnection::connect($confKey);
     }
 
@@ -91,15 +76,6 @@ class DbModel
             throw new \LogicException('Сначала нужно выполнить запрос, см. метод DBModel::query()');
         }
         return $this->sth;
-    }
-
-    /**
-     * Получить имя таблицы, которой соответствует текущая модель
-     * @return string
-     */
-    public function getTableName()
-    {
-        return $this->table;
     }
 
     /**
@@ -252,42 +228,6 @@ class DbModel
     public function effect()
     {
         return $this->getStatement()->rowCount();
-    }
-
-    /**
-     * Поиск записи по заданному полю
-     *
-     * Доп. параметры, передаваемые в $ops, описываются массивом:
-     * <pre>
-     * [
-     *   'select'  => string | '*',  поля для выбора. Без экранирования, просто через запятую.
-     *   'one_row' => bool | true,   ожидаем одну запись?
-     *   'cond'    => string | '',   доп.условия. Прям так и писать, 'AND|OR ...'.
-     * ]
-     * </pre>
-     *
-     * @param string $field по какому полю искать
-     * @param string $value значение поля для подстановки в запрос
-     * @param array  $ops   доп.параметры
-     * @return mixed
-     */
-    public function findByField(string $field, string $value, array $ops = [])
-    {
-        $select = $ops['select'] ?? '*';
-        $one_row = $ops['one_row'] ?? true;
-        $cond = $ops['cond'] ?? '';
-
-        if ($select !== '*') {
-            $select = '`' . preg_replace('~,\s*~', '`, `', $select) . '`';
-        }
-
-        $cond = "`{$field}` = ? " . $cond;
-
-        $sql = "SELECT {$select} FROM {$this->table} WHERE {$cond}" . ($one_row ? ' LIMIT 1' : '');
-        $params = [$value]; // параметры подстановки должны быть в массиве
-
-        $result = $this->query($sql, $params);
-        return $one_row ? $result->fetch() : $result->fetchAll();
     }
 
     /**
