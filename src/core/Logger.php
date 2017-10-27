@@ -161,19 +161,19 @@ class Logger extends AbstractLogger
      */
     private function prepareLogData($data)
     {
-        $ts = $this->conf['php_timezone']
+        $time = $this->conf['php_timezone']
             ? new \DateTime(null, new \DateTimeZone($this->conf['php_timezone']))
             : new \DateTime();
 
         $this->logIt = [
-            'type'     => $data['type'],
-            'ts'       => $ts,
-            'timezone' => $ts->format('\G\M\T P'),
-            'userIP'   => Request::userIP(),
-            'request'  => Request::absoluteURL(),
-            'source'   => $data['source'],
+            'type'       => $data['type'],
+            'created_at' => $time,
+            'timezone'   => 'GMT ' . $time->format('P'),
+            'userIP'     => Request::userIP(),
+            'request'    => Request::absoluteURL(),
+            'source'     => $data['source'],
             // Убираем tab-отступы
-            'message'  => str_replace(chr(9), '', $data['message']),
+            'message'    => str_replace(chr(9), '', $data['message']),
         ];
     }
 
@@ -209,7 +209,7 @@ class Logger extends AbstractLogger
         try {
             $table = $this->conf['table_name'];
             $sql =
-                "INSERT INTO `{$table}` (`ts`,`timezone`,`log_type`,`message`,`user_ip`,`request`,`source`)
+                "INSERT INTO `{$table}` (`created_at`,`timezone`,`log_type`,`message`,`user_ip`,`request`,`source`)
                 VALUES (?,?,?,?,?,?,?)";
 
             $request = $logIt['request'];
@@ -223,7 +223,7 @@ class Logger extends AbstractLogger
             }
 
             $params = [
-                $logIt['ts']->format('Y-m-d H:i:s'),
+                $logIt['created_at']->format('Y-m-d H:i:s'),
                 $logIt['timezone'],
                 $logIt['type'],
                 $logIt['message'],
@@ -263,14 +263,14 @@ class Logger extends AbstractLogger
                     throw new \ErrorException('Не задан каталог ("log_path") для лог-файлов.');
                 }
 
-                $fn = $logPath . $logIt['ts']->format('Ymd') . '_kira_log.csv';
+                $fn = $logPath . $logIt['created_at']->format('Ymd') . '_kira_log.csv';
 
                 if ($file = fopen($fn, 'a')) {
                     $result = (bool)fputcsv(
                         $file,
                         [
                             $logIt['type'],
-                            $logIt['ts']->format('H:i:s'),
+                            $logIt['created_at']->format('H:i:s'),
                             $logIt['timezone'],
                             $logIt['message'],
                             $logIt['source'],
@@ -312,7 +312,7 @@ class Logger extends AbstractLogger
         }
 
         $domain = Env::domainName();
-        $date = $logIt['ts']->format('Y/m/d H:i:s P');
+        $date = $logIt['created_at']->format('Y/m/d H:i:s P');
 
         $rn = PHP_EOL;
         $letters['text'] =
