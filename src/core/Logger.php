@@ -45,12 +45,11 @@ class Logger extends AbstractLogger
     {
         $conf = array_merge(
             [
-                'switch_on'    => true,
-                'store'        => self::STORE_IN_FILES,
-                'db_conf_key'  => 'db',
-                'log_path'     => KIRA_TEMP_PATH,
-                'php_timezone' => '',
-                'table_name'   => 'kira_log',
+                'switch_on'   => true,
+                'store'       => self::STORE_IN_FILES,
+                'db_conf_key' => 'db',
+                'log_path'    => KIRA_TEMP_PATH,
+                'table_name'  => 'kira_log',
             ],
             App::conf('log', false) ?: []
         );
@@ -153,27 +152,21 @@ class Logger extends AbstractLogger
     /**
      * Готовим данные для логирования.
      *
-     * Кроме сообщения, переданного клиентским кодом, добавляем полезную инфу: дата/время, часовой пояс, IP юзера,
-     * URL запроса.
+     * Кроме сообщения, переданного клиентским кодом, добавляем полезную инфу: дата/время, IP юзера, URL запроса.
      *
      * @param array $data исходные данные
      * @return void
      */
     private function prepareLogData($data)
     {
-        $time = $this->conf['php_timezone']
-            ? new \DateTime(null, new \DateTimeZone($this->conf['php_timezone']))
-            : new \DateTime();
-
         $this->logIt = [
-            'type'       => $data['type'],
-            'created_at' => $time,
-            'timezone'   => 'GMT ' . $time->format('P'),
-            'userIP'     => Request::userIP(),
-            'request'    => Request::absoluteURL(),
-            'source'     => $data['source'],
+            'type'      => $data['type'],
+            'createdAt' => new \DateTime,
+            'userIP'    => Request::userIP(),
+            'request'   => Request::absoluteURL(),
+            'source'    => $data['source'],
             // Убираем tab-отступы
-            'message'    => str_replace(chr(9), '', $data['message']),
+            'message'   => str_replace(chr(9), '', $data['message']),
         ];
     }
 
@@ -205,39 +198,37 @@ class Logger extends AbstractLogger
      */
     private function writeToDb()
     {
-        $logIt = $this->logIt;
         try {
             $table = $this->conf['table_name'];
             $sql =
-                "INSERT INTO `{$table}` (`created_at`,`timezone`,`log_type`,`message`,`user_ip`,`request`,`source`)
-                VALUES (?,?,?,?,?,?,?)";
+                "INSERT INTO `{$table}` SET
+                    `created_at` = NOW(),
+                    `log_type` = :type,
+                    `message` = :message,
+                    `user_ip` = :userIP,
+                    `request` = :request,
+                    `source` = :source";
 
-            $request = $logIt['request'];
+            $params = $this->logIt;
+
+            unset($params['createdAt']);
+
+            $request = &$params['request'];
             if (mb_strlen($request) > 255) {
                 $request = mb_substr($request, 0, 252) . '...';
             }
 
-            $source = $logIt['source'];
+            $source = &$params['source'];
             if (($len = mb_strlen($source)) > 100) {
                 $source = '...' . mb_substr($source, $len - 97);
             }
-
-            $params = [
-                $logIt['created_at']->format('Y-m-d H:i:s'),
-                $logIt['timezone'],
-                $logIt['type'],
-                $logIt['message'],
-                $logIt['userIP'],
-                $request,
-                $source,
-            ];
 
             $result = (bool)(new DbModel($this->conf['db_conf_key']))
                 ->query($sql, $params)
                 ->effect();
 
         } catch (\Exception $e) {
-            $logIt['message'] .= PHP_EOL . PHP_EOL
+            $this->logIt['message'] .= PHP_EOL . PHP_EOL
                 . 'Дополнительно. Не удалось записать это сообщение в лог БД, причина: ' . $e->getMessage();
             $result = false;
         }
@@ -257,21 +248,20 @@ class Logger extends AbstractLogger
     private function writeToFile()
     {
         $writeFunc = function () {
-            $logIt = &$this->logIt;
+            $logIt = $this->logIt;
             try {
                 if (!$logPath = $this->conf['log_path']) {
                     throw new \ErrorException('Не задан каталог ("log_path") для лог-файлов.');
                 }
 
-                $fn = $logPath . $logIt['created_at']->format('Ymd') . '_kira_log.csv';
+                $fn = $logPath . $logIt['createdAt']->format('Ymd') . '_kira_log.csv';
 
                 if ($file = fopen($fn, 'a')) {
                     $result = (bool)fputcsv(
                         $file,
                         [
                             $logIt['type'],
-                            $logIt['created_at']->format('H:i:s'),
-                            $logIt['timezone'],
+                            $logIt['createdAt']->format(self::FILE_TIME_FORMAT),
                             $logIt['message'],
                             $logIt['source'],
                             $logIt['userIP'],
@@ -284,7 +274,7 @@ class Logger extends AbstractLogger
                     throw new \ErrorException('Не могу писать в файл ' . $fn);
                 }
             } catch (\ErrorException $e) {
-                $logIt['message'] .= PHP_EOL . PHP_EOL
+                $this->logIt['message'] .= PHP_EOL . PHP_EOL
                     . 'Дополнительно. Не удалось записать это сообщение в файл лога, причина: ' . $e->getMessage();
                 $result = false;
             }
@@ -312,7 +302,7 @@ class Logger extends AbstractLogger
         }
 
         $domain = Env::domainName();
-        $date = $logIt['created_at']->format('Y/m/d H:i:s P');
+        $date = $logIt['createdAt']->format(self::FILE_TIME_FORMAT);
 
         $rn = PHP_EOL;
         $letters['text'] =
