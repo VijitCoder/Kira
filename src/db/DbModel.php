@@ -392,7 +392,8 @@ class DbModel
                     $pattern = '/\?/';
                     $sql = preg_replace($pattern, $value, $sql, 1);
                 } else {
-                    $pattern = "/$placeholder/";
+                    $placeholder = ltrim($placeholder, ':');
+                    $pattern = "/:$placeholder/";
                     $sql = preg_replace($pattern, $value, $sql);
                 }
             }
