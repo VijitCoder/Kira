@@ -13,16 +13,19 @@ class NormalizeStringTest extends TestCase
     public function test_normalize_string()
     {
         $validator = new NormalizeString(true);
-        $validator->validate(" test  one<script>console.log('hit!')</script> \\ \n \r \t \v \x0B \x00");
-        $this->assertEquals('test one&lt;script&gt;console.log(&#039;hit!&#039;)&lt;/script&gt;', $validator->value);
+        $validator->validate("Это\tпервый\tтест  \n\r<script>console.log('hit!')</script> \\ \n \r \v \x0B \x00");
+        $this->assertEquals(
+            'Это первый тест &lt;script&gt;console.log(&#039;hit!&#039;)&lt;/script&gt;',
+            $validator->value
+        );
     }
 
     public function test_keep_line_breaks()
     {
         $validator = new NormalizeString(['keep_line_breaks' => true]);
-        $validator->validate(" test  one<script>console.log('hit!')</script>\nstring #2\t");
+        $validator->validate("Коммент  \t\n\r в несколько  \nстрок\v.");
         $this->assertEquals(
-            "test one&lt;script&gt;console.log(&#039;hit!&#039;)&lt;/script&gt;\nstring #2",
+            "Коммент \n\r в несколько \nстрок.",
             $validator->value
         );
     }

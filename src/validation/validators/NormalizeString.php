@@ -28,6 +28,12 @@ class NormalizeString extends AbstractValidator
 
     /**
      * Дезинфекция и нормализация строки. Тут нет проверок, только изменение переданного значения.
+     *
+     * Тонкость: если требуется сохранять переносы строк, то нельзя использовать спец.символ \s для пробельных символов.
+     * Поэтому заведены два разных шаблона.
+     *
+     * @see https://stackoverflow.com/a/25956935/5497749 Match whitespace but not newlines
+     *
      * @param mixed $value исходная строка
      * @return bool
      */
@@ -35,10 +41,10 @@ class NormalizeString extends AbstractValidator
     {
         // прим: немного копипасты, но так понятнее, в чем смысл
         $ridOffPattern = $this->options['keep_line_breaks']
-            ? '~\t|\x0B|\0|\x00~'
-            : '~\t|\x0B|\0|\x00|\n|\r~';
+            ? '~[\x0B,\0,\x00]+~'
+            : '~[\x0B,\0,\x00,\v]+~';
 
-        $value = preg_replace(['~\s{2,}~', $ridOffPattern], [' ', ''], $value);
+        $value = preg_replace(['~\h+~', $ridOffPattern], [' ', ''], $value);
         $value = htmlspecialchars(stripslashes($value), ENT_QUOTES, 'UTF-8');
         $value = trim($value);
         $this->value = $value;
