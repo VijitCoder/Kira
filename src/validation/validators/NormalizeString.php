@@ -12,10 +12,20 @@ namespace kira\validation\validators;
  * <li>удаляем обратные слеши для исключения возможности написания скриптов на Perl</li>
  * </ul>
  *
+ * Настройка keep_line_breaks = TRUE позволит сохранять переносы строк в тексте.
+ *
  * Название валидатора 'normalize_string'.
  */
 class NormalizeString extends AbstractValidator
 {
+    /**
+     * Настройки валидатора по умолчанию
+     * @var array
+     */
+    protected $options = [
+        'keep_line_breaks' => false,
+    ];
+
     /**
      * Дезинфекция и нормализация строки. Тут нет проверок, только изменение переданного значения.
      * @param mixed $value исходная строка
@@ -23,7 +33,12 @@ class NormalizeString extends AbstractValidator
      */
     public function validate($value)
     {
-        $value = preg_replace(['~\s{2,}~', '~\t|\n|\r|\x0B|\0|\x00~'], [' ', ''], $value);
+        // прим: немного копипасты, но так понятнее, в чем смысл
+        $ridOffPattern = $this->options['keep_line_breaks']
+            ? '~\t|\x0B|\0|\x00~'
+            : '~\t|\x0B|\0|\x00|\n|\r~';
+
+        $value = preg_replace(['~\s{2,}~', $ridOffPattern], [' ', ''], $value);
         $value = htmlspecialchars(stripslashes($value), ENT_QUOTES, 'UTF-8');
         $value = trim($value);
         $this->value = $value;
