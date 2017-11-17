@@ -26,7 +26,7 @@ abstract class Enum implements \JsonSerializable
     public static function getConstants(): array
     {
         $calledClass = get_called_class();
-        if (!array_key_exists($calledClass, self::$constCacheArray)) {
+        if (!array_key_exists($calledClass, self::$constantsCache)) {
             $reflect = new \ReflectionClass($calledClass);
             self::$constantsCache[$calledClass] = $reflect->getConstants();
         }
