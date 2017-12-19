@@ -19,10 +19,10 @@ use kira\utils;
  *
  * Получение одного значения из массива GET|POST|REQUEST. Если ключ в массиве не существует, вернем NULL:
  *
- * @method static string|null get(string $key = null)
- * @method static string|null post(string $key = null)
- * @method static string|null cookie(string $key = null)
- * @method static string|null request(string $key = null)
+ * @method static array|string|null get(string $key = null)
+ * @method static array|string|null post(string $key = null)
+ * @method static array|string|null cookie(string $key = null)
+ * @method static array|string|null request(string $key = null)
  *
  * Ключ можно указать составной, типа "['lvl1' => ['lvl2' => 'param1']]". Если ключ не указан, возвращаем весь массив
  * супеглобальной переменной.
