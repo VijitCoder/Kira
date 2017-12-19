@@ -46,6 +46,7 @@ class DbModel
      * конфигурации.
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
+     * @throws DbException
      */
     public function __construct(string $confKey = 'db')
     {
@@ -68,12 +69,12 @@ class DbModel
     /**
      * Возвращает объект \PDOStatement для непосредственного обращения к методам класса
      * @return \PDOStatement
-     * @throws \LogicException
+     * @throws DbException
      */
     public function getStatement()
     {
         if (!$this->sth) {
-            throw new \LogicException('Сначала нужно выполнить запрос, см. метод DBModel::query()');
+            throw new DbException('Сначала нужно выполнить запрос, см. метод DBModel::query()', DbException::LOGIC);
         }
         return $this->sth;
     }
@@ -103,13 +104,12 @@ class DbModel
      * @param string $sql    текст запроса
      * @param array  $params значения для подстановки в запрос
      * @return $this
-     * @throws \LogicException
      * @throws DbException
      */
     public function query(string $sql, array $params = [])
     {
         if (!$sql) {
-            throw new \LogicException('Не указан текст запроса');
+            throw new DbException('Не указан текст запроса', DbException::LOGIC);
         }
 
         $this->bindingParams = $params;
@@ -145,7 +145,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws \LogicException из getStatement()
+     * @throws DbException
      */
     public function fetch(int $style = null)
     {
@@ -161,7 +161,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws \LogicException из getStatement()
+     * @throws DbException
      */
     public function fetchAll(int $style = null)
     {
@@ -176,7 +176,7 @@ class DbModel
      *
      * @param string $field имя поля
      * @return mixed|FALSE
-     * @throws \LogicException из getStatement()
+     * @throws DbException
      */
     public function fetchValue(string $field)
     {
@@ -188,7 +188,6 @@ class DbModel
      * Получить колонку (значение одного поля) из всех рядов запроса
      * @param string $field имя поля
      * @return array
-     * @throws \LogicException из getIterator()
      * @throws DbException
      */
     public function fetchColumn(string $field)
@@ -214,7 +213,7 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return RowIterator
-     * @throws \LogicException из getStatement()
+     * @throws DbException
      */
     public function getIterator(int $style = null)
     {
@@ -224,6 +223,7 @@ class DbModel
     /**
      * Возвращает количество строк, модифицированных последним SQL запросом
      * @return int
+     * @throws DbException
      */
     public function effect()
     {
@@ -301,8 +301,7 @@ class DbModel
      * @param string &$sql    текст запроса с плейсходерами
      * @param array  &$params массив замен. Если элемент сам является массивом, обрабатываем. Иначе оставляем, как есть.
      * @return $this
-     * @throws \LogicException
-     * @throws DBException из getConnection()
+     * @throws DBException
      */
     public function prepareIN(string &$sql, array &$params)
     {
@@ -311,7 +310,10 @@ class DbModel
         foreach ($params as $name => $value) {
             if (is_array($value)) {
                 if (is_int($name)) {
-                    throw new \LogicException('Подстановка массива возможна только для именованного плейсходера.');
+                    throw new DbException(
+                        'Подстановка массива возможна только для именованного плейсходера.',
+                        DbException::LOGIC
+                    );
                 }
 
                 if (is_string(current($value))) {
@@ -369,15 +371,18 @@ class DbModel
      * Функция только для отладки, не использовать в реальном обращении к серверу БД. Экранирование строк полагается
      * на функцию PDO::quote().
      *
-     * @param string $sql           тест запроса, возможно с подстановками
-     * @param array  $bindingParams массив подстановок
+     * @param string $sql тест запроса, возможно с подстановками
+     * @param array $bindingParams массив подстановок
      * @return string
-     * @throws \RuntimeException
+     * @throws DbException
      */
     public function simulate(string $sql, array $bindingParams = [])
     {
         if (!KIRA_DEBUG) {
-            throw new \RuntimeException('Нельзя использовать этот метод в боевом режиме сайта. Он только для отладки.');
+            throw new DbException(
+                'Нельзя использовать этот метод в боевом режиме сайта. Он только для отладки.',
+                DbException::LOGIC
+            );
         }
 
         if ($bindingParams) {

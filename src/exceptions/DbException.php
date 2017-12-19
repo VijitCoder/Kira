@@ -1,4 +1,5 @@
 <?php
+
 namespace kira\exceptions;
 
 use kira\core\App;
@@ -15,7 +16,9 @@ class DbException extends \Exception
      */
     const
         QUERY = 1,
-        CONNECT = 2;
+        CONNECT = 2,
+        // Неправильное использование функционала
+        LOGIC = 3;
 
     /**
      * Конструктор
@@ -23,8 +26,8 @@ class DbException extends \Exception
      * Логируем ошибку. В зависимости от кода пишем лог в БД или файлы: если исключение проброшено из попытки соединения,
      * сразу же пишем лог в файлы, не пытаясь еще раз ткнуться в базу.
      *
-     * @param string    $message
-     * @param int       $code
+     * @param string $message
+     * @param int $code
      * @param \Exception $previous
      */
     public function __construct($message, $code = self::QUERY, $previous = null)
@@ -32,7 +35,7 @@ class DbException extends \Exception
         $logger = App::logger();
         if ($code === self::CONNECT) {
             $logger->add(['message' => $message, 'type' => $logger::DB_CONNECT, 'file_force' => true]);
-        } else {
+        } elseif ($code === self::QUERY) {
             $logger->addTyped($message, $logger::DB_QUERY);
         }
 

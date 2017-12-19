@@ -3,6 +3,7 @@ namespace kira\db;
 
 use kira\core\App;
 use kira\core\Singleton;
+use kira\exceptions\ConfigException;
 use kira\exceptions\DbException;
 
 /**
@@ -55,9 +56,9 @@ final class DbConnection
             return self::$cons[$confKey];
         }
 
-        $conf = array_merge(['options' => null, 'mysql_timezone' => '+00:00'], App::conf($confKey));
-
         try {
+            $conf = array_merge(['options' => null, 'mysql_timezone' => '+00:00'], App::conf($confKey));
+
             $dbh = new \PDO($conf['dsn'], $conf['user'], $conf['password'], $conf['options']);
 
             if ($tz = $conf['mysql_timezone']) {
@@ -82,6 +83,8 @@ final class DbConnection
             }
 
             throw new DbException($msg, DbException::CONNECT, $e);
+        } catch (ConfigException $e) {
+            throw new DbException($e->getMessage(), DbException::LOGIC, $e);
         }
 
         return self::$cons[$confKey];
