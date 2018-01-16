@@ -236,4 +236,32 @@ class Arrays
         }
         return $value;
     }
+
+    /**
+     * Рекурсивная проверка массива на ассоциативность
+     *
+     * Числовые ключи в строках или ключи логического типа приравниваются к неассоциативному массиву. Все это согласно
+     * справки {@link http://php.net/manual/ru/language.types.array.php PHP. Массивы}. Пустой массив считается
+     * неассоциативным.
+     *
+     * Если хотя бы один ключ текстовый и не приводится к числу, то весь массив считается ассоциативным.
+     *
+     * Идея {@link http://thinkofdev.com/check-if-an-array-is-associative-or-sequentialindexed-in-php/ отсюда}.
+     *
+     * @param array $array проверяемый массив
+     * @return bool
+     */
+    public static function isAssociative(array $array): bool
+    {
+        foreach ($array as $key => $value) {
+            if (!is_numeric($key)) {
+                return true;
+            }
+
+            if (is_array($value)) {
+                return self::isAssociative($value);
+            }
+        }
+        return false;
+    }
 }

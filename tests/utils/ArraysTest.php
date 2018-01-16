@@ -365,4 +365,41 @@ class ArraysTest extends TestCase
         $notExistValue =  Arrays::value_extract($array, 'four');
         $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
+
+    /**
+     * Тест: рекурсивная проверка массива на ассоциативность
+     * @dataProvider isAssociativeData
+     * @param array $array
+     * @param bool  $isAssoc
+     */
+    public function test_isAssociative(array $array, bool $isAssoc)
+    {
+        $this->assertEquals($isAssoc, Arrays::isAssociative($array));
+    }
+
+    public function isAssociativeData()
+    {
+        return [
+            'ассоциативный массив' => [
+                'array' => [5, 7, '10 ten' => 3],
+                'is assoc?' => true,
+            ],
+            'ассоциативный многомерный массив' => [
+                'array' => [5, 7, ['10 ten' => 3], 45],
+                'is assoc?' => true,
+            ],
+            'пустой массив' => [
+                'array' => [],
+                'is assoc?' => false,
+            ],
+            'числовой массив' => [
+                'array' => [2, true => 5, '12' => 7, '10.3' => 3],
+                'is assoc?' => false,
+            ],
+            'числовой многомерный массив' => [
+                'array' => [2, [5, 20], 7, ['10.3' => 3]],
+                'is assoc?' => false,
+            ],
+        ];
+    }
 }
