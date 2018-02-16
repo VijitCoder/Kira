@@ -308,23 +308,26 @@ class DbModel
         $replaces = [];
 
         foreach ($params as $name => $value) {
-            if (is_array($value)) {
-                if (is_int($name)) {
-                    throw new DbException(
-                        'Подстановка массива возможна только для именованного плейсходера.',
-                        DbException::LOGIC
-                    );
-                }
-
-                if (is_string(current($value))) {
-                    $dbh = $this->getConnection();
-                    $value = array_map([$dbh, 'quote'], $value);
-                }
-
-                $replaces[$name] = implode(',', $value);
-
-                unset($params[$name]);
+            if (!is_array($value)) {
+                continue;
             }
+
+            if (is_int($name)) {
+                throw new DbException(
+                    'Подстановка массива возможна только для именованного плейсходера.',
+                    DbException::LOGIC
+                );
+            }
+
+            if (is_string(current($value))) {
+                $dbh = $this->getConnection();
+                $value = array_map([$dbh, 'quote'], $value);
+            }
+
+            $key = $name[0] == ':' ? $name : ":{$name}";
+            $replaces[$key] = implode(',', $value);
+
+            unset($params[$name]);
         }
 
         if ($replaces) {
@@ -386,6 +389,9 @@ class DbModel
         }
 
         if ($bindingParams) {
+
+            $this->prepareIN($sql, $bindingParams);
+
             foreach ($bindingParams as $placeholder => $value) {
                 if (is_null($value)) {
                     $value = 'NULL';
