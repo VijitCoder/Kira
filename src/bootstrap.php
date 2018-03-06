@@ -17,3 +17,9 @@ ob_start();
 register_shutdown_function(['kira\Handlers', 'shutdown']);
 
 require 'system_functions.php';
+
+// Фикс бага PHP >= 7.1 по части сериализации чисел с плавающей точкой
+// @see https://stackoverflow.com/a/43056278/5497749
+if (version_compare(phpversion(), '7.1', '>=')) {
+    ini_set('serialize_precision', -1);
+}
