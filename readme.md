@@ -1,7 +1,7 @@
 # Kira Web Engine
 *Since 20/09/2015*
 
-![PHP 7.0](https://img.shields.io/badge/PHP%207-%3E%3D7.0-blue.svg)
+![PHP 7.1](https://img.shields.io/badge/PHP%207-%3E%3D7.1-blue.svg)
 
 Мое представление об удобном web-движке.
 
