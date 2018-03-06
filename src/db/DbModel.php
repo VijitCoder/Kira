@@ -1,7 +1,12 @@
 <?php
 namespace kira\db;
 
+use kira\db\specifications\PaginateSpec;
 use kira\exceptions\DbException;
+use kira\exceptions\DtoException;
+use PDO;
+use PDOException;
+use PDOStatement;
 
 /**
  * Супер-класс моделей. Подключение и методы работы с БД.
@@ -25,18 +30,20 @@ class DbModel
     protected $pk = 'id';
 
     /**
-     * @var \PDO дескриптор соединения с БД
+     * @var PDO дескриптор соединения с БД
      */
     private $dbh;
 
     /**
      * Объект хранит результирующий набор, соответствующий выполненному запросу.
-     * @var \PDOStatement
+     *
+     * @var PDOStatement
      */
     private $sth = null;
 
     /**
      * Связываемые параметры. Как раз те значения, что будут подставляться в "prepared statement".
+     *
      * @var array
      */
     private $bindingParams = [];
@@ -55,7 +62,8 @@ class DbModel
 
     /**
      * Возвращает дескриптор соединения с БД
-     * @return \PDO
+     *
+     * @return PDO
      * @throws DbException
      */
     public function getConnection()
@@ -68,7 +76,8 @@ class DbModel
 
     /**
      * Возвращает объект \PDOStatement для непосредственного обращения к методам класса
-     * @return \PDOStatement
+     *
+     * @return PDOStatement
      * @throws DbException
      */
     public function getStatement()
@@ -118,7 +127,7 @@ class DbModel
             $this->sth = $this->dbh->prepare($sql);
             //$this->sth->debugDumpParams(); exit;//DBG
             $this->sth->execute($params);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $msg = $e->getMessage();
             $trace = $e->getTrace();
             if (isset($trace[1])) {
@@ -180,19 +189,20 @@ class DbModel
      */
     public function fetchValue(string $field)
     {
-        $row = $this->getStatement()->fetch(\PDO::FETCH_ASSOC);
+        $row = $this->getStatement()->fetch(PDO::FETCH_ASSOC);
         return $row && array_key_exists($field, $row) ? $row[$field] : false;
     }
 
     /**
      * Получить колонку (значение одного поля) из всех рядов запроса
+     *
      * @param string $field имя поля
      * @return array
      * @throws DbException
      */
     public function fetchColumn(string $field)
     {
-        $iterator = $this->getIterator(\PDO::FETCH_ASSOC);
+        $iterator = $this->getIterator(PDO::FETCH_ASSOC);
         if (!$current = $iterator->current()) {
             return [];
         }
@@ -222,6 +232,7 @@ class DbModel
 
     /**
      * Возвращает количество строк, модифицированных последним SQL запросом
+     *
      * @return int
      * @throws DbException
      */
@@ -248,6 +259,7 @@ class DbModel
 
     /**
      * Инициализация транзакции
+     *
      * @throws DBException
      */
     public function beginTransaction()
@@ -257,6 +269,7 @@ class DbModel
 
     /**
      * Проверка: транзакция в процессе
+     *
      * @return bool
      * @throws DBException
      */
@@ -267,6 +280,7 @@ class DbModel
 
     /**
      * Завершение транзакции
+     *
      * @throws DBException
      */
     public function commit()
@@ -276,6 +290,7 @@ class DbModel
 
     /**
      * Откат транзакции
+     *
      * @throws DBException
      */
     public function rollBack()
@@ -339,6 +354,7 @@ class DbModel
 
     /**
      * Экранирование в строке всех вхождений спец.символов LIKE. Таких символов два: % и _.
+     *
      * @param string $value исходное выражение
      * @return string
      */
@@ -374,8 +390,8 @@ class DbModel
      * Функция только для отладки, не использовать в реальном обращении к серверу БД. Экранирование строк полагается
      * на функцию PDO::quote().
      *
-     * @param string $sql тест запроса, возможно с подстановками
-     * @param array $bindingParams массив подстановок
+     * @param string $sql           тест запроса, возможно с подстановками
+     * @param array  $bindingParams массив подстановок
      * @return string
      * @throws DbException
      */
