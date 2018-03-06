@@ -428,4 +428,47 @@ class DbModel
 
         return "<pre>$sql</pre>";
     }
+
+    /**
+     * Выполнение запроса с пагинацией
+     *
+     * Запрос выполняется с подстановкой параметров и подготовкой IN условий, даже если они не нужны. Запрос дополняется
+     * нужными инструкциями для получения среза данных и вычисления общего количества записей.
+     *
+     * @param string $sql    текст запроса, без выражения LIMIT
+     * @param array  $params параметры подстановки в запрос
+     * @param int    $page   номер страницы в выдаче результата, начиная с единицы
+     * @param int    $limit  количество записей на страницу
+     * @return PaginateSpec
+     * @throws DbException
+     */
+    protected function paginate(string $sql, array $params, int $page, int $limit): PaginateSpec
+    {
+        if ($page < 1 || $limit < 1) {
+            throw new DbException('Неправильные параметры пагнинации. Ожидаются целые положительные числа');
+        }
+
+        $sql = preg_replace('/SELECT/i', 'SELECT SQL_CALC_FOUND_ROWS', $sql, 1);
+
+        $offset = ($page - 1) * $limit;
+        $sql .= " LIMIT {$offset}, {$limit}";
+
+        try {
+            $result = new PaginateSpec;
+        } catch (DtoException $e) {
+            // Никакой реакции, т.к. не будет исключения при текущем создании DTO. Но чтобы не светить отсюда двумя
+            // исключениями, сделана пустая ловушка.
+        }
+
+        $result->rows = $this
+            ->prepareIn($sql, $params)
+            ->query($sql, $params)
+            ->getIterator();
+
+        $result->pageRowsCount = $this->effect();
+
+        $result->allRowsCount = (int)$this->query('SELECT FOUND_ROWS() AS all_rows')->fetchValue('all_rows');
+
+        return $result;
+    }
 }
