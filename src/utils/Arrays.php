@@ -264,4 +264,56 @@ class Arrays
         }
         return false;
     }
+
+    /**
+     * Стабильная сортировка массива через callback-функцию
+     *
+     * Все PHP `*sort()` функции нестабильны. Они могут перемешать результ, если в массиве больше 16 элементов И если
+     * некоторые из них равны. Эта проблема известна годами, но до сих пор присутствует в PHP 7.1
+     *
+     * Этот метод решает проблему.
+     *
+     * @link https://bugs.php.net/bug.php?id=53341 баг репорт
+     * @link http://php.net/manual/ru/function.uasort.php#114535 обходное решение
+     *
+     * @param array    $array               массив для сортировки
+     * @param callable $comparisionFunction callback-функция для сравнения элементов
+     */
+    public static function stableSort(array &$array, callable $comparisionFunction): void
+    {
+        if (count($array) < 2) {
+            return;
+        }
+        $halfway = count($array) / 2;
+        $array1 = array_slice($array, 0, $halfway, true);
+        $array2 = array_slice($array, $halfway, null, true);
+
+        self::stableSort($array1, $comparisionFunction);
+        self::stableSort($array2, $comparisionFunction);
+        if (call_user_func($comparisionFunction, end($array1), reset($array2)) < 1) {
+            $array = $array1 + $array2;
+            return;
+        }
+        $array = [];
+        reset($array1);
+        reset($array2);
+        while (current($array1) && current($array2)) {
+            if (call_user_func($comparisionFunction, current($array1), current($array2)) < 1) {
+                $array[key($array1)] = current($array1);
+                next($array1);
+            } else {
+                $array[key($array2)] = current($array2);
+                next($array2);
+            }
+        }
+        while (current($array1)) {
+            $array[key($array1)] = current($array1);
+            next($array1);
+        }
+        while (current($array2)) {
+            $array[key($array2)] = current($array2);
+            next($array2);
+        }
+        return;
+    }
 }

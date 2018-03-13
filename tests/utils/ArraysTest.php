@@ -64,7 +64,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function($val) {
+            function ($val) {
                 return $val & 1;
             }
         );
@@ -93,7 +93,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function($val) {
+            function ($val) {
                 return $val & 1;
             },
             ARRAY_FILTER_USE_KEY
@@ -127,7 +127,7 @@ class ArraysTest extends TestCase
 
         $arr = Arrays::array_filter_recursive(
             $arr,
-            function($val, $key) {
+            function ($val, $key) {
                 return is_array($val) ? $key & 1 : $val & 1;
             },
             ARRAY_FILTER_USE_BOTH
@@ -310,7 +310,7 @@ class ArraysTest extends TestCase
             ],
         ];
 
-        $getParentId = function($key, &$item) {
+        $getParentId = function ($key, &$item) {
             $parentId = $item['bindTo'] ?? null;
             unset($item['bindTo']);
             return $parentId;
@@ -362,12 +362,13 @@ class ArraysTest extends TestCase
             'Массив без извлеченного значения не соответствует ожиданиям'
         );
 
-        $notExistValue =  Arrays::value_extract($array, 'four');
+        $notExistValue = Arrays::value_extract($array, 'four');
         $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
 
     /**
      * Тест: рекурсивная проверка массива на ассоциативность
+     *
      * @dataProvider isAssociativeData
      * @param array $array
      * @param bool  $isAssoc
@@ -380,26 +381,108 @@ class ArraysTest extends TestCase
     public function isAssociativeData()
     {
         return [
-            'ассоциативный массив' => [
-                'array' => [5, 7, '10 ten' => 3],
+            'ассоциативный массив'             => [
+                'array'     => [5, 7, '10 ten' => 3],
                 'is assoc?' => true,
             ],
             'ассоциативный многомерный массив' => [
-                'array' => [5, 7, ['10 ten' => 3], 45],
+                'array'     => [5, 7, ['10 ten' => 3], 45],
                 'is assoc?' => true,
             ],
-            'пустой массив' => [
-                'array' => [],
+            'пустой массив'                    => [
+                'array'     => [],
                 'is assoc?' => false,
             ],
-            'числовой массив' => [
-                'array' => [2, true => 5, '12' => 7, '10.3' => 3],
+            'числовой массив'                  => [
+                'array'     => [2, true => 5, '12' => 7, '10.3' => 3],
                 'is assoc?' => false,
             ],
-            'числовой многомерный массив' => [
-                'array' => [2, [5, 20], 7, ['10.3' => 3]],
+            'числовой многомерный массив'      => [
+                'array'     => [2, [5, 20], 7, ['10.3' => 3]],
                 'is assoc?' => false,
             ],
         ];
+    }
+
+    /**
+     * Тест: стабильная сортировка массива через callback-функцию
+     *
+     * Суть: если элементов больше 16-ти, сортировка с сохранением ключей перемешает элементы с равными значениями.
+     * Обычно это некритично, но если в массиве был задан дефолтный порядок и его нужно поддерживать, то нативная PHP
+     * сортировка поломает все нафиг. Тестируемый метод ничего не ломает.
+     *
+     * Есть вероятность, что в будущих версиях PHP изменят логику *sort-функций и этот тест будет падать. Для PHP 7.1
+     * работает.
+     */
+    public function test_stableSort()
+    {
+        /**
+         * Сортировка по возрастанию значений массива
+         *
+         * @param $a
+         * @param $b
+         * @return int
+         */
+        function compare($a, $b)
+        {
+            if ($a == $b) {
+                return 0;
+            }
+            return ($a > $b) ? 1 : -1;
+        }
+
+        $a = $b = [
+            'key 1'  => 2,
+            'key 2'  => 1,
+            'key 3'  => 2,
+            'key 4'  => 1,
+            'key 5'  => 1,
+            'key 6'  => 1,
+            'key 7'  => 1,
+            'key 8'  => 1,
+            'key 9'  => 1,
+            'key 10' => 1,
+            'key 11' => 1,
+            'key 12' => 1,
+            'key 13' => 1,
+            'key 14' => 1,
+            'key 15' => 1,
+            'key 16' => 1,
+            'key 17' => 1,
+        ];
+
+        uasort($a, 'compare');
+        $phpSortKeys = array_keys($a);
+
+        Arrays::stableSort($b, 'compare');
+        $stableSortKeys = array_keys($b);
+
+        $this->assertNotEquals(
+            $phpSortKeys,
+            $stableSortKeys,
+            'Нативная PHP сортировка не перемешала массив. Видимо исправили'
+        );
+
+        $expectedKeys = [
+            'key 2',
+            'key 4',
+            'key 5',
+            'key 6',
+            'key 7',
+            'key 8',
+            'key 9',
+            'key 10',
+            'key 11',
+            'key 12',
+            'key 13',
+            'key 14',
+            'key 15',
+            'key 16',
+            'key 17',
+            'key 1',
+            'key 3',
+        ];
+
+        $this->assertEquals($stableSortKeys, $expectedKeys, 'Стабильная сортировка перемешала массив');
     }
 }
