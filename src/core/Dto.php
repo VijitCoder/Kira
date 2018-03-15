@@ -11,19 +11,22 @@ class Dto
     /**
      * Конструктор
      *
-     * Можно заполнить dto переданными данными. Если в данных будет что-то лишнее, пробросим исключение.
+     * Можно заполнить dto переданными данными. Если в данных будет что-то лишнее, то при строгом режиме пробросим
+     * исключение иначе просто пропускаем значение.
      *
      * @param array $rawData данные для заполнения свойств DTO-объекта
+     * @param bool  $strict  TRUE - исключение на лишние данные, FALSE - просто пропускать лишние данные
      * @throws DtoException
      */
-    public function __construct(array $rawData = null)
+    public function __construct(array $rawData = null, bool $strict = true)
     {
         if ($rawData) {
             foreach ($rawData as $name => $value) {
-                if (!property_exists($this, $name)) {
+                if (property_exists($this, $name)) {
+                    $this->$name = $value;
+                } else if ($strict) {
                     $this->throwPropertyNotFoundException($name);
                 }
-                $this->$name = $value;
             }
         }
     }

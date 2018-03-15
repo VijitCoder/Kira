@@ -9,9 +9,9 @@ use PHPUnit\Framework\TestCase;
 class DtoTest extends TestCase
 {
     /**
-     * Заполнение DTO налету
+     * Заполнение DTO налету. Строгий режим: если будут лишние данные - ожидаем исключение.
      */
-    public function test_fill_on_construct()
+    public function test_fill_on_construct_strict()
     {
         $data = [
             'id'    => 3,
@@ -23,8 +23,57 @@ class DtoTest extends TestCase
         $this->assertNull($dto->status);
 
         $this->expectException(DtoException::class);
-        $data['missed_property'] = 'Ooops!';
+        $data['missedProperty'] = 'Ooops!';
         new TestDto($data);
+    }
+
+    /**
+     * Заполнение DTO налету. Нестрогий режим: если будут лишние данные - пропусить значение.
+     */
+    public function test_fill_on_construct_not_strict()
+    {
+        $data = [
+            'id'             => 3,
+            'title'          => 'Hi!',
+            'missedProperty' => 'Ooops!',
+        ];
+
+        // Загрузка с левыми данными должна пройти без проблем
+        $dto = new TestDto($data, false);
+
+        $this->assertEquals(3, $dto->id);
+        $this->assertEquals('Hi!', $dto->title);
+    }
+
+    /**
+     * Тест: запрещен магический сеттер. Присвоение через магию должно пробросить исключение
+     *
+     * @throws DtoException
+     * @throws PHPUnit_Framework_Exception
+     */
+    public function test_magic_set()
+    {
+        $dto = new TestDto;
+        $dto->id = 3;
+        $this->expectException(DtoException::class);
+        $dto->missedProperty = 'Ooops!';
+    }
+
+
+    /**
+     * Тест: запрещен магический геттер. Получение данных через магию должно пробросить исключение
+     *
+     * @throws DtoException
+     * @throws PHPUnit_Framework_Exception
+     */
+    public function test_magic_get()
+    {
+        $dto = new TestDto;
+        $dto->id = 3;
+
+        $this->assertEquals(3, $dto->id);
+        $this->expectException(DtoException::class);
+        $dto->missedProperty;
     }
 
     /**
@@ -56,6 +105,7 @@ class DtoTest extends TestCase
 
     /**
      * Данные для теста конвертации dto в массив
+     *
      * @return array
      */
     public function dtoToArrayProvider()
@@ -127,6 +177,7 @@ class TestDto extends Dto
 
     /**
      * Подчиненный DTO объект
+     *
      * @var TestSubDto
      */
     public $user;
