@@ -2,12 +2,10 @@
 namespace kira;
 
 use kira\html\Render;
-use kira\net\{
-    Request, Response
-};
-use kira\utils\{
-    System, ColorConsole
-};
+use kira\net\Request;
+use kira\net\Response;
+use kira\utils\System;
+use kira\utils\ColorConsole;
 use kira\web\Env;
 use kira\core\App;
 
@@ -42,33 +40,36 @@ class Handlers
     ];
 
     /**
-     * Перехватчик исключений. Ловит исключения, которые не были пойманы ранее.
+     * Перехватчик исключений
+     *
+     * Ловит исключения, которые не были пойманы ранее. Разматывает стек перехваченных исключений через
+     * \Throwable::$previous. Пишет в лог, если на сайте отключена отладка.
      *
      * После выполнения этого обработчика программа остановится, обеспечено PHP.
      *
-     * Если указано предыдущее исключение, отсюда не пишем в лог. Сей факт указывает на то, что реальное исключение
-     * уже было поймано и обработано. Считаем, что необходимость логирования была решена в предыдущих обработчиках.
-     *
-     * Прим: для поддержки PHP 7.0 тип ожидаемого параметра расширен.
-     *
      * @param \Throwable $ex исключение
      */
-    public static function exceptionHandler($ex)
+    public static function exceptionHandler(\Throwable $ex)
     {
-        $class = get_class($ex);
-        $message = nl2br($ex->getMessage());
-        $file = str_replace(KIRA_ROOT_PATH, '/', $ex->getFile());
-        $line = $ex->getLine();
+        $stack = self::getExceptionsStack($ex);
+        $currentEx = array_shift($stack);
+        $exceptionsStackString = self::exceptionsStackToString($stack);
+
+        $class = $currentEx['class'];
+        $message = $currentEx['message'];
+        $file = $currentEx['file'];
+        $line = $currentEx['line'];
         $trace = $ex->getTraceAsString();
         $rn = PHP_EOL;
 
-        if (!KIRA_DEBUG && $ex->getPrevious() === null) {
+        if (!KIRA_DEBUG) {
             $logger = App::logger();
             $logger->addTyped(
-                "Class: {$class}{$rn}" .
-                "Message: {$message}{$rn}" .
-                "Source: {$file}:{$line}{$rn}{$rn}" .
-                "Trace: {$trace}{$rn}",
+                "Класс: {$class}{$rn}" .
+                "Сообщение: {$message}{$rn}" .
+                "Источник: {$file}:{$line}{$rn}{$rn}" .
+                $exceptionsStackString .
+                "Стек вызова в обратном порядке: {$trace}{$rn}",
                 $logger::EXCEPTION
             );
         }
@@ -77,8 +78,9 @@ class Handlers
             if (KIRA_DEBUG) {
                 (new ColorConsole)->setColor('red')->setStyle('bold')
                     ->addText($rn . $class . $rn . $rn)->setColor('brown')->setBgColor('blue')
-                    ->addText($message)->reset()->setColor('brown')
-                    ->addText($rn . $rn . 'Стек вызова в обратном порядке:' . $rn . $rn)
+                    ->addText($message . $rn . $rn)->reset()->setColor('brown')
+                    ->addText($exceptionsStackString)
+                    ->addText("Стек вызова в обратном порядке:{$rn}{$rn}")
                     ->addText($trace)->reset()
                     ->draw($rn);
             } else {
@@ -93,7 +95,7 @@ class Handlers
         if (Request::isAjax()) {
             $trace = $ex->getTrace();
             $data = KIRA_DEBUG
-                ? compact('message', 'class', 'file', 'line', 'trace')
+                ? compact('message', 'class', 'file', 'line', 'exceptionsStackString', 'trace')
                 : ['message' => 'В ajax-запросе произошла ошибка.'];
             self::responseForAjax($data);
             return;
@@ -101,12 +103,63 @@ class Handlers
 
         if (KIRA_DEBUG) {
             $view = 'exception.htm';
-            $data = compact('class', 'message', 'file', 'line', 'trace');
+            $data = compact('class', 'message', 'file', 'line', 'exceptionsStackString', 'trace');
         } else {
             $view = 'exception_prod.htm';
             $data = ['domain' => Env::domainName()];
         }
         self::responseForHtml($view, $data);
+    }
+
+    /**
+     * Разматываем стек перехваченных исключений, от текущего к самому первому
+     *
+     * @param \Throwable $ex текущее исключение
+     * @return array
+     */
+    private static function getExceptionsStack(\Throwable $ex): array
+    {
+        $stack = [];
+
+        do {
+            $stack[] = [
+                'class'   => get_class($ex),
+                'message' => nl2br($ex->getMessage()),
+                'file'    => str_replace(KIRA_ROOT_PATH, '/', $ex->getFile()),
+                'line'    => $ex->getLine(),
+            ];
+        } while ($ex = $ex->getPrevious());
+
+        return $stack;
+    }
+
+    /**
+     * Собираем стек исключений в строку
+     *
+     * В силу простоты используемого шаблонизатора, я не могу в нем выполнить цикл по переданным данным. Приходится
+     * делать это здесь.
+     *
+     * TODO может пересмотреть шаблонизатор? Но нужно помнить, что здесь обрабатываются падения кода, не надо черезмерно
+     * усложнять решение.
+     *
+     * @param array $stack стек перехваченных исключений
+     * @return string
+     */
+    private static function exceptionsStackToString(array $stack): string
+    {
+        if (!$stack) {
+            return '';
+        }
+
+        $rn = PHP_EOL;
+        $result = 'Стек перехваченных исключений' . $rn . $rn;
+        foreach ($stack as $idx => $ex) {
+            $result .=
+                "#{$idx} {$ex['class']}: {$ex['message']}{$rn}"
+                . "{$ex['file']}:{$ex['line']}{$rn}{$rn}";
+        }
+
+        return $result;
     }
 
     /**
@@ -255,8 +308,9 @@ class Handlers
 
     /**
      * Ответ на обычный запрос, когда браузер ожидает html
-     * @param string $view название шаблона для заполнения
-     * @param array|string  $data данные в шаблон
+     *
+     * @param string       $view название шаблона для заполнения
+     * @param array|string $data данные в шаблон
      */
     private static function responseForHtml(string $view, $data)
     {
@@ -264,7 +318,7 @@ class Handlers
             header('500 Internal Server Error');
             header('Content-Type: text/html; charset=UTF-8');
         }
-        echo ($view ? Render::fetch($view, $data) : $data);
+        echo($view ? Render::fetch($view, $data) : $data);
     }
 
     /**
