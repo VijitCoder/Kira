@@ -1,6 +1,7 @@
 <?php
 namespace kira;
 
+use kira\exceptions\DbException;
 use kira\html\Render;
 use kira\net\Request;
 use kira\net\Response;
@@ -43,7 +44,8 @@ class Handlers
      * Перехватчик исключений
      *
      * Ловит исключения, которые не были пойманы ранее. Разматывает стек перехваченных исключений через
-     * \Throwable::$previous. Пишет в лог, если на сайте отключена отладка.
+     * \Throwable::$previous. Пишет в лог, если на сайте отключена отладка. Вообще не логируется исключение базы данных,
+     * у такого исключения свое логирование.
      *
      * После выполнения этого обработчика программа остановится, обеспечено PHP.
      *
@@ -62,7 +64,7 @@ class Handlers
         $trace = $ex->getTraceAsString();
         $rn = PHP_EOL;
 
-        if (!KIRA_DEBUG) {
+        if (!KIRA_DEBUG && !($ex instanceOf DbException)) {
             $logger = App::logger();
             $logger->addTyped(
                 "Класс: {$class}{$rn}" .
