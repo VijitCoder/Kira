@@ -5,6 +5,8 @@
  * Его вызов гарантирован Composer, см. в composer.json секцию autoload > files
  */
 
+require 'shortcuts.php';
+
 // Глобальный перехватчик для исключений, которые не будут пойманы в контексте
 set_exception_handler(['kira\Handlers', 'exceptionHandler']);
 
@@ -15,8 +17,6 @@ set_error_handler(['kira\Handlers', 'errorHandler']);
 // Подробнее см. в доке "Перехват ошибок".
 ob_start();
 register_shutdown_function(['kira\Handlers', 'shutdown']);
-
-require 'system_functions.php';
 
 // Фикс бага PHP >= 7.1 по части сериализации чисел с плавающей точкой
 // @see https://stackoverflow.com/a/43056278/5497749

@@ -1,4 +1,8 @@
 <?php
+/**
+ * Функции быстрого доступа
+ */
+
 use kira\utils\System;
 
 if (!function_exists('dd')) {
