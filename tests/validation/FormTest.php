@@ -12,6 +12,7 @@ class FromTest extends TestCase
 {
     /**
      * Объект формы
+     *
      * @var Form
      */
     private $form;
@@ -58,8 +59,8 @@ class FromTest extends TestCase
     public function test_getValues()
     {
         $expect = [
-            'path'        => 'valid/path/', // отличается от исходного. Нормализованный путь
-            'namespace'   => 'some_ns',     // отличается от исходного. Нормализованная строка
+            'path'            => 'valid/path/', // отличается от исходного. Нормализованный путь
+            'namespace'       => 'some_ns',     // отличается от исходного. Нормализованная строка
             'do_not_validate' => 'что-нибудь без валидации',
             'email'           => 'admin@site.com',
 
@@ -126,8 +127,36 @@ class FromTest extends TestCase
     }
 
     /**
-     * Добавим кастомные ошибки к глубоко вложенному полю. Получим эти ошибки разными способами. Такие ошибки не влияют
-     * на результат проведенной валидации.
+     * Получаем ошибки по сложному контракту, сообщения склеиваются в строку.
+     *
+     * Прим.: запись кастомных ошибок в модель формы - это необычный вариант использования. И он не преусматривает
+     * массовую загрузку ошибок.
+     */
+    public function test_getErrorsAsStringPerField()
+    {
+        $form = $this->form;
+        $form->load($this->data);
+        $form->addError(['email' => 'Недопустимые символы.']);
+        $form->addError(['db' => ['server' => 'Сервер не отвечает.']]);
+        $form->addError(['db' => ['server' => 'Еще ошибка.']]);
+        $form->addError(['db' => ['base' => 'Неизвестная БД.']]);
+
+        $allUsefulErrors = array_filter($form->getErrorsAsStringPerField());
+        $expect = [
+            'email' => 'Недопустимые символы.',
+            'db'    => 'Сервер не отвечает. Еще ошибка. Неизвестная БД.',
+        ];
+        $this->assertEquals($expect, $allUsefulErrors);
+
+        $this->assertEquals('Недопустимые символы.', $form->getErrorsAsStringPerField('email'));
+        $this->assertEquals('Сервер не отвечает. Еще ошибка. Неизвестная БД.', $form->getErrorsAsStringPerField('db'));
+        $this->assertEquals('Сервер не отвечает. Еще ошибка.', $form->getErrorsAsStringPerField(['db' => 'server']));
+        $this->assertEquals('Неизвестная БД.', $form->getErrorsAsStringPerField(['db' => 'base']));
+    }
+
+    /**
+     * Добавим кастомную ошибку к глубоко вложенному полю. Проверяем, что такие ошибки не влияют на результат
+     * проведенной валидации.
      */
     public function test_addCustomError()
     {
@@ -137,26 +166,17 @@ class FromTest extends TestCase
         $this->assertFalse($form->hasErrors(), 'Найдены ошибки, хотя данные должны быть абсолютно валидные');
         $this->assertTrue($this->form->isValid());
 
-        $errServerMessage = 'Этот сервер отключен';
-        $form->addError(['db' => ['server' => $errServerMessage]]);
+        $form->addError(['db' => ['server' => 'Этот сервер отключен.']]);
 
-        $this->assertTrue($this->form->isValid(),
-            'Добавление кастомной ошибки повлияло на результат проведенной валидации');
+        $this->assertTrue(
+            $this->form->isValid(),
+            'Добавление кастомной ошибки повлияло на результат проведенной валидации'
+        );
         $this->assertTrue($form->hasErrors(), 'Все еще нет ошибок, хотя одна была добавлена вручную');
-        $this->assertEquals([$errServerMessage], $form->getErrors(['db' => 'server']),
-            'Кастомная ошибка не добавлена к нужному полю');
-
-        $errBaseMessage = 'Неизвестная БД';
-        $form->addError(['db' => ['base' => $errBaseMessage]]);
-        $allDbErrors = Arrays::array_filter_recursive($form->getErrorsAsStringPerField('db'));
-        $expect = [
-            'server' => $errServerMessage,
-            'base'   => $errBaseMessage,
-        ];
         $this->assertEquals(
-            $expect,
-            $allDbErrors,
-            'Кастомные ошибки, собранные по каждому полю, не соответствуют ожиданиям'
+            ['Этот сервер отключен.'],
+            $form->getErrors(['db' => 'server']),
+            'Кастомная ошибка не добавлена к нужному полю'
         );
     }
 
@@ -184,11 +204,12 @@ class FromTest extends TestCase
 
     /**
      * Некоторые данные, подлежащие валидации
+     *
      * @var array
      */
     private $data = [
-        'path'        => '\valid\path',
-        'namespace'   => 'some_ns',
+        'path'            => '\valid\path',
+        'namespace'       => 'some_ns',
         'do_not_validate' => 'что-нибудь без валидации',
         'email'           => 'admin@site.com',
 
@@ -226,7 +247,7 @@ class FromTest extends TestCase
             ],
         ],
 
-        'namespace'   => [
+        'namespace'       => [
             'validators' => [
                 'filter_var' => [
                     'filter'  => FILTER_VALIDATE_REGEXP,
@@ -247,7 +268,7 @@ class FromTest extends TestCase
         // Вложенные именования полей формы. Запрос типа db[server]=xxx&db[base]=yyy
         // Тут же - набор дефолтных значений
         'db'      => [
-             // поле принять без проверок. Установить дефолтное значение, если тут NULL
+            // поле принять без проверок. Установить дефолтное значение, если тут NULL
             'switch' => [
                 'default' => 3,
             ],
