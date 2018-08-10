@@ -23,6 +23,6 @@ class ValidatorFactory
     public function makeValidator(string $name, $options)
     {
         $class = self::VALIDATORS_NS . StringCase::snakeToCamel($name);
-        return App::composer()->findFile($class) ? new $class($options) : null;
+        return App::isKnownClass($class) ? new $class($options) : null;
     }
 }

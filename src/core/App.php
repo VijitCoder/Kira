@@ -193,16 +193,21 @@ class App
     }
 
     /**
-     * Получить экземпляр класса текущего загрузчика
-     * @return ClassLoader
+     * Проверить, знает ли автозагрузчик указанный класс.
+     *
+     * @param string $className FQN класса для проверки. Ведущий слеш не имеет значения.
+     * @return bool
      * @throws \LogicException
      */
-    public static function composer()
+    public static function isKnownClass(string $className): bool
     {
         if (!isset(self::$instances['composer'])) {
             throw new \LogicException('Не задан экземпляр класса ClassLoader');
         }
-        return self::$instances['composer'];
+
+        $composer = self::$instances['composer'];
+        $className = ltrim($className, '\\');
+        return (bool)$composer->findFile($className);
     }
 
     /**

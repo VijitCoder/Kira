@@ -14,6 +14,7 @@ class Router extends AbstractRouter
 {
     /**
      * Названия контроллера, который вызвал роутер после парсинга запроса
+     *
      * @var string
      */
     private $controller = '';
@@ -74,7 +75,7 @@ class Router extends AbstractRouter
         $this->action = $action;
 //dd($set);//DBG
 
-        if (!App::composer()->findFile($ctrlName)) {
+        if (!App::isKnownClass($ctrlName)) {
             $this->notFound();
         }
 
@@ -210,9 +211,10 @@ class Router extends AbstractRouter
 
         $ctrlName = $handlerArr[0];
         $this->controller = $ctrlName;
-        if (!App::composer()->findFile($ctrlName)) {
+        if (!App::isKnownClass($ctrlName)) {
             throw new ConfigException(
-                "Контроллер не найден. Неверный хендлер '{$handler}' прописан в конфигурации приложения");
+                "Контроллер не найден. Неверный хендлер '{$handler}' прописан в конфигурации приложения"
+            );
         }
         $controller = new $ctrlName;
 
@@ -282,7 +284,7 @@ class Router extends AbstractRouter
                     foreach ($requiredParams as $k => &$v) {
                         if (isset($matchCtrlAct[$k])) {
                             $v = $matchCtrlAct[$k];
-                        } else if (isset($params[$k])) {
+                        } elseif (isset($params[$k])) {
                             $v = $params[$k];
                             // удаляем из параметров то, что будет использовано в подстановке
                             unset($params[$k]);
@@ -362,6 +364,7 @@ class Router extends AbstractRouter
 
     /**
      * Названия контроллера, к которому обратился роутер после парсинга запроса
+     *
      * @return string
      */
     public function getController()
@@ -371,6 +374,7 @@ class Router extends AbstractRouter
 
     /**
      * Названия метода-действия, которое вызвал роутер после парсинга запроса
+     *
      * @return string
      */
     public function getAction()
