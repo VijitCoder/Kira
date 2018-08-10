@@ -4,6 +4,7 @@ namespace kira\core;
 use Composer\Autoload\ClassLoader;
 use kira\exceptions\ConfigException;
 use kira\net\AbstractRouter;
+use kira\net\Router;
 use kira\utils\Registry;
 
 /**
@@ -211,7 +212,7 @@ class App
     public static function router()
     {
         if (!isset(self::$instances['router'])) {
-            $router = self::conf('router.class', false) ?: 'kira\net\Router';
+            $router = self::conf('router.class', false) ?: Router::class;
             self::$instances['router'] = new $router();
         }
         return self::$instances['router'];
@@ -219,12 +220,13 @@ class App
 
     /**
      * Получение инстанциированного объекта логера
+     *
      * @return AbstractLogger конкретная реализация абстрактного класса, потомок
      */
     public static function logger()
     {
         if (!isset(self::$instances['logger'])) {
-            $logger = self::conf('logger.class', false) ?: 'kira\core\Logger';
+            $logger = self::conf('logger.class', false) ?: Logger::class;
             self::$instances['logger'] = new $logger();
         }
         return self::$instances['logger'];

@@ -18,15 +18,13 @@ class Dto
      * @param bool  $strict  TRUE - исключение на лишние данные, FALSE - просто пропускать лишние данные
      * @throws DtoException
      */
-    public function __construct(array $rawData = null, bool $strict = true)
+    public function __construct(array $rawData = [], bool $strict = true)
     {
-        if ($rawData) {
-            foreach ($rawData as $name => $value) {
-                if (property_exists($this, $name)) {
-                    $this->$name = $value;
-                } else if ($strict) {
-                    $this->throwPropertyNotFoundException($name);
-                }
+        foreach ($rawData as $name => $value) {
+            if (property_exists($this, $name)) {
+                $this->$name = $value;
+            } else if ($strict) {
+                $this->throwPropertyNotFoundException($name);
             }
         }
     }
@@ -75,7 +73,8 @@ class Dto
      * Конвертация dto-объекта в массив
      *
      * Это метод ограниченного действия. Он каскадом вызовет конвертацию вложенных DTO, но оставит без изменений любые
-     * другие типы данных.
+     * другие типы данных. Проблема в том, что у обычных объектов нет из коробки метода для выборки только публичных
+     * свойств в массив.
      *
      * @param bool $withNulls свойства со значением NULL тоже выбирать
      * @param bool $assoc     результат - ассоцитивный массив. Иначе - с цифровыми ключами

@@ -435,23 +435,23 @@ class DbModel
      * Запрос выполняется с подстановкой параметров и подготовкой IN условий, даже если они не нужны. Запрос дополняется
      * нужными инструкциями для получения среза данных и вычисления общего количества записей.
      *
-     * @param string $sql    текст запроса, без выражения LIMIT
-     * @param array  $params параметры подстановки в запрос
-     * @param int    $page   номер страницы в выдаче результата, начиная с единицы
-     * @param int    $limit  количество записей на страницу
+     * @param string $sql         текст запроса, без выражения LIMIT
+     * @param array  $params      параметры подстановки в запрос
+     * @param int    $page        номер страницы в выдаче результата, начиная с единицы
+     * @param int    $rowsPerPage количество записей на страницу
      * @return PaginateSpec
      * @throws DbException
      */
-    protected function paginate(string $sql, array $params, int $page, int $limit): PaginateSpec
+    protected function paginate(string $sql, array $params, int $page, int $rowsPerPage): PaginateSpec
     {
-        if ($page < 1 || $limit < 1) {
-            throw new DbException('Неправильные параметры пагнинации. Ожидаются целые положительные числа');
+        if ($page < 1 || $rowsPerPage < 1) {
+            throw new DbException('Неправильные параметры пагинации. Ожидаются целые положительные числа');
         }
 
         $sql = preg_replace('/SELECT/i', 'SELECT SQL_CALC_FOUND_ROWS', $sql, 1);
 
-        $offset = ($page - 1) * $limit;
-        $sql .= " LIMIT {$offset}, {$limit}";
+        $offset = ($page - 1) * $rowsPerPage;
+        $sql .= " LIMIT {$offset}, {$rowsPerPage}";
 
         try {
             $result = new PaginateSpec;
