@@ -1,6 +1,7 @@
 <?php
 namespace kira\web;
 
+use kira\core\App;
 use kira\net\Response;
 
 /**
@@ -9,7 +10,10 @@ use kira\net\Response;
 class Controller
 {
     /**
-     * Действие контроллера по умолчанию
+     * Действие контроллера по умолчанию.
+     *
+     * Как минимум, роутеру нужно знать это свойство.
+     *
      * @var string
      */
     public $defaultAction = 'index';
@@ -38,6 +42,29 @@ class Controller
      * @var array [name => content]
      */
     public $meta = [];
+
+    /**
+     * Названия контроллера, который вызвал роутер после парсинга запроса
+     *
+     * @var string
+     */
+    protected $controller = '';
+
+    /**
+     * Названия действия, который вызвал роутер после парсинга запроса.
+     *
+     * @var string
+     */
+    protected $action = '';
+
+    /**
+     * Определяем название контроллера и действия, вызванных роутером
+     */
+    public function __construct()
+    {
+        $this->controller = App::router()->getController();
+        $this->action = App::router()->getAction() ?: $this->defaultAction;
+    }
 
     /**
      * Шаблонизатор
