@@ -155,6 +155,7 @@ class Router extends AbstractRouter
         ];
     }
 
+
     /**
      * Контроллер или роут не найден, нужно ответить юзеру страницей 404.
      *
@@ -170,14 +171,16 @@ class Router extends AbstractRouter
      */
     private function notFound()
     {
-        // Предохранитель
         $code = http_response_code();
+        $response = (new Response($code))->addHeaders('Content-Type: text/html; charset=UTF-8');
+
+        // Предохранитель
         if ($code > 400) {
             $msg = $code . ': ' . Response::textOf($code);
             if (isset($_SERVER['REDIRECT_URL'])) {
                 $msg .= '<br>URL: ' . $_SERVER['REDIRECT_URL'];
             }
-            (new Response)->send($msg);
+            $response->send($msg);
             App::end();
         }
 
@@ -186,7 +189,9 @@ class Router extends AbstractRouter
             list($controller, $action) = $this->parseHandler($handler);
             $controller->$action();
         } else {
-            (new Response(404))->send('Неизвестный URL');
+            $response
+                ->changeCode(404)
+                ->send('Неизвестный URL');
         }
 
         App::end();
