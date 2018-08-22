@@ -10,39 +10,49 @@ class Controller
 {
     /**
      * Действие контроллера по умолчанию
+     *
      * @var string
      */
     public $defaultAction = 'index';
 
     /**
      * Макет. Относительный путь от KIRA_VIEWS_PATH + имя файла без расширения.
+     *
      * @var string
      */
     protected $layout = 'layout';
 
     /**
      * Расширение файлов шаблонов и макетов
+     *
      * @var string
      */
     protected $viewExt = '.htm';
 
     /**
      * Заголовок страницы. Предполагается использование с тегом <title></title>
+     *
      * @var string
      */
     protected $title = '';
 
     /**
-     * Дополнительные мета-теги, типа keywords, description и т.д. Предполагаются теги в нотации
-     * <meta name='...' content='...'>
-     * @var array [name => content]
+     * Объект класса ответа
+     *
+     * @var Response
      */
-    public $meta = [];
+    protected $response;
 
     /**
-     * Шаблонизатор
-     *
-     * Заполняем шаблон, вписываем его в макет. Отдаем результат в ответ браузеру или возвращаем, как результат функции.
+     * Инициируем объект класса ответа
+     */
+    public function __construct()
+    {
+        $this->response = new Response;
+    }
+
+    /**
+     * Заполняем шаблон, вписываем его в макет. Отдаем результат с заголовками или возвращаем как результат функции.
      *
      * Зарезервированная переменная: $CONTENT. В ней текст отрисованного шаблона для вставки в макет. Верхний регистр
      * применен умышленно во избежание случайных совпадений, не принято писать переменные большими буквами.
@@ -68,14 +78,38 @@ class Controller
         $this->afterRender($view);
 
         if ($output) {
-            echo $result;
+            $this->answer($result);
         } else {
             return $result;
         }
     }
 
     /**
-     * Отрисовка части шаблона, без макета
+     * Отрисовка шаблона, хранящегося вне каталога KIRA_VIEWS_PATH
+     *
+     * Отличие от render() именно в возможности указать шаблон в любом месте файловой системы. Но при этом путь к нему
+     * должен быть абсолютным.
+     *
+     * @param string $view   шаблон для отрисовки, абсолютный путь + имя файла + расширение
+     * @param array  $data   параметры в шаблон
+     * @param bool   $output флаг "выводить в браузер"
+     * @return string
+     * @throws \Exception
+     */
+    protected function renderExternal($view, $data = [], $output = true)
+    {
+        $result = $this->renderFile($view, $data);
+        if ($output) {
+            $this->answer($result);
+        } else {
+            return $result;
+        }
+    }
+
+    /**
+     * Отрисовка части шаблона, без макета. Не предполагается использование метода для самостоятельного ответа
+     * на запрос, поэтому заголовки не отправляются.
+     *
      * @param string $view   шаблон для отрисовки, относительный путь от KIRA_VIEWS_PATH
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
@@ -93,29 +127,8 @@ class Controller
     }
 
     /**
-     * Отрисовка шаблона, хранящегося вне каталога KIRA_VIEWS_PATH
-     *
-     * Отличие от других методов отрисовки именно в возможности указать шаблон в любом месте файловой системы. Но при
-     * этом путь к нему должен быть абсолютным.
-     *
-     * @param string $view   шаблон для отрисовки, абсолютный путь + имя файла + расширение
-     * @param array  $data   параметры в шаблон
-     * @param bool   $output флаг "выводить в браузер"
-     * @return string
-     * @throws \Exception
-     */
-    protected function renderExternal($view, $data = [], $output = true)
-    {
-        $result = $this->renderFile($view, $data);
-        if ($output) {
-            echo $result;
-        } else {
-            return $result;
-        }
-    }
-
-    /**
      * Отрисовка виджета
+     *
      * @param string $class  FQN класса виджета
      * @param array  $params параметры для передачи в виджет
      * @param bool   $output флаг "выводить в браузер"
@@ -163,6 +176,28 @@ class Controller
     }
 
     /**
+     * Отправляем подготовленный ответ.
+     *
+     * Это конечная точка работы web-приложения. Все заголовки должны быть заданы через $this->response или прямо тут
+     * в параметре, сам ответ может быть как отрисованным шаблоном, так и просто (json)строкой.
+     *
+     * @param string $message ответ
+     * @param array  $headers заголовки
+     * @throws \RuntimeException
+     */
+    public function answer(string $message = '', array $headers = []): void
+    {
+        if (!$this->response) {
+            throw new \RuntimeException('Объект $response не инициализирован.'
+                . 'Забыл где-то вызвать констуктор контроллера-родителя?');
+        }
+
+        $this->response
+            ->addHeaders($headers)
+            ->send($message);
+    }
+
+    /**
      * Редирект из контроллера
      *
      * Функция введена для удобства чтения кода.
@@ -173,11 +208,12 @@ class Controller
      */
     public function redirect($url, $code = 302)
     {
-        Response::redirect($url, $code);
+        $this->response->redirect($url, $code);
     }
 
     /**
      * Действие непосредственно перед отрисовкой шаблона с макетом
+     *
      * @param string $view шаблон для отрисовки
      * @param array  $data параметры в шаблон
      * @return void
@@ -188,6 +224,7 @@ class Controller
 
     /**
      * Действие сразу после отрисовки шаблона с макетом
+     *
      * @param string $view шаблон для отрисовки
      * @return void
      */
