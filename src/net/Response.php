@@ -13,6 +13,7 @@ class Response
 {
     /**
      * HTTP код отправляемого ответа
+     *
      * @var int
      */
     private $httpCode;
@@ -94,40 +95,101 @@ class Response
     ];
 
     /**
+     * Заголовки ответа
+     *
+     * @var array
+     */
+    private $headers = [];
+
+    /**
      * Запоминаем HTTP код отправляемого ответа
+     *
      * @param int $httpCode HTTP код отправляемого ответа
      */
-    public function __construct(int $httpCode = 200) {
+    public function __construct(int $httpCode = 200)
+    {
         $this->httpCode = $httpCode;
     }
 
     /**
      * Смена HTTP кода ответа
+     *
      * @param int $newCode
+     * @return $this
      */
     public function changeCode(int $newCode)
     {
         $this->httpCode = $newCode;
+        return $this;
     }
 
     /**
-     * Отправляем ответ браузеру с заданными заголовками
+     * Тест HTTP-статуса по его коду
      *
-     * По умолчанию в заголовках указан text/html, UTF-8. Если требуется свой набор заголовков, нужно описывать их все,
-     * т.к. результат не объединяется с заголовками по умолчанию, но заменяется на переданные в параметре.
+     * @param $code
+     * @return bool|string
+     */
+    public static function textOf($code)
+    {
+        return isset(self::$statuses[$code]) ? self::$statuses[$code] : '';
+    }
+
+    /**
+     * Добавить заголовоки в ответ
+     *
+     * @param array|string $headers массив заголовков или один заголовок
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function addHeaders($headers)
+    {
+        if (!$headers) {
+            return $this;
+        }
+
+        if (is_array($headers)) {
+            $this->headers = array_merge($this->headers, $headers);
+        } elseif (is_string($headers)) {
+            $this->headers[] = $headers;
+        } else {
+            throw new \InvalidArgumentException('Передавайте заголовки в массиве либо в строке');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Устанавливаем HTTP-код ответа и отправляем заголовки, собранные с этом экземпляре класса.
+     *
+     * Если заголовки уже были отправлены откуда-то еще, кидаем исключение. В идеале вся мета-информация ответа должна
+     * идти только отсюда.
+     *
+     * @throws \LogicException
+     */
+    public function sendHeaders(): void
+    {
+        if (!$this->headers) {
+            return;
+        }
+
+        if (headers_sent($script, $line)) {
+            throw new \LogicException(
+                "Не могу отправить заголовки, уже идет передача ответа. Началась тут $script:$line"
+            );
+        }
+
+        http_response_code($this->httpCode);
+        array_map('header', $this->headers);
+    }
+
+    /**
+     * Отправляем ответ браузеру с заданными ранее заголовками
      *
      * @param string $message ответ браузеру
-     * @param array  $headers заголовки
      */
-    public function send(string $message, array $headers = [])
+    public function send(string $message = '')
     {
-        if (!headers_sent()) {
-            http_response_code($this->httpCode);
-            if (!$headers) {
-                $headers = ['Content-Type: text/html; charset=UTF-8'];
-            }
-            array_map('header', $headers);
-        }
+        $this->sendHeaders();
         echo $message;
     }
 
@@ -150,20 +212,43 @@ class Response
         if (KIRA_DEBUG) {
             $options = $options | JSON_PRETTY_PRINT;
         }
-        self::send(
-            json_encode($data, $options, $depth),
-            ['Content-Type: application/json; charset=UTF-8']
-        );
+
+        $this->addHeaders('Content-Type: application/json; charset=UTF-8')
+            ->send(json_encode($data, $options, $depth));
     }
 
     /**
-     * Тест HTTP-статуса по его коду
-     * @param $code
-     * @return bool|string
+     * Отдать файл на скачивание
+     *
+     * Современные браузеры распознают многие типы файлов и не скачивают их, а открывают. Функция создана для
+     * принудительного скачивания. Поэтому по любому файлу сообщаем "Content-type: application/octet-stream".
+     *
+     * Объявлять размер обязательно! Иначе отправляется Transfer-Encoding: chunked, что приводит к неполной загрузке
+     * файла, если в нем обнаруживается CRLF.
+     *
+     * Рекомедуется завершить приложение после вызова этой функции. Или, как минимум, ничего больше не передавать
+     * в output.
+     *
+     * @param string $file полный путь + файл
      */
-    public static function textOf($code)
+    public function download(string $file): void
     {
-        return isset(self::$statuses[$code]) ? self::$statuses[$code] : '';
+        if (ini_get('zlib.output_compression')) {
+            ini_set('zlib.output_compression', 'Off');
+        }
+
+        $this->addHeaders([
+            'Content-Description: File Transfer',
+            'Content-Type: application/octet-stream',
+            'Content-Disposition: attachment; filename="' . basename($file) . '"',
+            'Content-Length: ' . filesize($file),
+            // антикеш
+            'Expires: 0',
+            'Cache-Control: must-revalidate',
+            'Pragma: public',
+        ])->sendHeaders();
+
+        readfile($file);
     }
 
     /**
@@ -192,45 +277,6 @@ class Response
         }
 
         App::end();
-    }
-
-    /**
-     * Отдать файл на скачивание
-     *
-     * Современные браузеры распознают многие типы файлов и не скачивают их, а открывают. Функция создана для
-     * принудительного скачивания. Поэтому по любому файлу сообщаем "Content-type: application/octet-stream".
-     *
-     * Объявлять размер обязательно! Иначе отправляется Transfer-Encoding: chunked, что приводит к неполной загрузке
-     * файла, если в нем обнаруживается CRLF.
-     *
-     * Рекомедуется завершить приложение после вызова этой функции. Или, как минимум, ничего больше не передавать
-     * в output.
-     *
-     * @param string $file полный путь + файл
-     * @throws \LogicException
-     */
-    public static function download($file)
-    {
-        if (headers_sent($script, $line)) {
-            throw new \LogicException(
-                "Не могу отправить заголовки, уже идет передача ответа. Началась тут $script:$line");
-        }
-
-        if (ini_get('zlib.output_compression')) {
-            ini_set('zlib.output_compression', 'Off');
-        }
-
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . basename($file) . '"');
-        header('Content-Length: ' . filesize($file));
-
-        // антикеш
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-
-        readfile($file);
     }
 
     /**
