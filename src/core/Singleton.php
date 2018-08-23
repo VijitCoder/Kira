@@ -14,7 +14,7 @@ trait Singleton
 
     /**
      * Получение объекта в единственном экземпляре
-     * @return Object
+     * @return self
      */
     public static function getInstance()
     {

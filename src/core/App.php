@@ -2,10 +2,10 @@
 namespace kira\core;
 
 use Composer\Autoload\ClassLoader;
-use kira\exceptions\ConfigException;
 use kira\net\AbstractRouter;
 use kira\net\Router;
 use kira\utils\Registry;
+use \kira\internal\ConfigurationManager;
 
 /**
  * Базовый класс движка. Очень общие методы.
@@ -23,11 +23,6 @@ class App
         ENGINE_NAME = 'Kira Web Engine',
         VERSION = '1.5',
         ENGINE_URL = 'https://github.com/VijitCoder/Kira';
-
-    /**
-     * @var array конфигурация приложения
-     */
-    private static $config;
 
     /**
      * @var array словарь локализации. Внутренний кеш класса
@@ -53,66 +48,24 @@ class App
      * @param string $key    ключ в конфиге
      * @param bool   $strict флаг критичности реакции, когда настройка не найдена: TRUE = пробросить исключение
      * @return mixed|null
-     * @throws ConfigException
      */
     public static function conf($key, $strict = true)
     {
-        if (!self::$config) {
-            self::$config = require KIRA_MAIN_CONFIG;
-        }
-
-        $result = self::$config;
-        foreach (explode('.', $key) as $levelKey) {
-            if (!isset($result[$levelKey])) {
-                if ($strict) {
-                    throw new ConfigException("В конфигурации не найден ключ '{$levelKey}'");
-                } else {
-                    return null;
-                }
-            }
-
-            $result = $result[$levelKey];
-        }
-
-        return $result;
+        return ConfigurationManager::getInstance()->getValue($key, $strict);
     }
 
     /**
      * Замена значения в конфиге "налету"
-     *
-     * Этой функцией можно поменять значение в конфиге приложения, но только если ключ уже существует. Такое ограничение
-     * введено для предотвращения попытки сохранить в конфиге произвольное глобальное значение. Для этого есть Реестр
-     * (kira\utils\Registry).
      *
      * Ключ может быть составным, через точку (по аналогии с чтением конфига). Новое значение <b>перезаписывает</b>
      * текущее.
      *
      * @param string $key   ключ в конфиге
      * @param mixed  $value новое значение
-     * @throws ConfigException
      */
-    public static function changeConf($key, $value)
+    public static function changeConf($key, $value): void
     {
-        if (!$key) {
-            throw new ConfigException('Ключ в конфигурации не может быть пустым.');
-        }
-
-        if (!self::$config) {
-            self::$config = require KIRA_MAIN_CONFIG;
-        }
-
-        $conf = &self::$config;
-        $keys = explode('.', $key);
-        for ($i = 0, $cnt = count($keys); $i < $cnt; ++$i) {
-            $levelKey = $keys[$i];
-            if (!isset($conf[$levelKey])) {
-                throw new ConfigException("В конфигурации не найден ключ '{$levelKey}'");
-            }
-            if ($i < $cnt - 1) {
-                $conf = &$conf[$levelKey];
-            }
-        }
-        $conf[$levelKey] = $value;
+        ConfigurationManager::getInstance()->setValue($key, $value);
     }
 
     /**

@@ -15,7 +15,7 @@ if (!function_exists('dd')) {
     {
         foreach (func_get_args() as $var) {
             if (System::isConsoleInterface()) {
-                echo kira\utils\Dumper::dumpAsString($var, 10, 0) . PHP_EOL;
+                echo kira\utils\Dumper::dumpAsString($var, 10, false) . PHP_EOL;
             } else {
                 kira\utils\Dumper::dump($var);
             }
