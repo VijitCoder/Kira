@@ -14,14 +14,26 @@ trait Singleton
 
     /**
      * Получение объекта в единственном экземпляре
+     *
+     * @param array $args параметры в конструктор создаваемого объекта
      * @return self
      */
-    public static function getInstance()
+    public static function getInstance(...$args)
     {
         if (!self::$instance) {
-            self::$instance = new self;
+            self::$instance = new static(...$args);
         }
         return self::$instance;
+    }
+
+    /**
+     * Обнуляем singleton-объект.
+     *
+     * На практике нужно для unit-тестирования, каждый тест требует чистый объект-одиночку.
+     */
+    public static function reset()
+    {
+        self::$instance = null;
     }
 
     /**
