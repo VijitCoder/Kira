@@ -2,10 +2,11 @@
 namespace kira\core;
 
 use Composer\Autoload\ClassLoader;
+use kira\configuration\PhpConfigProvider;
+use \kira\configuration\ConfigManager;
 use kira\net\AbstractRouter;
 use kira\net\Router;
 use kira\utils\Registry;
-use \kira\internal\ConfigurationManager;
 
 /**
  * Базовый класс движка. Очень общие методы.
@@ -40,7 +41,7 @@ class App
     private static $instances = [];
 
     /**
-     * Чтение конкретной настройки конфига
+     * Shortcut-метод: чтение конкретной настройки конфига
      *
      * Можно указать цепочку вложенных ключей, через точку. Типа: "validators.password.minComb". Возвращено будет
      * значение последнего ключа. Очевидно, что использовать точку в именах ключей конфига теперь нельзя.
@@ -51,11 +52,11 @@ class App
      */
     public static function conf($key, $strict = true)
     {
-        return ConfigurationManager::getInstance()->getValue($key, $strict);
+        return self::configManager()->getValue($key, $strict);
     }
 
     /**
-     * Замена значения в конфиге "налету"
+     *  Shortcut-метод: замена значения в конфиге "налету"
      *
      * Ключ может быть составным, через точку (по аналогии с чтением конфига). Новое значение <b>перезаписывает</b>
      * текущее.
@@ -65,7 +66,7 @@ class App
      */
     public static function changeConf($key, $value): void
     {
-        ConfigurationManager::getInstance()->setValue($key, $value);
+        self::configManager()->setValue($key, $value);
     }
 
     /**
@@ -121,6 +122,7 @@ class App
 
     /**
      * Завершение приложения. Последние процедуры после отправки ответа браузеру.
+     *
      * @param callable $callback функция, которую следует выполнить перед выходом.
      * @param string   $msg      сообщение на выходе
      */
@@ -164,7 +166,26 @@ class App
     }
 
     /**
+     * Получение инстанциированного объекта менеджера конфигурации
+     *
+     * TODO: тут нужно определять, какой тип конфигурации используется (php, yaml, json, etc.) и создавать
+     * соответствующий объект поставщика конфигурации. Как именно определять, пока не придумал.
+     *
+     * @return ConfigManager
+     */
+    public function configManager(): ConfigManager
+    {
+        if (!isset(self::$instances['configManager'])) {
+            $provider = new PhpConfigProvider(KIRA_MAIN_CONFIG);
+            self::$instances['configManager'] = ConfigManager::getInstance($provider);
+        }
+
+        return self::$instances['configManager'];
+    }
+
+    /**
      * Получение инстанциированного объекта роутера
+     *
      * @return AbstractRouter конкретная реализация абстрактного класса, потомок
      */
     public static function router()

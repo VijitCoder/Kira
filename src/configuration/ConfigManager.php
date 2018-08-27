@@ -1,22 +1,44 @@
 <?php
-namespace kira\internal;
+namespace kira\configuration;
 
 use kira\core\Singleton;
 use kira\exceptions\ConfigException;
 use kira\utils\Arrays;
-use kira\utils\FS;
 
 /**
  * Менеджер конфигурации приложения
+ *
+ * Бизнес-логика работы с конфигурацией.
  */
-class ConfigurationManager
+class ConfigManager
 {
     use Singleton;
 
     /**
-     * @var array конфигурация приложения
+     * Загруженная конфигурация приложения
+     *
+     * @var array
      */
     private $config = [];
+
+    /**
+     * Поставщик конфигурации
+     *
+     * @var AbstractConfigProvider
+     */
+    private $provider;
+
+    /**
+     * Менеджер конфигурации приложения
+     *
+     * Запоминаем поставщика конфигурации, с которым будем работать.
+     *
+     * @param AbstractConfigProvider $provider
+     */
+    private function __construct(AbstractConfigProvider $provider)
+    {
+        $this->provider = $provider;
+    }
 
     /**
      * Чтение конкретного значения из конфигурации
@@ -31,7 +53,7 @@ class ConfigurationManager
      */
     public function getValue($key, $strict = true)
     {
-        $result = $this->loadConfiguration();
+        $result = $this->getConfiguration();
         foreach (explode('.', $key) as $levelKey) {
             if (!isset($result[$levelKey])) {
                 if ($strict) {
@@ -64,10 +86,11 @@ class ConfigurationManager
         }
 
         // Нужно гарантировать, что конфиг загружен.
-        $this->loadConfiguration();
+        $this->getConfiguration();
 
         $conf = &$this->config;
         $keys = explode('.', $key);
+        $levelKey = '';
         for ($i = 0, $cnt = count($keys); $i < $cnt; ++$i) {
             $levelKey = $keys[$i];
             if (!isset($conf[$levelKey])) {
@@ -81,57 +104,24 @@ class ConfigurationManager
     }
 
     /**
-     * Загрузка и получение всей конфигурации приложения
+     * Получаем конфигурацию у поставщика
+     *
+     * Если что-то в конфигурации потребует у движка данные из самой себя, движок сможет использовать ту часть конфига,
+     * что уже успел загрузить. В этом суть пошаговой загрузки конфигурации приложения.
+     *
+     * TODO не смог создать unit-тест для пошаговой загрузки конфигурации. На реальных файлах знаю, что это работает.
      *
      * @return array
      */
-    private function loadConfiguration()
+    private function getConfiguration(): array
     {
         if (!$this->config) {
-            foreach ($this->mainConfigsGenerator() as $fileName) {
-                $configPart = require $fileName;
-                $this->config = Arrays::merge_recursive($this->config, $configPart, true);
+            $iterator = $this->provider->loadConfiguration();
+            foreach ($iterator as $part) {
+                $this->config = Arrays::merge_recursive($this->config, $part);
             }
         }
 
         return $this->config;
     }
-
-    /**
-     * Генератор: получить список файлов основных конфигураций. Отдавать по одному.
-     *
-     * @return \Generator
-     */
-    private function mainConfigsGenerator()
-    {
-        $mains = self::enumerateMains();
-        foreach ($mains as $main) {
-            yield $main;
-        }
-    }
-
-    /**
-     * Перечислить основные файлы конфигураций, в том порядке, как они будут загружаться.
-     *
-     * Метод публичный для отладки в конечном приложении. Можно его напрямую вызвать и увидеть, какие основные конфиги
-     * собирается подхватить загрузчик, и в каком порядке.
-     *
-     * @return array
-     */
-    public static function enumerateMains(): array
-    {
-        $parts = pathinfo(KIRA_MAIN_CONFIG);
-        $dir = '/' . FS::normalizePath($parts['dirname']);
-        $fileName = $parts['filename'];
-        $extension = $parts['extension'];
-
-        $pattern = "/{$fileName}\d?\.{$extension}/";
-        $mains = FS::dirList($dir, $pattern);
-
-        foreach ($mains as &$main) {
-            $main = $dir . $main;
-        }
-        return $mains;
-    }
 }
-
