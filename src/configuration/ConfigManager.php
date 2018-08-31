@@ -17,9 +17,11 @@ class ConfigManager
     /**
      * Загруженная конфигурация приложения
      *
-     * @var array
+     * Явная инициализация с NULL нужна, чтобы случайно не переписать это значение при очередном рефакторинге.
+     *
+     * @var null|array
      */
-    private $config = [];
+    private $config = null;
 
     /**
      * Поставщик конфигурации
@@ -109,17 +111,16 @@ class ConfigManager
      * Если что-то в конфигурации потребует у движка данные из самой себя, движок сможет использовать ту часть конфига,
      * что уже успел загрузить. В этом суть пошаговой загрузки конфигурации приложения.
      *
-     * TODO не смог создать unit-тест для пошаговой загрузки конфигурации. На реальных файлах знаю, что это работает.
-     *
      * @return array
      */
     private function getConfiguration(): array
     {
-        if (!$this->config) {
-            $iterator = $this->provider->loadConfiguration();
-            foreach ($iterator as $part) {
+        if (is_null($this->config)) {
+            $this->config = [];
+            do {
+                $part = $this->provider->loadConfiguration();
                 $this->config = Arrays::merge_recursive($this->config, $part);
-            }
+            } while (!$this->provider->isFullyLoaded());
         }
 
         return $this->config;

@@ -173,7 +173,7 @@ class App
      *
      * @return ConfigManager
      */
-    public function configManager(): ConfigManager
+    public static function configManager(): ConfigManager
     {
         if (!isset(self::$instances['configManager'])) {
             $provider = new PhpConfigProvider(KIRA_MAIN_CONFIG);

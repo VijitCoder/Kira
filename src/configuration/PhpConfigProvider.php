@@ -1,6 +1,7 @@
 <?php
 namespace kira\configuration;
 
+use kira\exceptions\ConfigException;
 use kira\utils\FS;
 
 /**
@@ -16,11 +17,20 @@ class PhpConfigProvider extends AbstractConfigProvider
     private $mainConfigFile;
 
     /**
+     * Основные файлы конфигураций, в том порядке, как они будут загружаться.
+     *
+     * Явная инициализация с NULL нужна, чтобы случайно не переписать это значение при очередном рефакторинге.
+     *
+     * @var null|array
+     */
+    private $mains = null;
+
+    /**
      * Конфигурация загружена полностью?
      *
      * @var bool
      */
-    private $fullyLoaded;
+    private $fullyLoaded = false;
 
     /**
      * Поставщик конфигурации приложения из php-файлов.
@@ -35,29 +45,35 @@ class PhpConfigProvider extends AbstractConfigProvider
     }
 
     /**
-     * Загрузка конфигурации приложения
+     * Пошаговая загрузка конфигурации приложения.
      *
-     * @return \Iterator в данной реализации - генератор.
+     * По одному основному файлу конфигурации на вызов этого метода.
+     *
+     * @return array
      */
-    public function loadConfiguration(): \Iterator
+    public function loadConfiguration(): array
     {
-        $this->fullyLoaded = false;
-        foreach (self::enumerateMains() as $fileName) {
-            yield require $fileName;
+        $this->mains = $this->mains ?? $this->enumerateMains();
+
+        if ($this->mains) {
+            $fileName = array_shift($this->mains);
+            $config = require $fileName;
+        } else {
+            $config = [];
         }
-        $this->fullyLoaded = true;
+
+        $this->fullyLoaded = !$this->mains;
+
+        return $config;
     }
 
     /**
      * Метод-флаг сообщает, когда конфиг загружен полностью.
      *
-     * В данной реализации конфиг загрузится полностью, когда закончит работу генератор в loadConfiguration().
-     *
      * @return bool
      */
-    public function isFullyLoaded()
+    public function isFullyLoaded(): bool
     {
-        // return !$this->loadConfiguration()->isValid();
         return $this->fullyLoaded;
     }
 
@@ -65,11 +81,17 @@ class PhpConfigProvider extends AbstractConfigProvider
      * Перечислить основные файлы конфигураций, в том порядке, как они будут загружаться.
      *
      * @return array
+     * @throws ConfigException
      */
     private function enumerateMains(): array
     {
         $parts = pathinfo($this->mainConfigFile);
-        $dir = '/' . FS::normalizePath($parts['dirname']);
+        $dir = FS::normalizePath($parts['dirname']);
+
+        if (!FS::isWindowsRootedPath($dir)) {
+            $dir = '/' . $dir;
+        }
+
         $fileName = $parts['filename'];
         $extension = $parts['extension'];
 
@@ -79,6 +101,13 @@ class PhpConfigProvider extends AbstractConfigProvider
         foreach ($mains as &$main) {
             $main = $dir . $main;
         }
+
+        if (!$mains) {
+            throw new ConfigException(
+                'Не найден ни один основной файл конфигурации по заданному пути: ' . $this->mainConfigFile
+            );
+        }
+
         return $mains;
     }
 

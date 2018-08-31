@@ -3,11 +3,11 @@ use kira\configuration\AbstractConfigProvider;
 use kira\configuration\ConfigManager;
 use kira\exceptions\ConfigException;
 use PHPUnit\Framework\TestCase;
-use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
 
 /**
  * Тестируем менеджер конфигурации приложения
+ *
+ * Прим.: тест на реальную пошаговую загрузку конфигов с зависимостями реализован отдельно, см. рядом с этим скриптом.
  */
 class ConfigManagerTest extends TestCase
 {
@@ -16,26 +16,37 @@ class ConfigManagerTest extends TestCase
 
     public function setUp()
     {
-        $configSources = new \ArrayIterator([
-            'main.php' => [
-                'domain' => 'http://server.com',
-                'env'    => 'local',
-                'auth'   => [
-                    'login' => [
-                        'tries'   => 5,
-                        'penalty' => 10,
-                    ],
+        $configSources = [
+            'domain' => 'http://server.com',
+            'env'    => 'local',
+            'auth'   => [
+                'login' => [
+                    'tries'   => 5,
+                    'penalty' => 10,
                 ],
             ],
-        ]);
+        ];
 
         $provider = $this->createMock(AbstractConfigProvider::class);
+
         $provider
             ->method('loadConfiguration')
             ->willReturn($configSources);
 
-        ConfigManager::reset();
+        $provider
+            ->method('isFullyLoaded')
+            ->willReturn(true);
+
         $this->manager = ConfigManager::getInstance($provider);
+    }
+
+    /**
+     * Менеджер конфигурации реализует шаблон проектирования "Одиночка" (Singleton), нужно сбрасывать его состояние
+     * между тестами.
+     */
+    public function tearDown()
+    {
+        ConfigManager::reset();
     }
 
     /**

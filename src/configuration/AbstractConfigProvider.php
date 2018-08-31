@@ -13,19 +13,19 @@ abstract class AbstractConfigProvider
     /**
      * Загрузить конфигурацию. Результатом должен быть ассоциативный массив конфигурации, готовый к использованию.
      *
-     * @return \Iterator
+     * @return array
      */
-    abstract public function loadConfiguration(): \Iterator;
+    abstract public function loadConfiguration(): array;
 
     /**
      * Конфигурация загружена полностью?
      *
-     * В некоторых реализациях этого класса возможна пошаговая загрузка конфигурации с ее немедленным использованием.
-     * Метод-флаг сообщает, когда конфиг загружен полностью.
+     * Возможна пошаговая загрузка конфигурации с ее немедленным использованием. Метод-флаг сообщает, когда конфиг
+     * загружен полностью.
      *
      * @return bool
      */
-    public function isFullyLoaded()
+    public function isFullyLoaded(): bool
     {
         return true;
     }
