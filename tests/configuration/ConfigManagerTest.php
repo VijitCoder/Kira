@@ -14,6 +14,22 @@ class ConfigManagerTest extends TestCase
     /** @var ConfigManager */
     private $manager;
 
+    /**
+     * Менеджер конфигурации реализует шаблон проектирования "Одиночка" (Singleton). И я периодически забываю сбрасывать
+     * его состояние после тестов какого-нибудь классса. Тем более, там неявная связь. Проще поготовить его перед
+     * тестом тут.
+     */
+    public static function setUpBeforeClass()
+    {
+        parent::setUpBeforeClass();
+        ConfigManager::reset();
+    }
+
+    /**
+     * Инициализируем менеджер конфигурации.
+     *
+     * Используем поставщика конфигурации из php-файлов, это неважно в тестах текущего класса.
+     */
     public function setUp()
     {
         $configSources = [

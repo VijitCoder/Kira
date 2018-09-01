@@ -13,5 +13,10 @@
             <directory suffix="Test.php">validation</directory>
         </testsuite>
 
+        <testsuite name="Other unit tests">
+            <directory suffix="Test.php">configuration</directory>
+            <directory suffix="Test.php">core</directory>
+        </testsuite>
+
     </testsuites>
 </phpunit>
