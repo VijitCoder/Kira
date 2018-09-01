@@ -85,21 +85,13 @@ class PhpConfigProvider extends AbstractConfigProvider
      */
     private function enumerateMains(): array
     {
-        $parts = pathinfo($this->mainConfigFile);
-        $dir = FS::normalizePath($parts['dirname']);
+        $parts = FS::pathInfo($this->mainConfigFile);
 
-        if (!FS::isWindowsRootedPath($dir)) {
-            $dir = '/' . $dir;
-        }
-
-        $fileName = $parts['filename'];
-        $extension = $parts['extension'];
-
-        $pattern = "/{$fileName}\d?\.{$extension}/";
-        $mains = FS::dirList($dir, $pattern);
+        $pattern = "/{$parts->shortName}\d?\.{$parts->extension}/";
+        $mains = FS::dirList($parts->path, $pattern);
 
         foreach ($mains as &$main) {
-            $main = $dir . $main;
+            $main = $parts->path . $main;
         }
 
         if (!$mains) {
