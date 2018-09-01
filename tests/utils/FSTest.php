@@ -274,4 +274,126 @@ class FSTest extends TestCase
         FS::deleteFile($this->rootPath . 'some.ext');
         $this->assertFalse($this->root->hasChild('some.ext'), 'Целевой файл после удаления остался');
     }
+
+    /**
+     * Тест: парсинг файлового пути.
+     *
+     * @dataProvider pathInfoData
+     *
+     * @param string $source        путь для анализа
+     * @param array  $expectedParts ожидаемый результат
+     */
+    public function test_pathInfo(string $source, array $expectedParts)
+    {
+        $parts = FS::pathInfo($source)->toArray(true);
+        $expectedParts['source'] = $source;
+        $this->assertEquals($expectedParts, $parts);
+    }
+
+    /**
+     * Данные: парсинг файлового пути.
+     *
+     * @return array
+     */
+    public function pathInfoData()
+    {
+        $dummyParts = [
+            'path'      => null,
+            'fullName'  => null,
+            'shortName' => null,
+            'extension' => null,
+        ];
+
+        return [
+            'Linux. Абсолютный каталог' => [
+                'source' => '/var/www/',
+                'parts'  => array_merge($dummyParts, [
+                    'path' => '/var/www/',
+                ]),
+            ],
+
+            'Linux. Относительный каталог' => [
+                'source' => 'www/',
+                'parts'  => array_merge($dummyParts, [
+                    'path' => 'www/',
+                ]),
+            ],
+
+            'Linux. Абсолютный каталог + файл без расширения' => [
+                'source' => '/var/www/file',
+                'parts'  => array_merge($dummyParts, [
+                    'path'      => '/var/www/',
+                    'fullName'  => 'file',
+                    'shortName' => 'file',
+                ]),
+            ],
+
+            'Linux. Файл с ведущей точкой' => [
+                'source' => '/var/www/.hidden_file',
+                'parts'  => array_merge($dummyParts, [
+                    'path'      => '/var/www/',
+                    'fullName'  => '.hidden_file',
+                    'shortName' => '.hidden_file',
+                ]),
+            ],
+
+            'Linux. Файл с расширением' => [
+                'source' => '/var/www/file.lib.co',
+                'parts'  => array_merge($dummyParts, [
+                    'path'      => '/var/www/',
+                    'fullName'  => 'file.lib.co',
+                    'shortName' => 'file.lib',
+                    'extension' => 'co',
+                ]),
+            ],
+
+            'Windows. Абсолютный каталог' => [
+                'source' => 'd:\temp\\',
+                'parts'  => array_merge($dummyParts, [
+                    'path' => 'd:\temp\\',
+                ]),
+            ],
+
+            'Windows. Относительный каталог' => [
+                'source' => 'temp\\',
+                'parts'  => array_merge($dummyParts, [
+                    'path' => 'temp\\',
+                ]),
+            ],
+
+            'Windows. Путь + файл' => [
+                'path'  => 'd:\temp\some.doc.txt',
+                'parts' => array_merge($dummyParts, [
+                    'path'      => 'd:\temp\\',
+                    'fullName'  => 'some.doc.txt',
+                    'shortName' => 'some.doc',
+                    'extension' => 'txt',
+                ]),
+            ],
+
+            'Нет пути, только файл' => [
+                'source' => 'some.doc.txt',
+                'parts'  => array_merge($dummyParts, [
+                    'fullName'  => 'some.doc.txt',
+                    'shortName' => 'some.doc',
+                    'extension' => 'txt',
+                ]),
+            ],
+
+            'Кириллица' => [
+                'path'  => 'd:\мой\каталог\заметки_new.txt',
+                'parts' => array_merge($dummyParts, [
+                    'path'      => 'd:\мой\каталог\\',
+                    'fullName'  => 'заметки_new.txt',
+                    'shortName' => 'заметки_new',
+                    'extension' => 'txt',
+                ]),
+            ],
+
+            'Вообще ничего нет' => [
+                'source' => '',
+                'parts'  => $dummyParts,
+            ],
+        ];
+    }
 }

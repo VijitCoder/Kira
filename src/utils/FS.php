@@ -346,4 +346,62 @@ class FS
         $dir = self::normalizePath(dirname($rc->getFileName()));
         return System::isWindows() ? $dir : '/' . $dir;
     }
+
+    /**
+     * Парсинг файлового пути.
+     *
+     * Аналог `php::pathinfo()` и `php::SplFileInfo`, но более адекватный.
+     *
+     * Улучшения:
+     * <ul>
+     * <li>кроссплатформа: корректно распознаются пути с прямыми и обратными слешами;</li>
+     * <li>только если путь заканчивается на слеш, он определяется как каталог, иначе - это файл;</li>
+     * <li>если в имени файла первый символ - точка, это все еще имя файла, а не "файл без имени, только расширение";
+     * </li>
+     * <li>распарсенный каталог всегда заканчивается на слеш (обратный слеш).</li>
+     * </ul>
+     *
+     * Ограничение: любые слеши расцениваются, как разделители каталогов.
+     *
+     * Прим: тут используются функции байтовой обработки текстов (без преффикса "mb_"), и это правильно,
+     * т.к. PREG_OFFSET_CAPTURE возвращает смещение в байтах. В итоге весь парсер корректно работает с мультибайтными
+     * строками.
+     *
+     * @param string $source путь к файлу, для парсинга
+     * @return FilePathInfo
+     */
+    public static function pathInfo(string $source): FilePathInfo
+    {
+        $info = new FilePathInfo;
+        $info->source = $source;
+
+        if (!$source) {
+            return $info;
+        }
+
+        if (preg_match('~.*(\\\\|/)~', $source, $matches, PREG_OFFSET_CAPTURE)) {
+            $info->path = $matches[0][0];
+            $lastSlashPos = $matches[1][1];
+        } else {
+            $lastSlashPos = -1;
+        }
+
+        $filePart = substr($source, $lastSlashPos + 1);
+
+        if (!$filePart) {
+            return $info;
+        }
+
+        $info->fullName = $filePart;
+
+        $lastDotPos = strrpos($filePart, '.');
+        if (!$lastDotPos) {
+            $info->shortName = $filePart;
+        } else {
+            $info->shortName = substr($filePart, 0, $lastDotPos);
+            $info->extension = substr($filePart, $lastDotPos + 1);
+        }
+
+        return $info;
+    }
 }
