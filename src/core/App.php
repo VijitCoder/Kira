@@ -22,7 +22,7 @@ class App
      */
     const
         ENGINE_NAME = 'Kira Web Engine',
-        VERSION = '1.5',
+        VERSION = '2.0',
         ENGINE_URL = 'https://github.com/VijitCoder/Kira';
 
     /**
