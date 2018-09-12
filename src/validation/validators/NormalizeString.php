@@ -8,11 +8,15 @@ namespace kira\validation\validators;
  * <li>удаляем начальные и конечные пробельные пробелы, а так же "\n, \r, \t, \v, \0" <b>из любого места
  * в строке</b></li>
  * <li>удаляем лишние пробелы внутри строки</li>
- * <li>преобразуем html-сущности, кодировка 'UTF-8'</li>
+ * <li>преобразуем html-сущности, кодировка 'UTF-8' ИЛИ вообще вырезаем теги (опционально)</li>
  * <li>удаляем обратные слеши для исключения возможности написания скриптов на Perl</li>
  * </ul>
  *
- * Настройка keep_line_breaks = TRUE позволит сохранять переносы строк в тексте.
+ * Настройки:
+ * <ul>
+ * <li>keep_line_breaks - сохранять переносы строк в тексте. По умолчанию - FALSE.</li>
+ * <li>strip_tags - TRUE = удалять теги, FALSE = сохранять, но преобразовывать html-сущности. По умолчанию - FALSE.</li>
+ * </ul>
  *
  * Название валидатора 'normalize_string'.
  */
@@ -20,10 +24,12 @@ class NormalizeString extends AbstractValidator
 {
     /**
      * Настройки валидатора по умолчанию
+     *
      * @var array
      */
     protected $options = [
         'keep_line_breaks' => false,
+        'strip_tags'       => false,
     ];
 
     /**
@@ -45,7 +51,11 @@ class NormalizeString extends AbstractValidator
             : '~[\x0B,\0,\x00,\v]+~';
 
         $value = preg_replace(['~\h+~', $ridOffPattern], [' ', ''], $value);
-        $value = htmlspecialchars(stripslashes($value), ENT_QUOTES, 'UTF-8');
+        $value = stripslashes($value);
+        if ($this->options['strip_tags']) {
+            $value = strip_tags($value);
+        }
+        $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
         $value = trim($value);
         $this->value = $value;
         return true;

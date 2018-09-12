@@ -29,4 +29,11 @@ class NormalizeStringTest extends TestCase
             $validator->value
         );
     }
+
+    public function test_strip_tags()
+    {
+        $validator = new NormalizeString(['strip_tags' => true]);
+        $validator->validate('some & \'<script>console.log("hit!")</script>\' tail');
+        $this->assertEquals('some &amp; &#039;console.log(&quot;hit!&quot;)&#039; tail', $validator->value);
+    }
 }
