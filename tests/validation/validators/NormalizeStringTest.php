@@ -36,4 +36,15 @@ class NormalizeStringTest extends TestCase
         $validator->validate('some & \'<script>console.log("hit!")</script>\' tail');
         $this->assertEquals('some &amp; &#039;console.log(&quot;hit!&quot;)&#039; tail', $validator->value);
     }
+
+    /**
+     * Конкретно это слово указало на баг с пропущенным модификатором "u" (юникод). Не знаю, почему именно так,
+     * в валидаторе нет регулярок, требующих учитывать юникод. Модификатор в выражения добавил, а тест пусть будет.
+     */
+    public function test_unicode_bug()
+    {
+        $validator = new NormalizeString(['strip_tags' => true]);
+        $validator->validate('сеРВЕр');
+        $this->assertEquals('сеРВЕр', $validator->value);
+    }
 }
