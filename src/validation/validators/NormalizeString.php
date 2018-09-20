@@ -47,8 +47,8 @@ class NormalizeString extends AbstractValidator
     {
         // прим: немного копипасты, но так понятнее, в чем смысл
         $ridOffPattern = $this->options['keep_line_breaks']
-            ? '~[\x0B,\0,\x00]+~u'
-            : '~[\x0B,\0,\x00,\v]+~u';
+            ? '~[\x0B\0\x00]+~u'
+            : '~[\x0B\0\x00\v]+~u';
 
         $value = preg_replace(['~\h+~u', $ridOffPattern], [' ', ''], $value);
         $value = stripslashes($value);
