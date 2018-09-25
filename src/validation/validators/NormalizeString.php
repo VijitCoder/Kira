@@ -16,6 +16,7 @@ namespace kira\validation\validators;
  * <ul>
  * <li>keep_line_breaks - сохранять переносы строк в тексте. По умолчанию - FALSE.</li>
  * <li>strip_tags - TRUE = удалять теги, FALSE = сохранять, но преобразовывать html-сущности. По умолчанию - FALSE.</li>
+ * <li>ent_flags - флаги для php::htmlspecialchars(). См. справку по функции.</li>
  * </ul>
  *
  * Название валидатора 'normalize_string'.
@@ -30,6 +31,7 @@ class NormalizeString extends AbstractValidator
     protected $options = [
         'keep_line_breaks' => false,
         'strip_tags'       => false,
+        'ent_flags'        => ENT_QUOTES | ENT_HTML5,
     ];
 
     /**
@@ -55,7 +57,7 @@ class NormalizeString extends AbstractValidator
         if ($this->options['strip_tags']) {
             $value = strip_tags($value);
         }
-        $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        $value = htmlspecialchars($value, $this->options['ent_flags'], 'UTF-8');
         $value = trim($value);
         $this->value = $value;
         return true;

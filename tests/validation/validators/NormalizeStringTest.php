@@ -15,7 +15,7 @@ class NormalizeStringTest extends TestCase
         $validator = new NormalizeString(true);
         $validator->validate("Это\tпервый\tтест  \n\r<script>console.log('hit!')</script> \\ \n \r \v \x0B \x00");
         $this->assertEquals(
-            'Это первый тест &lt;script&gt;console.log(&#039;hit!&#039;)&lt;/script&gt;',
+            'Это первый тест &lt;script&gt;console.log(&apos;hit!&apos;)&lt;/script&gt;',
             $validator->value
         );
     }
@@ -34,7 +34,25 @@ class NormalizeStringTest extends TestCase
     {
         $validator = new NormalizeString(['strip_tags' => true]);
         $validator->validate('some & \'<script>console.log("hit!")</script>\' tail');
-        $this->assertEquals('some &amp; &#039;console.log(&quot;hit!&quot;)&#039; tail', $validator->value);
+        $this->assertEquals('some &amp; &apos;console.log(&quot;hit!&quot;)&apos; tail', $validator->value);
+    }
+
+    /**
+     * Проверяем, как применяются флаги для php::htmlspecialchars()
+     */
+    public function test_ent_flags()
+    {
+        $string = 'some "text" here &';
+
+        // Флаги по умолчанию преобразуют кавычки
+        $validator = new NormalizeString(true);
+        $validator->validate($string);
+        $this->assertEquals('some &quot;text&quot; here &amp;', $validator->value);
+
+        // Теперь просим оставить кавычки, как есть
+        $validator = new NormalizeString(['ent_flags' => ENT_NOQUOTES | ENT_HTML401]);
+        $validator->validate($string);
+        $this->assertEquals('some "text" here &amp;', $validator->value);
     }
 
     /**
