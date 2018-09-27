@@ -9,16 +9,14 @@ use kira\core\App;
  * с разными кодами. Клиента должен заботить только сам класс исключения, коды нужны для правильного логирования внутри
  * этого класса.
  */
-class DbException extends \Exception
+class DbException extends EngineException
 {
     /**
      * Код причины исключения
      */
     const
-        QUERY = 1,
-        CONNECT = 2,
-        // Неправильное использование функционала
-        LOGIC = 3;
+        QUERY = 101,
+        CONNECT = 102;
 
     /**
      * Конструктор

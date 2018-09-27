@@ -4,6 +4,7 @@ namespace kira\core;
 use Composer\Autoload\ClassLoader;
 use kira\configuration\PhpConfigProvider;
 use \kira\configuration\ConfigManager;
+use kira\exceptions\EngineException;
 use kira\net\AbstractRouter;
 use kira\net\Router;
 use kira\utils\Registry;
@@ -152,12 +153,12 @@ class App
      *
      * @param string $className FQN класса для проверки. Ведущий слеш не имеет значения.
      * @return bool
-     * @throws \LogicException
+     * @throws EngineException
      */
     public static function isKnownClass(string $className): bool
     {
         if (!isset(self::$instances['composer'])) {
-            throw new \LogicException('Не задан экземпляр класса ClassLoader');
+            throw new EngineException('Не задан экземпляр класса ClassLoader', EngineException::BAD_METHOD_CALL);
         }
 
         $composer = self::$instances['composer'];

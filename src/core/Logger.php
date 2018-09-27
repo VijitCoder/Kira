@@ -1,6 +1,8 @@
 <?php
 namespace kira\core;
 
+use kira\exceptions\DbException;
+use kira\exceptions\LoggerException;
 use kira\net\Request;
 use kira\db\DbModel;
 use kira\utils\Mailer;
@@ -39,7 +41,7 @@ class Logger extends AbstractLogger
      * Прим.: конструктор не проверяет возможность записи лога по указанным настройкам. Это отслеживается
      * непосредственно при записи через возникающие ошибки.
      *
-     * @throws \LogicException
+     * @throws LoggerException
      */
     public function __construct()
     {
@@ -57,13 +59,19 @@ class Logger extends AbstractLogger
         $conf['_mail'] = App::conf('admin_mail', false);
 
         if ($conf['store'] == self::STORE_IN_DB && !App::conf($conf['db_conf_key'], false)) {
-            throw new \LogicException('Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке.'
-                . PHP_EOL . 'Лог в БД невозможен');
+            throw new LoggerException(
+                'Ошибка конфигурации логера: указан "db_conf_key" к несуществующей настройке.'
+                . PHP_EOL . 'Лог в БД невозможен',
+                LoggerException::LOGIC_ERROR
+            );
         }
 
         if ($conf['store'] == self::STORE_IN_FILES && !$conf['log_path']) {
-            throw new \LogicException('Ошибка конфигурации логера: не задан каталог ("log_path") для лог-файлов.'
-                . PHP_EOL . 'Логирование в файлы невозможно.');
+            throw new LoggerException(
+                'Ошибка конфигурации логера: не задан каталог ("log_path") для лог-файлов.'
+                . PHP_EOL . 'Логирование в файлы невозможно.',
+                LoggerException::LOGIC_ERROR
+            );
         }
 
         $this->conf = $conf;
@@ -85,7 +93,7 @@ class Logger extends AbstractLogger
      *
      * @param string|array $data
      * @return void
-     * @throws \LogicException
+     * @throws LoggerException
      */
     public function add($data)
     {
@@ -111,7 +119,7 @@ class Logger extends AbstractLogger
         }
 
         if (!$data['message']) {
-            throw new \LogicException('Нет сообщения для записи в лог.');
+            throw new LoggerException('Нет сообщения для записи в лог.', LoggerException::LOGIC_ERROR);
         }
 
         $this->prepareLogData($data);
@@ -194,7 +202,6 @@ class Logger extends AbstractLogger
      * </ul>
      *
      * @return bool
-     * @throws \Exception
      */
     private function writeToDb()
     {
@@ -227,7 +234,7 @@ class Logger extends AbstractLogger
                 ->query($sql, $params)
                 ->effect();
 
-        } catch (\Exception $e) {
+        } catch (DbException $e) {
             $this->logIt['message'] .= PHP_EOL . PHP_EOL
                 . 'Дополнительно. Не удалось записать это сообщение в лог БД, причина: ' . $e->getMessage();
             $result = false;
@@ -251,7 +258,7 @@ class Logger extends AbstractLogger
             $logIt = $this->logIt;
             try {
                 if (!$logPath = $this->conf['log_path']) {
-                    throw new \ErrorException('Не задан каталог ("log_path") для лог-файлов.');
+                    throw new LoggerException('Не задан каталог ("log_path") для лог-файлов.');
                 }
 
                 $fn = $logPath . $logIt['createdAt']->format('Ymd') . '_kira_log.csv';
@@ -271,9 +278,9 @@ class Logger extends AbstractLogger
                     );
                     fclose($file);
                 } else {
-                    throw new \ErrorException('Не могу писать в файл ' . $fn);
+                    throw new LoggerException('Не могу писать в файл ' . $fn, LoggerException::RUNTIME_ERROR);
                 }
-            } catch (\ErrorException $e) {
+            } catch (LoggerException $e) {
                 $this->logIt['message'] .= PHP_EOL . PHP_EOL
                     . 'Дополнительно. Не удалось записать это сообщение в файл лога, причина: ' . $e->getMessage();
                 $result = false;

@@ -6,6 +6,6 @@ namespace kira\exceptions;
  *
  * Кидается им исключительно класс kira\core\App, когда не может найти требуемую настройку в приложении.
  */
-class ConfigException extends \Exception
+class ConfigException extends EngineException
 {
 }

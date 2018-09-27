@@ -2,6 +2,7 @@
 namespace kira\utils;
 
 use kira\core\Singleton;
+use kira\exceptions\EngineException;
 use kira\exceptions\WriteException;
 use kira\exceptions\ReadException;
 
@@ -16,6 +17,7 @@ final class Registry implements \Serializable
 
     /**
      * Внутреннее хранилище данных
+     *
      * @var array
      */
     private $storage = [];
@@ -48,6 +50,7 @@ final class Registry implements \Serializable
 
     /**
      * Проверка существования значения в хранилище по ключу
+     *
      * @param string $key ключ в массиве внутреннего хранилища
      * @return bool
      */
@@ -103,6 +106,7 @@ final class Registry implements \Serializable
 
     /**
      * Удаление значения из реестра
+     *
      * @param string $key ключ в массиве внутреннего хранилища
      */
     public function delete($key)
@@ -128,12 +132,15 @@ final class Registry implements \Serializable
      * @param string $func
      * @param array  $argv
      * @return mixed
-     * @throws \BadMethodCallException
+     * @throws EngineException
      */
     public function __call(string $func, array $argv)
     {
         if (!is_callable($func) || substr($func, 0, 6) !== 'array_') {
-            throw new \BadMethodCallException(__CLASS__ . '->' . $func);
+            throw new EngineException(
+                'Вызов неизвестной функции: ' . __CLASS__ . '->' . $func,
+                EngineException::BAD_METHOD_CALL
+            );
         }
         array_unshift($argv, $this->storage);
         return call_user_func_array($func, $argv);
@@ -141,6 +148,7 @@ final class Registry implements \Serializable
 
     /**
      * Поддержка сериализации класса
+     *
      * @see http://php.net/manual/ru/class.serializable.php
      * @return string
      */
@@ -151,8 +159,8 @@ final class Registry implements \Serializable
 
     /**
      * Поддержка десериализации класса
+     *
      * @param string $data
-     * @return string
      */
     public function unserialize($data)
     {

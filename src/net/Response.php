@@ -2,6 +2,7 @@
 namespace kira\net;
 
 use kira\core\App;
+use kira\exceptions\ResponseException;
 use kira\web\Env;
 
 /**
@@ -152,7 +153,10 @@ class Response
         } elseif (is_string($headers)) {
             $this->headers[] = $headers;
         } else {
-            throw new \InvalidArgumentException('Передавайте заголовки в массиве либо в строке');
+            throw new ResponseException(
+                'Передавайте заголовки в массиве либо в строке',
+                ResponseException::INVALID_ARGUMENT
+            );
         }
 
         return $this;
@@ -173,8 +177,9 @@ class Response
         }
 
         if (headers_sent($script, $line)) {
-            throw new \LogicException(
-                "Не могу отправить заголовки, уже идет передача ответа. Началась тут $script:$line"
+            throw new ResponseException(
+                "Не могу отправить заголовки, уже идет передача ответа. Началась тут $script:$line",
+                ResponseException::RUNTIME_ERROR
             );
         }
 

@@ -1,6 +1,7 @@
 <?php
 namespace kira\web;
 
+use kira\exceptions\ControllerException;
 use kira\net\Response;
 
 /**
@@ -61,7 +62,6 @@ class Controller
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string|null
-     * @throws \Exception
      */
     protected function render($view, $data = [], $output = true)
     {
@@ -94,7 +94,6 @@ class Controller
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string
-     * @throws \Exception
      */
     protected function renderExternal($view, $data = [], $output = true)
     {
@@ -114,8 +113,7 @@ class Controller
      * @param array  $data   параметры в шаблон
      * @param bool   $output флаг "выводить в браузер"
      * @return string
-     * @throws \Exception
-     */
+      */
     protected function renderPartial($view, $data = [], $output = true)
     {
         $result = $this->renderFile(KIRA_VIEWS_PATH . $view . $this->viewExt, $data);
@@ -133,13 +131,16 @@ class Controller
      * @param array  $params параметры для передачи в виджет
      * @param bool   $output флаг "выводить в браузер"
      * @return null|string
-     * @throws \LogicException
+     * @throws ControllerException
      */
     public function widget(string $class, array $params = [], $output = true)
     {
         $widget = new $class($params);
         if (!$widget instanceof Widget) {
-            throw new \LogicException('Объект виджета не унаследован от ' . Widget::class . '. Это недопустимо.');
+            throw new ControllerException(
+                'Объект виджета не унаследован от ' . Widget::class . '. Это недопустимо.',
+                ControllerException::LOGIC_ERROR
+            );
         }
         $result = $this->renderExternal($widget->getView(), $widget->getData(), $output);
         if (!$output) {
@@ -155,16 +156,19 @@ class Controller
      * @param string $_view123 шаблон для отрисовки, абсолютный путь + файл + расширение
      * @param array  $data     параметры в шаблон
      * @return string
-     * @throws \InvalidArgumentException
+     * @throws ControllerException
      */
     private function renderFile($_view123, $data)
     {
         if (isset($data['_view123'])) {
-            throw new \InvalidArgumentException ('Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__);
+            throw new ControllerException(
+                'Недопустимый параметр "_view123". ' . __FILE__ . ':' . __LINE__,
+                ControllerException::INVALID_ARGUMENT
+            );
         }
 
         if (!is_array($data)) {
-            throw new \InvalidArgumentException('Ожидается массив параметров');
+            throw new ControllerException('Ожидается массив параметров', ControllerException::INVALID_ARGUMENT);
         }
 
         extract($data);
@@ -183,13 +187,15 @@ class Controller
      *
      * @param string $message ответ
      * @param array  $headers заголовки
-     * @throws \RuntimeException
+     * @throws ControllerException
      */
     public function answer(string $message = '', array $headers = []): void
     {
         if (!$this->response) {
-            throw new \RuntimeException('Объект $response не инициализирован.'
-                . 'Забыл где-то вызвать констуктор контроллера-родителя?');
+            throw new ControllerException(
+                'Объект $response не инициализирован. Забыл где-то вызвать констуктор контроллера-родителя?',
+                ControllerException::RUNTIME_ERROR
+            );
         }
 
         $this->response

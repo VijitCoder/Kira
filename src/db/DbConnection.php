@@ -64,8 +64,10 @@ final class DbConnection
             if ($tz = $conf['mysql_timezone']) {
                 $sql = 'SET time_zone = ?';
                 if (false === $dbh->prepare($sql)->execute([$tz])) {
-                    throw new DbException('Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
-                        . 'Запрос: ' . str_replace('?', "'$tz'", $sql));
+                    throw new DbException(
+                        'Ошибка установки часового пояса MySQL-сессии.' . PHP_EOL
+                        . 'Запрос: ' . str_replace('?', "'$tz'", $sql)
+                    );
                 }
             }
 
@@ -84,7 +86,7 @@ final class DbConnection
 
             throw new DbException($msg, DbException::CONNECT, $e);
         } catch (ConfigException $e) {
-            throw new DbException($e->getMessage(), DbException::LOGIC, $e);
+            throw new DbException($e->getMessage(), DbException::LOGIC_ERROR, $e);
         }
 
         return self::$cons[$confKey];

@@ -3,7 +3,6 @@ namespace kira\db;
 
 use kira\db\specifications\PaginateSpec;
 use kira\exceptions\DbException;
-use kira\exceptions\DtoException;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -53,7 +52,6 @@ class DbModel
      * конфигурации.
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
-     * @throws DbException
      */
     public function __construct(string $confKey = 'db')
     {
@@ -83,7 +81,10 @@ class DbModel
     public function getStatement()
     {
         if (!$this->sth) {
-            throw new DbException('Сначала нужно выполнить запрос, см. метод DBModel::query()', DbException::LOGIC);
+            throw new DbException(
+                'Сначала нужно выполнить запрос, см. метод DBModel::query()',
+                DbException::BAD_METHOD_CALL
+            );
         }
         return $this->sth;
     }
@@ -93,7 +94,6 @@ class DbModel
      *
      * @param string $confKey ключ конфига, описывающий подключение к БД
      * @return $this
-     * @throws DbException через connect()
      */
     public function switchConnection(string $confKey)
     {
@@ -118,7 +118,7 @@ class DbModel
     public function query(string $sql, array $params = [])
     {
         if (!$sql) {
-            throw new DbException('Не указан текст запроса', DbException::LOGIC);
+            throw new DbException('Не указан текст запроса', DbException::LOGIC_ERROR);
         }
 
         $this->bindingParams = $params;
@@ -154,7 +154,6 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws DbException
      */
     public function fetch(int $style = null)
     {
@@ -170,7 +169,6 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return mixed
-     * @throws DbException
      */
     public function fetchAll(int $style = null)
     {
@@ -185,7 +183,6 @@ class DbModel
      *
      * @param string $field имя поля
      * @return mixed|FALSE
-     * @throws DbException
      */
     public function fetchValue(string $field)
     {
@@ -223,7 +220,6 @@ class DbModel
      *
      * @param int $style в каком стиле выдать результат, константы \PDO::FETCH_*
      * @return RowIterator
-     * @throws DbException
      */
     public function getIterator(int $style = null)
     {
@@ -234,7 +230,6 @@ class DbModel
      * Возвращает количество строк, модифицированных последним SQL запросом
      *
      * @return int
-     * @throws DbException
      */
     public function effect()
     {
@@ -250,7 +245,6 @@ class DbModel
      * Источник {@link http://php.net/manual/ru/pdo.lastinsertid.php#107622}
      *
      * @return int
-     * @throws DBException
      */
     public function getLastId()
     {
@@ -259,8 +253,6 @@ class DbModel
 
     /**
      * Инициализация транзакции
-     *
-     * @throws DBException
      */
     public function beginTransaction()
     {
@@ -271,7 +263,6 @@ class DbModel
      * Проверка: транзакция в процессе
      *
      * @return bool
-     * @throws DBException
      */
     public function inTransaction()
     {
@@ -280,8 +271,6 @@ class DbModel
 
     /**
      * Завершение транзакции
-     *
-     * @throws DBException
      */
     public function commit()
     {
@@ -290,8 +279,6 @@ class DbModel
 
     /**
      * Откат транзакции
-     *
-     * @throws DBException
      */
     public function rollBack()
     {
@@ -330,7 +317,7 @@ class DbModel
             if (is_int($name)) {
                 throw new DbException(
                     'Подстановка массива возможна только для именованного плейсходера.',
-                    DbException::LOGIC
+                    DbException::LOGIC_ERROR
                 );
             }
 
@@ -400,7 +387,7 @@ class DbModel
         if (!KIRA_DEBUG) {
             throw new DbException(
                 'Нельзя использовать этот метод в боевом режиме сайта. Он только для отладки.',
-                DbException::LOGIC
+                DbException::LOGIC_ERROR
             );
         }
 
@@ -445,7 +432,10 @@ class DbModel
     protected function paginate(string $sql, array $params, int $page, int $rowsPerPage): PaginateSpec
     {
         if ($page < 1 || $rowsPerPage < 1) {
-            throw new DbException('Неправильные параметры пагинации. Ожидаются целые положительные числа');
+            throw new DbException(
+                'Неправильные параметры пагинации. Ожидаются целые положительные числа',
+                DbException::INVALID_ARGUMENT
+            );
         }
 
         $sql = preg_replace('/SELECT/i', 'SELECT SQL_CALC_FOUND_ROWS', $sql, 1);
@@ -453,12 +443,7 @@ class DbModel
         $offset = ($page - 1) * $rowsPerPage;
         $sql .= " LIMIT {$offset}, {$rowsPerPage}";
 
-        try {
-            $result = new PaginateSpec;
-        } catch (DtoException $e) {
-            // Никакой реакции, т.к. не будет исключения при текущем создании DTO. Но чтобы не светить отсюда двумя
-            // исключениями, сделана пустая ловушка.
-        }
+        $result = new PaginateSpec;
 
         $result->rows = $this
             ->prepareIn($sql, $params)

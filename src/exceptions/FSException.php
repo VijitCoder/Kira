@@ -7,6 +7,6 @@ namespace kira\exceptions;
  * Код ошибки, передаваемый в конструктор, соответствует уровням ошибок PHP
  * {@link http://php.net/manual/ru/errorfunc.constants.php}
  */
-class FSException extends \Exception
+class FSException extends EngineException
 {
 }

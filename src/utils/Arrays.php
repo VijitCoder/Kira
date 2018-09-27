@@ -1,6 +1,8 @@
 <?php
 namespace kira\utils;
 
+use kira\exceptions\EngineException;
+
 /**
  * Свои манипуляции с массивами. В PHP их много, но иногда чего-то не хватает :)
  *
@@ -58,8 +60,10 @@ class Arrays
         $viaFunc = (bool)$callback;
 
         if (!$viaFunc && in_array($flag, [ARRAY_FILTER_USE_KEY, ARRAY_FILTER_USE_BOTH])) {
-            throw new \LogicException(
-                'Не задана callback-функция. Фильтрация по ключам или "ключ + значение" бессмысленна');
+            throw new EngineException(
+                'Не задана callback-функция. Фильтрация по ключам или "ключ + значение" бессмысленна',
+                EngineException::LOGIC_ERROR
+            );
         }
 
         foreach ($array as $k => $v) {

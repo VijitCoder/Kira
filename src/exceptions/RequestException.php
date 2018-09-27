@@ -6,6 +6,6 @@ namespace kira\exceptions;
  *
  * Их пробрасывают методы типа postAsInt() и вся остальная компания.
  */
-class RequestException extends \Exception
+class RequestException extends EngineException
 {
 }
