@@ -122,7 +122,7 @@ class Form
      */
     public function load(array $data)
     {
-        $this->rawData = Arrays::merge_recursive($this->rawData, $data);
+        $this->rawData = Arrays::mergeRecursive($this->rawData, $data);
 
         return $this;
     }
@@ -202,7 +202,7 @@ class Form
      */
     public function setValue(array $value)
     {
-        $this->values = Arrays::merge_recursive($this->values, $value);
+        $this->values = Arrays::mergeRecursive($this->values, $value);
         return $this;
     }
 
@@ -353,11 +353,11 @@ class Form
         }
 
         if ($key) {
-            $errors = Arrays::implode_recursive($errors, $glue, $eol);
+            $errors = Arrays::implodeRecursive($errors, $glue, $eol);
         } else {
             foreach ($errors as &$v) {
                 if (is_array($v)) {
-                    $v = Arrays::implode_recursive($v, $glue, $eol);
+                    $v = Arrays::implodeRecursive($v, $glue, $eol);
                 }
             }
         }

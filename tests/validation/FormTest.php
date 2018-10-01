@@ -119,7 +119,7 @@ class FromTest extends TestCase
     {
         $form = $this->form;
         $isValid = $form->load([])->validate();
-        $errors = Arrays::array_filter_recursive($form->getErrors());
+        $errors = Arrays::filterRecursive($form->getErrors());
         $this->assertFalse($isValid, 'Заведомо неправильный набор данных неожиданно прошел валидацию');
         $this->assertEquals(2, count($errors), 'Количество полей с ошибками не равно ожидаемому');
         $this->assertArrayHasKey('path', $errors, 'Нет ошибки в ожидаемом поле');

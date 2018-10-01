@@ -119,7 +119,7 @@ class ConfigManager
             $this->config = [];
             do {
                 $part = $this->provider->loadConfiguration();
-                $this->config = Arrays::merge_recursive($this->config, $part);
+                $this->config = Arrays::mergeRecursive($this->config, $part);
             } while (!$this->provider->isFullyLoaded());
         }
 

@@ -29,7 +29,7 @@ class ArraysTest extends TestCase
     /**
      * Рекурсивная фильтрация пустых значений в массиве
      */
-    public function test_array_filter_recursive_empty()
+    public function test_filter_empty()
     {
         $arr = [
             [11, 0, 13],
@@ -38,7 +38,7 @@ class ArraysTest extends TestCase
             ['stay', '', 'stay1', []],
         ];
 
-        $arr = Arrays::array_filter_recursive($arr);
+        $arr = Arrays::filterRecursive($arr);
 
         $expect = [
             [11, 2 => 13,],
@@ -53,7 +53,7 @@ class ArraysTest extends TestCase
      *
      * Функция проверяет значение на четность. Останутся только нечетные значения.
      */
-    public function test_array_filter_recursive_value()
+    public function test_filter_value()
     {
         $arr = [
             [11, 12, 13, 14],
@@ -62,7 +62,7 @@ class ArraysTest extends TestCase
             [19, 20,],
         ];
 
-        $arr = Arrays::array_filter_recursive(
+        $arr = Arrays::filterRecursive(
             $arr,
             function ($val) {
                 return $val & 1;
@@ -83,7 +83,7 @@ class ArraysTest extends TestCase
      *
      * Функция проверяет значение на четность. Останутся только нечетные элементы.
      */
-    public function test_array_filter_recursive_key()
+    public function test_filter_key()
     {
         $arr = [
             [11, 12, 13, 14],
@@ -91,7 +91,7 @@ class ArraysTest extends TestCase
             [19, 20,],
         ];
 
-        $arr = Arrays::array_filter_recursive(
+        $arr = Arrays::filterRecursive(
             $arr,
             function ($val) {
                 return $val & 1;
@@ -116,7 +116,7 @@ class ArraysTest extends TestCase
      * проверяем на четность элемент. Вообще мне трудно придумать какую-то вразумительную ситуацию, когда могла бы
      * потребоваться фильтрация многомерного массива и по ключам и по значениям.
      */
-    public function test_array_filter_recursive_both()
+    public function test_filter_both()
     {
         $arr = [
             [11, 12, 13, 14],
@@ -125,7 +125,7 @@ class ArraysTest extends TestCase
             [19, 20,],
         ];
 
-        $arr = Arrays::array_filter_recursive(
+        $arr = Arrays::filterRecursive(
             $arr,
             function ($val, $key) {
                 return is_array($val) ? $key & 1 : $val & 1;
@@ -145,7 +145,7 @@ class ArraysTest extends TestCase
             'Не верная рекурсивная фильтрация ключей и значений массива через callback-функцию');
     }
 
-    public function test_merge_recursive()
+    public function test_merge()
     {
         $arr1 = [
             'key1' => 'will be rewrite to array',
@@ -162,7 +162,7 @@ class ArraysTest extends TestCase
             'nums' => [0 => 4, 2 => 27, 4 => 46],
         ];
 
-        $arr = Arrays::merge_recursive($arr1, $arr2, false);
+        $arr = Arrays::mergeRecursive($arr1, $arr2, false);
         $expect = [
             'key1' => ['str', 'rewrite with', 'new value',],
             'key2' => 'array rewrite to a new string',
@@ -180,7 +180,7 @@ class ArraysTest extends TestCase
 
         $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Числовые ключи не сбросились.');
 
-        $arr = Arrays::merge_recursive($arr1, $arr2, true);
+        $arr = Arrays::mergeRecursive($arr1, $arr2, true);
         $expect = [
             'key1' => ['str', 'rewrite with', 'new value',],
             'key2' => 'array rewrite to a new string',
@@ -199,7 +199,7 @@ class ArraysTest extends TestCase
         $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Не сохранились числовые ключи.');
     }
 
-    public function test_implode_recursive()
+    public function test_implode()
     {
         $arr = [
             'string 1',
@@ -207,7 +207,7 @@ class ArraysTest extends TestCase
             ['sub' => ['string 4', 'string 5',]],
         ];
 
-        $expect = Arrays::implode_recursive($arr, ' + ', ' rn ');
+        $expect = Arrays::implodeRecursive($arr, ' + ', ' rn ');
         $this->assertEquals($expect, 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5',
             'Ошибка слияния многомерного массива в строку');
     }
@@ -217,6 +217,32 @@ class ArraysTest extends TestCase
         $arr = ['path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],];
         $expect = Arrays::getValue($arr, ['path' => ['app' => 'level2']]);
         $this->assertEquals($expect, '/www', 'Получено неверное значение массива по заданной цепочке ключей');
+    }
+
+    /**
+     * Извлечение элемента массива по заданному ключу
+     */
+    public function test_extractValue()
+    {
+        $array = [
+            'one'   => 'раз',
+            'two'   => 'два',
+            'three' => 'три',
+        ];
+
+        $value = Arrays::extractValue($array, 'two');
+        $this->assertEquals('два', $value, 'Извлечено неверное значение массива');
+        $this->assertEquals(
+            [
+                'one'   => 'раз',
+                'three' => 'три',
+            ],
+            $array,
+            'Массив без извлеченного значения не соответствует ожиданиям'
+        );
+
+        $notExistValue = Arrays::extractValue($array, 'four');
+        $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
 
     /**
@@ -338,32 +364,6 @@ class ArraysTest extends TestCase
         $tree = Arrays::buildTree($array, $getParentId);
 
         $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию получен неправильно');
-    }
-
-    /**
-     * Извлечение элемента массива по заданному ключу
-     */
-    public function test_value_extract()
-    {
-        $array = [
-            'one'   => 'раз',
-            'two'   => 'два',
-            'three' => 'три',
-        ];
-
-        $value = Arrays::value_extract($array, 'two');
-        $this->assertEquals('два', $value, 'Извлечено неверное значение массива');
-        $this->assertEquals(
-            [
-                'one'   => 'раз',
-                'three' => 'три',
-            ],
-            $array,
-            'Массив без извлеченного значения не соответствует ожиданиям'
-        );
-
-        $notExistValue = Arrays::value_extract($array, 'four');
-        $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
 
     /**

@@ -35,7 +35,7 @@ class Arrays
     }
 
     /**
-     * Фильтрация многомерного массива
+     * Фильтрация многомерного массива. Рекурсия.
      *
      * Функция по типу array_filter() {@link http://php.net/manual/ru/function.array-filter.php}, только работает
      * с многомерными массивами.
@@ -52,9 +52,9 @@ class Arrays
      * @param callable $callback функция для фильтрации
      * @param int      $flag     фильтровать по значениям или по ключам. см. ARRAY_FILTER_USE_* в справке PHP
      * @return array
-     * @throws \LogicException
+     * @throws EngineException
      */
-    public static function array_filter_recursive(array $array, callable $callback = null, $flag = 0)
+    public static function filterRecursive(array $array, callable $callback = null, $flag = 0): array
     {
         $result = [];
         $viaFunc = (bool)$callback;
@@ -80,7 +80,7 @@ class Arrays
             }
 
             if (is_array($v)) {
-                if ($v = self::array_filter_recursive($v, $callback, $flag)) {
+                if ($v = self::filterRecursive($v, $callback, $flag)) {
                     $result[$k] = $v;
                 }
                 continue;
@@ -103,7 +103,7 @@ class Arrays
     }
 
     /**
-     * Рекурсивное объединение <b>двух</b> массивов.
+     * Объединение <b>двух</b> многомерных массивов. Рекурсия.
      *
      * По мотивам {@link http://php.net/manual/ru/function.array-merge-recursive.php#92195}
      *
@@ -123,15 +123,15 @@ class Arrays
      *                              в конец, с новыми числовыми ключами.
      * @return array
      */
-    public static function merge_recursive(array $array1, array $array2, bool $numKeyAsString = false)
+    public static function mergeRecursive(array $array1, array $array2, bool $numKeyAsString = false): array
     {
         $merged = $array1;
 
         foreach ($array2 as $key => &$value) {
             if (is_int($key) && !$numKeyAsString) {
                 $merged[] = $value;
-            } else if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
-                $merged[$key] = self::merge_recursive($merged[$key], $value, $numKeyAsString);
+            } elseif (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
+                $merged[$key] = self::mergeRecursive($merged[$key], $value, $numKeyAsString);
             } else {
                 $merged[$key] = $value;
             }
@@ -141,9 +141,7 @@ class Arrays
     }
 
     /**
-     * Слияние многомерного массива в строку
-     *
-     * Рекурсия
+     * Слияние многомерного массива в строку. Рекурсия.
      *
      * Это похоже на использование php::array_reduce(), только запилено под строковый результат. Перед каждым
      * подмассивом пишется значение из $eol. Так можно получить многострочный текст, отражающий многомерный массив.
@@ -153,7 +151,7 @@ class Arrays
      * @param string $eol  клей между соседними подмассивами
      * @return string
      */
-    public static function implode_recursive(array $arr, string $glue = ' ', string $eol = '')
+    public static function implodeRecursive(array $arr, string $glue = ' ', string $eol = ''): string
     {
         $result = '';
         foreach ($arr as $v) {
@@ -162,7 +160,7 @@ class Arrays
             }
             if (is_array($v)) {
                 $result .= $eol;
-                $v = self::implode_recursive($v, $glue, $eol);
+                $v = self::implodeRecursive($v, $glue, $eol);
             }
             $result .= $glue . $v;
         }
@@ -171,7 +169,7 @@ class Arrays
     }
 
     /**
-     * Получение значения из массива по заданной цепочке ключей
+     * Получение значения из массива по заданной цепочке ключей. Рекурсия.
      *
      * Пример цепочки: ['key1' => ['key2' => 'key4']]
      *
@@ -186,6 +184,27 @@ class Arrays
             return isset($arr[$key]) ? self::getValue($arr[$key], $chain[$key]) : null;
         }
         return isset($arr[$chain]) ? $arr[$chain] : null;
+    }
+
+    /**
+     * Получить значение из массива по его ключу. Удалить соостветствующий элемент массива.
+     *
+     * Поведение похоже на array_pop(), только элемент извлекается не с конца массива, а из любого места по заданному
+     * ключу.
+     *
+     * @param array      $array массив источник
+     * @param string|int $key   ключ элемента для извлечения
+     * @return mixed
+     */
+    public static function extractValue(array &$array, $key)
+    {
+        if (array_key_exists($key, $array)) {
+            $value = $array[$key];
+            unset($array[$key]);
+        } else {
+            $value = null;
+        }
+        return $value;
     }
 
     /**
@@ -218,27 +237,6 @@ class Arrays
             }
         }
         return $tree;
-    }
-
-    /**
-     * Получить значение из массива по его ключу. Удалить соостветствующий элемент массива.
-     *
-     * Поведение похоже на array_pop(), только элемент извлекается не с конца массива, а из любого места по заданному
-     * ключу.
-     *
-     * @param array      $array массив источник
-     * @param string|int $key   ключ элемента для извлечения
-     * @return mixed
-     */
-    public static function value_extract(array &$array, $key)
-    {
-        if (array_key_exists($key, $array)) {
-            $value = $array[$key];
-            unset($array[$key]);
-        } else {
-            $value = null;
-        }
-        return $value;
     }
 
     /**
@@ -319,5 +317,64 @@ class Arrays
             next($array2);
         }
         return;
+    }
+
+    /**
+     * Алиас для Arrays::filterRecursive()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param array         $array
+     * @param callable|null $callback
+     * @param int           $flag
+     * @return mixed
+     */
+    public static function array_filter_recursive(array $array, callable $callback = null, $flag = 0): array
+    {
+        return self::filterRecursive($array, $callback, $flag);
+    }
+
+    /**
+     * Алиас для Arrays::mergeRecursive()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param array $array1
+     * @param array $array2
+     * @param bool  $numKeyAsString
+     * @return array
+     */
+    public static function merge_recursive(array $array1, array $array2, bool $numKeyAsString = false): array
+    {
+        return self::mergeRecursive($array1, $array2, $numKeyAsString);
+    }
+
+    /**
+     * Алиас для Arrays::implodeRecursive()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param array  $arr
+     * @param string $glue
+     * @param string $eol
+     * @return string
+     */
+    public static function implode_recursive(array $arr, string $glue = ' ', string $eol = ''): string
+    {
+        return self::implodeRecursive($arr, $glue, $eol);
+    }
+
+    /**
+     * Алиас для Arrays::extractValue()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param array $array
+     * @param       $key
+     * @return mixed
+     */
+    public static function value_extract(array &$array, $key)
+    {
+        return self::extractValue($array, $key);
     }
 }
