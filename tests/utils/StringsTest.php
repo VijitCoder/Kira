@@ -37,13 +37,22 @@ class StringsTest extends TestCase
      */
     public function test_firstLetter()
     {
-         $this->assertEquals('Русский', Strings::mb_ucfirst('русский'), 'Ошибка приведения к заглавной первой букве');
-         $this->assertEquals('пРОБЕЛ', Strings::mb_lcfirst('ПРОБЕЛ'), 'Ошибка приведения к строчной первой букве');
+         $this->assertEquals(
+             'Русский',
+             Strings::upperCaseFirst('русский'),
+             'Ошибка приведения к заглавной первой букве'
+         );
+
+         $this->assertEquals(
+             'пРОБЕЛ',
+             Strings::lowerCaseFirst('ПРОБЕЛ'),
+             'Ошибка приведения к строчной первой букве'
+         );
     }
 
-    public function test_word_chunk()
+    public function test_wordChunk()
     {
-        $this->assertEquals('рус + ски + й', Strings::word_chunk('русский', 3, ' + '),
+        $this->assertEquals('рус + ски + й', Strings::wordChunk('русский', 3, ' + '),
             'Не верное мультибайтное разбиение строки');
     }
 

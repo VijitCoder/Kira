@@ -32,7 +32,8 @@ class Strings
     /**
      * Склонение слов в зависимости от числа.
      *
-     * Не использует возможности движка по локализации. Для этого потребуется отдельный вызов переводчика {@see App::t()}
+     * Не использует возможности движка по локализации. Для этого потребуется отдельный вызов
+     * переводчика {@see App::t()}.
      *
      * Пример передаваемых данных в массиве $s = ['комментарий', 'комментария', 'комментариев']:
      * <pre>
@@ -46,7 +47,7 @@ class Strings
      * @param bool  $glued объединить результат с числом? Объединение будет через пробел
      * @return string
      */
-    public static function declination($n, array $s, $glued = true)
+    public static function declination(int $n, array $s, $glued = true): string
     {
         $n = $n % 100;
         $ln = $n % 10;
@@ -64,7 +65,7 @@ class Strings
      * @param string $str исходная строка
      * @return string
      */
-    public static function rus2eng($str)
+    public static function rus2eng(string $str): string
     {
         return strtr($str, self::dictionary('rus'));
     }
@@ -80,17 +81,18 @@ class Strings
      * @param string $str исходная строка
      * @return string
      */
-    public static function eng2rus($str)
+    public static function eng2rus(string $str): string
     {
         return strtr($str, self::dictionary('eng'));
     }
 
     /**
      * Словарь транслита. Раскладка нестандартная, зато без мудренной фигни типа 'э'=>'e`'.
+     *
      * @param string $keys rus|eng ключи массива
      * @return array
      */
-    private static function dictionary($keys)
+    private static function dictionary(string $keys): array
     {
         return $keys == 'eng'
             ? [ //удалены 'ь', 'ъ'
@@ -167,12 +169,13 @@ class Strings
      * Заглавная первая буква. Мультибайтная версия
      *
      * Не нашел "из коробки" мультибайтный ucfirst(). Сделал свой.
+     *
      * @see http://php.net/manual/ru/function.ucfirst.php#57298
      *
      * @param string $str
      * @return string
      */
-    public static function mb_ucfirst($str)
+    public static function upperCaseFirst(string $str): string
     {
         $fc = mb_strtoupper(mb_substr($str, 0, 1));
         return $fc . mb_substr($str, 1);
@@ -180,10 +183,11 @@ class Strings
 
     /**
      * Строчная первая буква. Мультибайтная версия
+     *
      * @param string $str
      * @return string
      */
-    public static function mb_lcfirst($str)
+    public static function lowerCaseFirst(string $str): string
     {
         $fc = mb_strtolower(mb_substr($str, 0, 1));
         return $fc . mb_substr($str, 1);
@@ -201,7 +205,7 @@ class Strings
      * @param string $end символы конца строки
      * @return string
      */
-    public static function word_chunk($str, $len = 76, $end = "\r\n")
+    public static function wordChunk(string $str, int $len = 76, string $end = "\r\n"): string
     {
         $pattern = '~.{1,' . $len . '}~u';
         $str = preg_replace($pattern, '$0' . $end, $str);
@@ -334,5 +338,49 @@ class Strings
     public static function br2nl(string $text): string
     {
         return preg_replace('~<br\s*/?>~i', PHP_EOL, $text);
+    }
+
+    /**
+     * Алиас для Strings::upperCaseFirst()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param $str
+     * @return string
+     */
+    public static function mb_ucfirst($str): string
+    {
+        return self::upperCaseFirst($str);
+
+    }
+
+    /**
+     * Алиас для Strings::lowerCaseFirst()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param $str
+     * @return string
+     */
+    public static function mb_lcfirst($str): string
+    {
+        return self::lowerCaseFirst($str);
+
+    }
+
+    /**
+     * Алиас для Strings::wordChunk()
+     *
+     * @deprecated Будет удалена в v.3
+     *
+     * @param string $str
+     * @param int    $len
+     * @param string $end
+     * @return string
+     */
+    public static function word_chunk(string $str, int $len = 76, string $end = "\r\n"): string
+    {
+        return self::wordChunk($str, $len, $end);
+
     }
 }
