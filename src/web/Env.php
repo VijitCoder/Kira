@@ -9,8 +9,94 @@ use kira\core\App;
  *
  * См. документацию, "Среда окружения сайта"
  */
-class Env implements IDetectEnvironment
+class Env
 {
+    /**
+     * Среда окружения
+     */
+    const
+        ENV_UNKNOWN = 'unknown',
+        ENV_LOCAL = 'local',
+        ENV_DEV = 'dev',
+        ENV_STAGE = 'stage',
+        ENV_PROD = 'production',
+        ENV_MOBILE = 'mobile',
+        ENV_UNIT = 'unit'; // модульное тестирование
+
+    /**
+     * Определение среды окружения (local, dev, production и т.д.)
+     *
+     * Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
+     * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
+     * его динамическим - невыгодно.
+     *
+     * @return string см. константы ENV_* в IDetectEnvironment.
+     */
+    public static function detectEnvironment()
+    {
+        return IDetectEnvironment::ENV_UNKNOWN;
+    }
+
+    /**
+     * Сайт на локалке
+     *
+     * @return bool
+     */
+    public static final function isLocal()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_LOCAL;
+    }
+
+    /**
+     * Сайт на деве
+     *
+     * @return bool
+     */
+    public static final function isDevelopment()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_DEV;
+    }
+
+    /**
+     * Сайт на staging
+     *
+     * @return bool
+     */
+    public static final function isStage()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_STAGE;
+    }
+
+    /**
+     * Сайт на проде
+     *
+     * @return bool
+     */
+    public static final function isProduction()
+    {
+        return self::detectEnvironment() === IDetectEnvironment::ENV_PROD;
+    }
+
+    /**
+     * Сайт на спец.домене для мобильных устройств
+     *
+     * @return bool
+     */
+    public static final function isMobile()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_MOBILE;
+    }
+
+    /**
+     * Приложение выполняется в тестовом окружении (unit-тесты)
+     *
+     * @return bool
+     */
+    public static final function isUnit()
+    {
+        return static::detectEnvironment() === IDetectEnvironment::ENV_UNIT;
+    }
+
     /**
      * Схема вместе с '://'
      *
@@ -37,7 +123,7 @@ class Env implements IDetectEnvironment
      */
     public static function domainName()
     {
-        return isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (App::conf('domain', false) ? : '');
+        return isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (App::conf('domain', false) ?: '');
     }
 
     /**
@@ -57,6 +143,7 @@ class Env implements IDetectEnvironment
 
     /**
      * Схема://домен:порт. Без слеша в конце
+     *
      * @return string|null
      */
     public static function domainUrl()
@@ -77,51 +164,5 @@ class Env implements IDetectEnvironment
     public static function indexPage()
     {
         return self::domainUrl() . '/';
-    }
-
-    /**
-     * Определение среды окружения (local, dev, production и т.д.)
-     *
-     * Метод должен быть реализован в конкретном приложении, если будут использоваться ниже приведенные геттеры.
-     * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
-     * его динамическим - невыгодно.
-     *
-     * @return int см. константы ENV_* в IDetectEnvironment.
-     */
-    public static function detectEnvironment()
-    {
-        return -1;
-    }
-
-    # Геттеры для выяснения среды окружения
-
-    public static final function isLocal()
-    {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_LOCAL;
-    }
-
-    public static final function isDevelopment()
-    {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_DEV;
-    }
-
-    public static final function isStage()
-    {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_STAGE;
-    }
-
-    public static final function isProduction()
-    {
-        return self::detectEnvironment() === IDetectEnvironment::ENV_PROD;
-    }
-
-    public static final function isMobile()
-    {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_MOBILE;
-    }
-
-    public static final function isUnit()
-    {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_UNIT;
     }
 }
