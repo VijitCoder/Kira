@@ -1,7 +1,6 @@
 <?php
 namespace kira\web;
 
-use kira\interfaces\IDetectEnvironment;
 use kira\core\App;
 
 /**
@@ -30,11 +29,11 @@ class Env
      * По сути, это абстрактный метод. Но ограничения PHP не позволяют объявить абстрактным статический метод. Делать
      * его динамическим - невыгодно.
      *
-     * @return string см. константы ENV_* в IDetectEnvironment.
+     * @return string см. константы self::ENV_*
      */
     public static function detectEnvironment()
     {
-        return IDetectEnvironment::ENV_UNKNOWN;
+        return self::ENV_UNKNOWN;
     }
 
     /**
@@ -44,7 +43,7 @@ class Env
      */
     public static final function isLocal()
     {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_LOCAL;
+        return static::detectEnvironment() === self::ENV_LOCAL;
     }
 
     /**
@@ -54,7 +53,7 @@ class Env
      */
     public static final function isDevelopment()
     {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_DEV;
+        return static::detectEnvironment() === self::ENV_DEV;
     }
 
     /**
@@ -64,7 +63,7 @@ class Env
      */
     public static final function isStage()
     {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_STAGE;
+        return static::detectEnvironment() === self::ENV_STAGE;
     }
 
     /**
@@ -74,7 +73,7 @@ class Env
      */
     public static final function isProduction()
     {
-        return self::detectEnvironment() === IDetectEnvironment::ENV_PROD;
+        return self::detectEnvironment() === self::ENV_PROD;
     }
 
     /**
@@ -84,7 +83,7 @@ class Env
      */
     public static final function isMobile()
     {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_MOBILE;
+        return static::detectEnvironment() === self::ENV_MOBILE;
     }
 
     /**
@@ -94,7 +93,7 @@ class Env
      */
     public static final function isUnit()
     {
-        return static::detectEnvironment() === IDetectEnvironment::ENV_UNIT;
+        return static::detectEnvironment() === self::ENV_UNIT;
     }
 
     /**
