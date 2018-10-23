@@ -42,19 +42,23 @@ class Strings
      * 5 комментариев
      * </pre>
      *
-     * @param int   $n     число
-     * @param array $s     набор слов
-     * @param bool  $glued объединить результат с числом? Объединение будет через пробел
+     * @param int   $num     число
+     * @param array $strings набор слов
+     * @param bool  $glued   объединить результат с числом? Объединение будет через пробел
      * @return string
      */
-    public static function declination(int $n, array $s, $glued = true): string
+    public static function declination(int $num, array $strings, $glued = true): string
     {
-        $n = $n % 100;
-        $ln = $n % 10;
-        $phrase = $s[(($n < 10 || $n > 20) && $ln >= 1 && $ln <= 4)
-            ? (($ln == 1) ? 0 : 1)
-            : 2];
-        return $glued ? $n . ' ' . $phrase : $phrase;
+        $mod100 = $num % 100;
+        $mod10Mod100 = $mod100 % 10;
+
+        $idx = (($mod100 < 10 || $mod100 > 20) && $mod10Mod100 >= 1 && $mod10Mod100 <= 4)
+            ? ($mod10Mod100 == 1 ? 0 : 1)
+            : 2;
+
+        $phrase = $strings[$idx];
+
+        return $glued ? $num . ' ' . $phrase : $phrase;
     }
 
     /**

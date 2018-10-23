@@ -13,8 +13,8 @@ class StringsTest extends TestCase
         $words = ['комментарий', 'комментария', 'комментариев'];
 
         $this->assertEquals('1 комментарий', Strings::declination(1, $words));
-        $this->assertEquals('2 комментария', Strings::declination(2, $words));
-        $this->assertEquals('5 комментариев', Strings::declination(5, $words));
+        $this->assertEquals('1242 комментария', Strings::declination(1242, $words));
+        $this->assertEquals('538 комментариев', Strings::declination(538, $words));
     }
 
     public function test_translit()
