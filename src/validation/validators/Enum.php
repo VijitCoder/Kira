@@ -44,23 +44,44 @@ class Enum extends AbstractValidator
     public function __construct($options)
     {
         if (!$options
-            || is_array($options) && Arrays::isAssociative($options) && !isset($options['values'])
+            || (is_array($options) && Arrays::isAssociative($options) && !isset($options['values']))
         ) {
             throw new FormException('Не задан набор допустимых значений');
         }
 
         if (!isset($options['values'])) {
-            $options = [
-                'values' => $options,
-            ];
+            $options = ['values' => $options];
         }
 
         parent::__construct($options);
+
+        $this->prepareValues();
     }
 
     /**
-     * Валидатор проверяет значение как id: значение должно быть целым положительным числом. Преобразованное значение
-     * сохраняется в свойстве валидатора.
+     * Приводим список допустимых значений к формату для внутреннего использования в валидаторе
+     */
+    private function prepareValues(): void
+    {
+        $values = $this->options['values'];
+
+        if (!is_array($values)) {
+            $values = explode('|', $values);
+        }
+
+        if ($this->options['insensitive']) {
+            $values = array_map('mb_strtolower', $values);
+        }
+
+        $this->options['values']  = $values;
+    }
+
+    /**
+     * Проверяем значение по списку допустимых значений
+     *
+     * Если требуется регистронезависимое сравнение, приводим значение к нижнему регистру.
+     * Список допустимых значений уже приведен к нижнему регистру.
+     *
      * @param mixed $value проверяемое значение
      * @return bool
      */
@@ -68,16 +89,10 @@ class Enum extends AbstractValidator
     {
         $this->value = $value;
 
-        $allowedValues = $this->options['values'];
-        if (is_array($allowedValues)) {
-            $allowedValues = implode('|', $allowedValues);
-        }
-
-        $pattern = "/^{$allowedValues}$/u";
         if ($this->options['insensitive']) {
-            $pattern .= 'i';
+            $value = mb_strtolower($value);
         }
 
-        return (bool)preg_match($pattern, $value);
+        return in_array($value, $this->options['values'], true);
     }
 }
