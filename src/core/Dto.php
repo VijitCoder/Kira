@@ -30,7 +30,7 @@ class Dto
     }
 
     /**
-     * Ограничиваем поведение PHP односительно магических свойств в DTO классах.
+     * Ограничиваем поведение PHP относительно магических свойств в DTO классах.
      *
      * Если свойство явно не описано в DTO, его нельзя назначить.
      *
@@ -41,15 +41,14 @@ class Dto
     public function __set(string $name, $value)
     {
         $this->throwPropertyNotFoundException($name);
-
     }
 
     /**
-     * Ограничиваем поведение PHP односительно магических свойств в DTO классах.
+     * Ограничиваем поведение PHP относительно магических свойств в DTO классах.
      *
      * Ничего нельзя получить неявно.
      *
-     * @param string $name property name
+     * @param string $name имя свойства
      * @return mixed|void
      * @throws DtoException
      */
@@ -66,7 +65,7 @@ class Dto
      */
     private function throwPropertyNotFoundException(string $name)
     {
-        throw new DtoException("Свойство '$name' не найдено в классе '" . get_class($this) . "'");
+        throw new DtoException("Свойство '{$name}' не найдено в классе '" . get_class($this) . "'");
     }
 
     /**
