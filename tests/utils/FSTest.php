@@ -26,7 +26,7 @@ class FSTest extends TestCase
      */
     private $rootPath;
 
-    public function setUp()
+    public function setUp(): void
     {
         $structure = [
             'level1'   => [

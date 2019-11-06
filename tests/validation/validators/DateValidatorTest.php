@@ -75,7 +75,7 @@ class DateValidatorTest extends TestCase
 
             'Только часы' => [
                 'format'  => 'H',
-                'value'   => 14,
+                'value'   => '14',
                 'isValid' => true,
             ],
 

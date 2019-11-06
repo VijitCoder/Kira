@@ -23,7 +23,7 @@ class PhpConfigProviderTest extends TestCase
      * Каждый из файлов тут имеет значение. Тестируем не только пошаговую загрузку группы основных файлов конфигурации,
      * но загрузку конфига вообще, в разных условиях.
      */
-    public function setUp()
+    public function setUp(): void
     {
         $structure = [
             'main.php'   => '<?php return ["main#0" => 0];',  // Первый основной файл конфигурации в группе.

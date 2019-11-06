@@ -19,7 +19,7 @@ class ConfigManagerTest extends TestCase
      * его состояние после тестов какого-нибудь классса. Тем более, там неявная связь. Проще поготовить его перед
      * тестом тут.
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
         ConfigManager::reset();
@@ -30,7 +30,7 @@ class ConfigManagerTest extends TestCase
      *
      * Используем поставщика конфигурации из php-файлов, это неважно в тестах текущего класса.
      */
-    public function setUp()
+    public function setUp(): void
     {
         $configSources = [
             'domain' => 'http://server.com',
@@ -60,7 +60,7 @@ class ConfigManagerTest extends TestCase
      * Менеджер конфигурации реализует шаблон проектирования "Одиночка" (Singleton), нужно сбрасывать его состояние
      * между тестами.
      */
-    public function tearDown()
+    public function tearDown(): void
     {
         ConfigManager::reset();
     }

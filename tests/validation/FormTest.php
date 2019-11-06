@@ -23,7 +23,7 @@ class FromTest extends TestCase
     /**
      * Создание модели формы. Явно задаем контракт валидации, т.к. у данной модели нет своего контракта.
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->form = new Form($this->contract);
     }

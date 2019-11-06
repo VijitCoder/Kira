@@ -13,7 +13,7 @@ class ConfigManagerMultiMainsTest extends TestCase
      * его состояние после тестов какого-нибудь классса. Тем более, там неявная связь. Проще поготовить его перед
      * тестом тут.
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
         ConfigManager::reset();
@@ -36,7 +36,7 @@ class ConfigManagerMultiMainsTest extends TestCase
      * Менеджер конфигурации реализует шаблон проектирования "Одиночка" (Singleton), нужно сбрасывать его состояние
      * между тестами.
      */
-    public function tearDown()
+    public function tearDown(): void
     {
         ConfigManager::reset();
     }

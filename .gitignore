@@ -6,3 +6,6 @@
 sandbox/
 docs/api/
 vendor/
+
+# https://stackoverflow.com/a/55091860/5497749
+tests/.phpunit.result.cache
