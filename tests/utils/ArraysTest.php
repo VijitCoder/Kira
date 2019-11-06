@@ -21,7 +21,7 @@ class ArraysTest extends TestCase
 
         $this->assertCount(2, $result, 'Корневой массив не сохранил количество элементов');
         $this->assertInstanceOf(\ArrayObject::class, $result[0], 'Ассоциативный массив не превращен в объект');
-        $this->assertArraySubset([1 => [14, 46, 63]], $result, 'Неассоциативный массив изменился');
+        $this->assertEquals($arr[1], $result[1], 'Неассоциативный массив изменился');
         $this->assertObjectHasAttribute('prop1', $result[0], 'Не найдено свойство "prop1"');
         $this->assertEquals($result[0]->prop1, 234, 'prop1 не равно ожидаемому значению');
     }
