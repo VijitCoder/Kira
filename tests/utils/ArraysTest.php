@@ -7,9 +7,9 @@ use kira\utils\Arrays;
  */
 class ArraysTest extends TestCase
 {
-    public function test_arrObject()
+    public function test_arrObject(): void
     {
-        $arr = [
+        $data = [
             [
                 'prop1' => 234,
                 'prop2' => 'val',
@@ -17,11 +17,11 @@ class ArraysTest extends TestCase
             [14, 46, 63],
         ];
 
-        $result = Arrays::arrObject($arr);
+        $result = Arrays::arrObject($data);
 
         $this->assertCount(2, $result, 'Корневой массив не сохранил количество элементов');
-        $this->assertInstanceOf(\ArrayObject::class, $result[0], 'Ассоциативный массив не превращен в объект');
-        $this->assertEquals($arr[1], $result[1], 'Неассоциативный массив изменился');
+        $this->assertInstanceOf(ArrayObject::class, $result[0], 'Ассоциативный массив не превращен в объект');
+        $this->assertEquals($data[1], $result[1], 'Неассоциативный массив изменился');
         $this->assertObjectHasAttribute('prop1', $result[0], 'Не найдено свойство "prop1"');
         $this->assertEquals($result[0]->prop1, 234, 'prop1 не равно ожидаемому значению');
     }
@@ -29,23 +29,24 @@ class ArraysTest extends TestCase
     /**
      * Рекурсивная фильтрация пустых значений в массиве
      */
-    public function test_filter_empty()
+    public function test_filter_empty(): void
     {
-        $arr = [
+        $data = [
             [11, 0, 13],
             [15, 16, null],
             [],
             ['stay', '', 'stay1', []],
         ];
 
-        $arr = Arrays::filterRecursive($arr);
-
-        $expect = [
+        $expected = [
             [11, 2 => 13,],
             [15, 16],
             3 => ['stay', 2 => 'stay1'],
         ];
-        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация пустых значений в массиве');
+
+        $actual = Arrays::filterRecursive($data);
+
+        $this->assertEquals($expected, $actual, 'Не верная рекурсивная фильтрация пустых значений в массиве');
     }
 
     /**
@@ -53,29 +54,33 @@ class ArraysTest extends TestCase
      *
      * Функция проверяет значение на четность. Останутся только нечетные значения.
      */
-    public function test_filter_value()
+    public function test_filter_value(): void
     {
-        $arr = [
+        $data = [
             [11, 12, 13, 14],
             [15, 16, 17, 18],
             [2, 4, 6], // этот массив должен полностью исчезнуть
             [19, 20,],
         ];
 
-        $arr = Arrays::filterRecursive(
-            $arr,
-            function ($val) {
-                return $val & 1;
-            }
-        );
-
-        $expect = [
+        $expected = [
             [11, 2 => 13],
             [15, 2 => 17],
             3 => [19],
         ];
 
-        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация значений массива через callback-функцию');
+        $actual = Arrays::filterRecursive(
+            $data,
+            static function ($val) {
+                return $val & 1;
+            }
+        );
+
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'Не верная рекурсивная фильтрация значений массива через callback-функцию'
+        );
     }
 
     /**
@@ -83,27 +88,31 @@ class ArraysTest extends TestCase
      *
      * Функция проверяет значение на четность. Останутся только нечетные элементы.
      */
-    public function test_filter_key()
+    public function test_filter_key(): void
     {
-        $arr = [
+        $data = [
             [11, 12, 13, 14],
             [15, 16, 17, 18],
             [19, 20,],
         ];
 
-        $arr = Arrays::filterRecursive(
-            $arr,
-            function ($val) {
+        $expected = [
+            1 => [1 => 16, 3 => 18],
+        ];
+
+        $actual = Arrays::filterRecursive(
+            $data,
+            static function ($val) {
                 return $val & 1;
             },
             ARRAY_FILTER_USE_KEY
         );
 
-        $expect = [
-            1 => [1 => 16, 3 => 18],
-        ];
-
-        $this->assertEquals($expect, $arr, 'Не верная рекурсивная фильтрация ключей массива через callback-функцию');
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'Не верная рекурсивная фильтрация ключей массива через callback-функцию'
+        );
     }
 
     /**
@@ -116,24 +125,16 @@ class ArraysTest extends TestCase
      * проверяем на четность элемент. Вообще мне трудно придумать какую-то вразумительную ситуацию, когда могла бы
      * потребоваться фильтрация многомерного массива и по ключам и по значениям.
      */
-    public function test_filter_both()
+    public function test_filter_both(): void
     {
-        $arr = [
+        $data = [
             [11, 12, 13, 14],
             [15, 16, 17, 18],
             [2, 4, 6],
             [19, 20,],
         ];
 
-        $arr = Arrays::filterRecursive(
-            $arr,
-            function ($val, $key) {
-                return is_array($val) ? $key & 1 : $val & 1;
-            },
-            ARRAY_FILTER_USE_BOTH
-        );
-
-        $expect = [
+        $expected = [
             1 => [
                 0 => 15,
                 2 => 17,
@@ -141,11 +142,22 @@ class ArraysTest extends TestCase
             3 => [19],
         ];
 
-        $this->assertEquals($expect, $arr,
-            'Не верная рекурсивная фильтрация ключей и значений массива через callback-функцию');
+        $actual = Arrays::filterRecursive(
+            $data,
+            static function ($val, $key) {
+                return is_array($val) ? $key & 1 : $val & 1;
+            },
+            ARRAY_FILTER_USE_BOTH
+        );
+
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'Не верная рекурсивная фильтрация ключей и значений массива через callback-функцию'
+        );
     }
 
-    public function test_merge()
+    public function test_merge(): void
     {
         $arr1 = [
             'key1' => 'will be rewrite to array',
@@ -162,8 +174,7 @@ class ArraysTest extends TestCase
             'nums' => [0 => 4, 2 => 27, 4 => 46],
         ];
 
-        $arr = Arrays::mergeRecursive($arr1, $arr2, false);
-        $expect = [
+        $expected = [
             'key1' => ['str', 'rewrite with', 'new value',],
             'key2' => 'array rewrite to a new string',
             'key3' => ['k3' => 'new sub', 'k4' => 'array', 0 => 1, 1 => 2, 'k5' => 'here', 2 => 3, 3 => 4,],
@@ -177,11 +188,11 @@ class ArraysTest extends TestCase
             ],
             'key4' => 'unique value',
         ];
+        $actual = Arrays::mergeRecursive($arr1, $arr2, false);
 
-        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Числовые ключи не сбросились.');
+        $this->assertEquals($expected, $actual, 'Рекурсивное объединение массивов. Числовые ключи не сбросились.');
 
-        $arr = Arrays::mergeRecursive($arr1, $arr2, true);
-        $expect = [
+        $expected = [
             'key1' => ['str', 'rewrite with', 'new value',],
             'key2' => 'array rewrite to a new string',
             // Числовые ключи рассматривались как текстовые. Два элемента переписаны, т.к. было совпадение ключей.
@@ -196,10 +207,13 @@ class ArraysTest extends TestCase
             ],
             'key4' => 'unique value',
         ];
-        $this->assertEquals($expect, $arr, 'Рекурсивное объединение массивов. Не сохранились числовые ключи.');
+
+        $actual = Arrays::mergeRecursive($arr1, $arr2, true);
+
+        $this->assertEquals($expected, $actual, 'Рекурсивное объединение массивов. Не сохранились числовые ключи.');
     }
 
-    public function test_implode()
+    public function test_implode(): void
     {
         $arr = [
             'string 1',
@@ -207,12 +221,12 @@ class ArraysTest extends TestCase
             ['sub' => ['string 4', 'string 5',]],
         ];
 
-        $expect = Arrays::implodeRecursive($arr, ' + ', ' rn ');
-        $this->assertEquals($expect, 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5',
-            'Ошибка слияния многомерного массива в строку');
+        $expected = 'string 1 rn  + string 2 + string 3 rn  + rn  + string 4 + string 5';
+        $actual = Arrays::implodeRecursive($arr, ' + ', ' rn ');
+        $this->assertEquals($expected, $actual, 'Ошибка слияния многомерного массива в строку');
     }
 
-    public function test_getValue()
+    public function test_getValue(): void
     {
         $arr = ['path' => ['app' => ['level1' => '/home', 'level2' => '/www',],],];
         $expect = Arrays::getValue($arr, ['path' => ['app' => 'level2']]);
@@ -222,85 +236,85 @@ class ArraysTest extends TestCase
     /**
      * Извлечение элемента массива по заданному ключу
      */
-    public function test_extractValue()
+    public function test_extractValue(): void
     {
-        $array = [
-            'one'   => 'раз',
-            'two'   => 'два',
+        $data = [
+            'one' => 'раз',
+            'two' => 'два',
             'three' => 'три',
         ];
 
-        $value = Arrays::extractValue($array, 'two');
+        $value = Arrays::extractValue($data, 'two');
         $this->assertEquals('два', $value, 'Извлечено неверное значение массива');
         $this->assertEquals(
             [
-                'one'   => 'раз',
+                'one' => 'раз',
                 'three' => 'три',
             ],
-            $array,
+            $data,
             'Массив без извлеченного значения не соответствует ожиданиям'
         );
 
-        $notExistValue = Arrays::extractValue($array, 'four');
+        $notExistValue = Arrays::extractValue($data, 'four');
         $this->assertNull($notExistValue, 'Успешная попытка добыть несуществующий элемент');
     }
 
     /**
      * Построение иерархического дерева из одномерного массива без использования callback-функции
      */
-    public function test_buildTree()
+    public function test_buildTree(): void
     {
         $source = [
-            'lvl0'   => [
+            'lvl0' => [
                 'pos' => 'корень дерева. Уровень 0',
             ],
             'lvl1.1' => [
                 'parentId' => 'lvl0',
-                'pos'      => 'уровень 1 ветка 1',
+                'pos' => 'уровень 1 ветка 1',
             ],
             'lvl1.2' => [
                 'parentId' => 'lvl0',
-                'pos'      => 'уровень 1 ветка 2',
+                'pos' => 'уровень 1 ветка 2',
             ],
             'lvl2.1' => [
                 'parentId' => 'lvl1.2',
-                'pos'      => 'уровень 2 ветка 1',
+                'pos' => 'уровень 2 ветка 1',
             ],
             'lvl3.1' => [
                 'parentId' => 'lvl2.1',
-                'pos'      => 'уровень 3 ветка 1',
+                'pos' => 'уровень 3 ветка 1',
             ],
             'lvl2.2' => [
                 'parentId' => 'lvl1.2',
-                'pos'      => 'уровень 2 ветка 2',
+                'pos' => 'уровень 2 ветка 2',
             ],
         ];
 
-        $expect = [
+        $expected = [
             'lvl0' => [
-                'pos'      => 'корень дерева. Уровень 0',
+                'pos' => 'корень дерева. Уровень 0',
                 'children' => [
                     'lvl1.1' => [
                         'parentId' => 'lvl0',
-                        'pos'      => 'уровень 1 ветка 1',
+                        'pos' => 'уровень 1 ветка 1',
                     ],
                     'lvl1.2' => [
                         'parentId' => 'lvl0',
-                        'pos'      => 'уровень 1 ветка 2',
+                        'pos' => 'уровень 1 ветка 2',
                         'children' => [
                             'lvl2.1' => [
                                 'parentId' => 'lvl1.2',
-                                'pos'      => 'уровень 2 ветка 1',
+                                'pos' => 'уровень 2 ветка 1',
                                 'children' => [
                                     'lvl3.1' => [
                                         'parentId' => 'lvl2.1',
-                                        'pos'      => 'уровень 3 ветка 1',
+                                        'pos' => 'уровень 3 ветка 1',
                                     ],
                                 ],
                             ],
                             'lvl2.2' => [
                                 'parentId' => 'lvl1.2',
-                                'pos'      => 'уровень 2 ветка 2',
+                                'pos' => 'уровень 2 ветка 2',
                             ],
                         ],
                     ],
@@ -310,47 +324,47 @@ class ArraysTest extends TestCase
 
         $tree = Arrays::buildTree($source);
 
-        $this->assertEquals($expect, $tree, 'Ошибка построения иерахического массива');
+        $this->assertEquals($expected, $tree, 'Ошибка построения иерахического массива');
     }
 
     /**
      * Построение иерархического дерева из одномерного массива c использованием callback-функции
      */
-    public function test_buildTree_callback()
+    public function test_buildTree_callback(): void
     {
-        $array = [
-            'lvl0'   => [
+        $data = [
+            'lvl0' => [
                 'pos' => 'корень дерева. Уровень 0',
             ],
             'lvl1.1' => [
                 'bindTo' => 'lvl0',
-                'pos'    => 'уровень 1 ветка 1',
+                'pos' => 'уровень 1 ветка 1',
             ],
             'lvl1.2' => [
                 'bindTo' => 'lvl0',
-                'pos'    => 'уровень 1 ветка 2',
+                'pos' => 'уровень 1 ветка 2',
             ],
             'lvl2.1' => [
                 'bindTo' => 'lvl1.2',
-                'pos'    => 'уровень 2 ветка 1',
+                'pos' => 'уровень 2 ветка 1',
             ],
         ];
 
-        $getParentId = function ($key, &$item) {
+        $getParentId = static function ($key, &$item) {
             $parentId = $item['bindTo'] ?? null;
             unset($item['bindTo']);
             return $parentId;
         };
 
-        $expect = [
+        $expected = [
             'lvl0' => [
-                'pos'      => 'корень дерева. Уровень 0',
+                'pos' => 'корень дерева. Уровень 0',
                 'children' => [
                     'lvl1.1' => [
                         'pos' => 'уровень 1 ветка 1',
                     ],
                     'lvl1.2' => [
-                        'pos'      => 'уровень 1 ветка 2',
+                        'pos' => 'уровень 1 ветка 2',
                         'children' => [
                             'lvl2.1' => [
                                 'pos' => 'уровень 2 ветка 1',
@@ -361,9 +375,9 @@ class ArraysTest extends TestCase
             ],
         ];
 
-        $tree = Arrays::buildTree($array, $getParentId);
+        $tree = Arrays::buildTree($data, $getParentId);
 
-        $this->assertEquals($expect, $tree, 'Иерахический массив через callback-функцию получен неправильно');
+        $this->assertEquals($expected, $tree, 'Иерахический массив через callback-функцию получен неправильно');
     }
 
     /**
@@ -371,34 +385,34 @@ class ArraysTest extends TestCase
      *
      * @dataProvider isAssociativeData
      * @param array $array
-     * @param bool  $isAssoc
+     * @param bool $isAssoc
      */
-    public function test_isAssociative(array $array, bool $isAssoc)
+    public function test_isAssociative(array $array, bool $isAssoc): void
     {
         $this->assertEquals($isAssoc, Arrays::isAssociative($array));
     }
 
-    public function isAssociativeData()
+    public function isAssociativeData(): array
     {
         return [
-            'ассоциативный массив'             => [
-                'array'     => [5, 7, '10 ten' => 3],
+            'ассоциативный массив' => [
+                'array' => [5, 7, '10 ten' => 3],
                 'is assoc?' => true,
             ],
             'ассоциативный многомерный массив' => [
-                'array'     => [5, 7, ['10 ten' => 3], 45],
+                'array' => [5, 7, ['10 ten' => 3], 45],
                 'is assoc?' => true,
             ],
-            'пустой массив'                    => [
-                'array'     => [],
+            'пустой массив' => [
+                'array' => [],
                 'is assoc?' => false,
             ],
-            'числовой массив'                  => [
-                'array'     => [2, true => 5, '12' => 7, '10.3' => 3],
+            'числовой массив' => [
+                'array' => [2, true => 5, '12' => 7, '10.3' => 3],
                 'is assoc?' => false,
             ],
-            'числовой многомерный массив'      => [
-                'array'     => [2, [5, 20], 7, ['10.3' => 3]],
+            'числовой многомерный массив' => [
+                'array' => [2, [5, 20], 7, ['10.3' => 3]],
                 'is assoc?' => false,
             ],
         ];
@@ -414,7 +428,7 @@ class ArraysTest extends TestCase
      * Есть вероятность, что в будущих версиях PHP изменят логику *sort-функций и этот тест будет падать. Для PHP 7.1
      * работает.
      */
-    public function test_stableSort()
+    public function test_stableSort(): void
     {
         /**
          * Сортировка по возрастанию значений массива
@@ -425,22 +439,22 @@ class ArraysTest extends TestCase
          */
         function compare($a, $b)
         {
-            if ($a == $b) {
+            if ($a === $b) {
                 return 0;
             }
             return ($a > $b) ? 1 : -1;
         }
 
         $a = $b = [
-            'key 1'  => 2,
-            'key 2'  => 1,
-            'key 3'  => 2,
-            'key 4'  => 1,
-            'key 5'  => 1,
-            'key 6'  => 1,
-            'key 7'  => 1,
-            'key 8'  => 1,
-            'key 9'  => 1,
+            'key 1' => 2,
+            'key 2' => 1,
+            'key 3' => 2,
+            'key 4' => 1,
+            'key 5' => 1,
+            'key 6' => 1,
+            'key 7' => 1,
+            'key 8' => 1,
+            'key 9' => 1,
             'key 10' => 1,
             'key 11' => 1,
             'key 12' => 1,
