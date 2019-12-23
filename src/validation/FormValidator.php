@@ -65,23 +65,19 @@ class FormValidator
      */
     public function validate($contractPart, &$value, &$error)
     {
-        if ($contractPart && key_exists('default', $contractPart)) {
-            $default = $contractPart['default'];
+        if ($contractPart && array_key_exists('default', $contractPart)) {
             unset($contractPart['default']);
-        } else {
-            $default = null;
         }
 
         if (!$contractPart) {
-            $this->afterValueValidation(true, $value, $default);
             return;
         }
 
         if (isset($contractPart['validators'])) {
             $validators = $contractPart['validators'];
         } else {
-            foreach ($contractPart as $k => $cp) {
-                $this->validate($cp, $value[$k], $error[$k]);
+            foreach ($contractPart as $k => $nestedContractPart) {
+                $this->validate($nestedContractPart, $value[$k], $error[$k]);
             }
             return;
         }
@@ -90,7 +86,7 @@ class FormValidator
             $expectArray = (bool)$validators['expect_array'];
             unset($validators['expect_array']);
         }
-        if (!is_null($value) && !$this->checkDataTypeForArray($expectArray, $value, $error)) {
+        if ($value !== null && !$this->checkDataTypeForArray($expectArray, $value, $error)) {
             $this->isValid = false;
             return;
         }
@@ -101,7 +97,7 @@ class FormValidator
             ? $this->validateAsArray($validators, $value, $error)
             : $this->fireValidators($validators, $value, $error);
 
-        $this->afterValueValidation($passed, $value, $default);
+        $this->isValid = $passed && $this->isValid;
     }
 
     /**
@@ -123,7 +119,7 @@ class FormValidator
             foreach (array_keys($value) as $k) {
                 $passed = $this->fireValidators($validators, $value[$k], $error[$k]) && $passed;
             }
-        } else if (isset($validators['required'])) {
+        } elseif (isset($validators['required'])) {
             $passed = false;
             $this->fireValidators($validators, $value, $error);
         }
@@ -232,24 +228,6 @@ class FormValidator
         $this->validatorsInstances[$cacheKey] = $validator;
 
         return $validator;
-    }
-
-    /**
-     * Метод вызывается после проверки каждого узла контракта
-     *
-     * Если значение валидное и при этом пустое (NULL), присваиваем значение по умолчанию.
-     * Если значение не валидное, сбрасываем флаг общей успешной валидации.
-     *
-     * @param bool  $passed  TRUE - проверяемое значение валидное
-     * @param mixed $value   проверяемое значение
-     * @param mixed $default значение по умолчанию
-     */
-    private function afterValueValidation(bool $passed, &$value, $default)
-    {
-        if ($passed && is_null($value)) {
-            $value = $default;
-        }
-        $this->isValid = $passed && $this->isValid;
     }
 
     /**

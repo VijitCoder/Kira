@@ -1,4 +1,4 @@
-<phpunit bootstrap="bootstrap.php" colors="true" verbose="true" backupGlobals="false">
+<phpunit bootstrap="bootstrap.php" colors="false" verbose="true" backupGlobals="false">
     <testsuites>
 
         <testsuite name="Integration tests">

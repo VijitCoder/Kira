@@ -260,6 +260,79 @@ class ArraysTest extends TestCase
     }
 
     /**
+     * Тест: рекурсивно сбросить все значения массива.
+     *
+     * @dataProvider resetValuesData
+     * @param array $target
+     * @param mixed $replacement
+     * @param array $expected
+     */
+    public function test_resetValues(array $target, $replacement, array $expected): void
+    {
+        $actual = Arrays::resetValues($target, $replacement);
+        $this->assertEquals($expected, $actual, 'Массив обнулился неверно');
+    }
+
+    /**
+     * Данные для теста: рекурсивно сбросить все значения массива.
+     *
+     * @return array
+     */
+    public function resetValuesData(): array
+    {
+        $target = [
+            'k1' => 'text',
+            'sub' => [
+                'sk1' => 'test',
+                'sk2' => 'more',
+                'three',
+                4,
+            ],
+        ];
+
+        return [
+            'многомерный, NULL' => [
+                'target' => $target,
+                'replacement' => null,
+                'expected' => [
+                    'k1' => null,
+                    'sub' => [
+                        'sk1' => null,
+                        'sk2' => null,
+                        null,
+                        null,
+                    ],
+                ],
+            ],
+
+            'многомерный, подстановка' => [
+                'target' => $target,
+                'replacement' => 'bang',
+                'expected' => [
+                    'k1' => 'bang',
+                    'sub' => [
+                        'sk1' => 'bang',
+                        'sk2' => 'bang',
+                        'bang',
+                        'bang',
+                    ],
+                ],
+            ],
+
+            'одномерный, нули' => [
+                'target' => $target['sub'],
+                'replacement' => 0,
+                'expected' => [
+                    'sk1' => 0,
+                    'sk2' => 0,
+                    0,
+                    0,
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Построение иерархического дерева из одномерного массива без использования callback-функции
      */
     public function test_buildTree(): void

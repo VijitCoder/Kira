@@ -86,8 +86,9 @@ class Form
         }
 
         $this->rawData =
-        $this->errors =
-        $this->values = $this->initialArray($this->contract);
+        $this->values = $this->getInitialArray($this->contract);
+
+        $this->errors = Arrays::resetValues($this->values);
 
         $this->formValidator = new FormValidator(new ValidatorFactory);
     }
@@ -98,20 +99,27 @@ class Form
      * Требуется обход всего дерева массивов, чтобы извлечь все имена полей с учетом из уровня вложенности.
      * В результате будет копия с массива контракта, содержащая только имена полей, но без каких-либо данных.
      *
-     * @param array $arr контракт или его часть
+     * @param array $contract контракт или его часть
      * @return mixed
      */
-    private function initialArray(array $arr)
+    private function getInitialArray(array $contract)
     {
         $result = [];
-        foreach ($arr as $k => $v) {
-            if (in_array($k, ['validators', 'default'])) {
+        $default = null;
+        foreach ($contract as $k => $contractPart) {
+            if ($k === 'validators') {
                 continue;
             }
 
-            $result[$k] = is_array($v) ? $this->initialArray($v) : null;
+            if ($k === 'default') {
+                // В данном случае в $contractPart - дефолтное значение, заданное в контракте для конкретного поля.
+                $default = $contractPart;
+                continue;
+            }
+
+            $result[$k] = is_array($contractPart) ? $this->getInitialArray($contractPart) : $default;
         }
-        return $result ?: null;
+        return $result ?: $default;
     }
 
     /**
