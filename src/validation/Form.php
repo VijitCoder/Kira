@@ -1,4 +1,5 @@
 <?php
+
 namespace kira\validation;
 
 use kira\utils\Arrays;
@@ -152,9 +153,7 @@ class Form
         }
 
         foreach ($this->contract as $key => $contractPart) {
-            if (isset($this->rawData[$key])) {
-                $this->values[$key] = $this->rawData[$key];
-            }
+            $this->values[$key] = $this->rawData[$key];
             $this->formValidator->validate($contractPart, $this->values[$key], $this->errors[$key]);
         }
 
@@ -266,8 +265,8 @@ class Form
     /**
      * Добавление сообщения об ошибке в нужном месте многоуровнего массива. Рекурсия.
      *
-     * @param mixed        $errors куда писать сообщение
-     * @param string|array $msg    текст сообщения ИЛИ массив ключей и в итоге текст сообщения
+     * @param mixed $errors куда писать сообщение
+     * @param string|array $msg текст сообщения ИЛИ массив ключей и в итоге текст сообщения
      */
     private function internalAddError(&$errors, &$msg)
     {
@@ -329,8 +328,8 @@ class Form
      * Ключ может быть составным, типа "['lvl1' => ['lvl2' => 'param1']]".
      * см. комментарий к kira\utils\Arrays::getValue()
      *
-     * @param array  $data массив данных в текущем классе
-     * @param string $key  ключ в массиве данных. Возможно составной ключ.
+     * @param array $data массив данных в текущем классе
+     * @param string $key ключ в массиве данных. Возможно составной ключ.
      * @return array | string | null
      */
     private function getData($data, $key)
@@ -348,9 +347,9 @@ class Form
      * На выходе получаем: если поле задано - будет просто строка, все ошибки поля в ней; если поле не задано, будет
      * одномерный массив, где ключи - имена полей, значения - все ошибки в строку по каждому полю отдельно.
      *
-     * @param mixed  $key  ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
+     * @param mixed $key ключ в массиве данных. Возможно составной ключ типа "['lvl1' => ['lvl2' => 'param1']]".
      * @param string $glue клей между соседними элементами одного массива
-     * @param string $eol  клей между соседними подмассивами
+     * @param string $eol клей между соседними подмассивами
      * @return array|string|null
      */
     public function getErrorsAsStringPerField($key = null, string $glue = ' ', string $eol = '')
@@ -391,7 +390,7 @@ class Form
      * Сеттер поля формы. Значение устанавливается в массиве валидированных данных.
      *
      * @param string $name имя поля формы
-     * @param mixed  $value
+     * @param mixed $value
      */
     public function __set(string $name, $value)
     {
