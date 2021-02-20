@@ -57,7 +57,7 @@ class Password extends AbstractValidator
         if ($minCombination) {
             $combinationsCount = 0;
             // Убираем левое
-            $temp1 = preg_replace("/[^\w{$specSymbols}]+/u", '', $value);
+            $temp1 = preg_replace("/[^{$specSymbols}\w]+/u", '', $value);
 
             // Убраем спец.символы
             $temp2 = preg_replace("/[{$specSymbols}]+/", '', $temp1);
@@ -67,7 +67,7 @@ class Password extends AbstractValidator
                 $combinationsCount++;
             }
 
-            // Из оставшейся(!) строки убраем цифры.
+            // Из оставшейся(!) строки убираем цифры.
             $temp1 = preg_replace('/\d+/', '', $temp2);
 
             // Опять изменилась? Значит цифровой набор был.

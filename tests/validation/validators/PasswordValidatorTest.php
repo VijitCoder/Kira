@@ -16,7 +16,7 @@ class PasswordValidatorTest extends TestCase
         ]);
 
         $this->assertTrue($validator->validate('`12Qwe'));
-        $this->assertTrue($validator->validate('[`12Qwe]>', 'Пароль с не учитываемыми символами оказался невалидным'));
+        $this->assertTrue($validator->validate('[`12Qwe]>'), 'Пароль с не учитываемыми символами оказался невалидным');
 
         $this->assertFalse($validator->validate('`1 q'));
         $errors = explode(' | ', $validator->error);
@@ -24,7 +24,7 @@ class PasswordValidatorTest extends TestCase
 
         $this->assertFalse($validator->validate('12345!'));
 
-        $this->assertFalse($validator->validate('[12Qwe]>',
-            'Пароль с не учитываемыми символами увеличил счетчик комбинаций'));
+        $this->assertFalse($validator->validate('[12Qwe]>'),
+            'Пароль с не учитываемыми символами увеличил счетчик комбинаций');
     }
 }
