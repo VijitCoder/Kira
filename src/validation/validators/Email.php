@@ -11,7 +11,7 @@ use kira\exceptions\FormException;
  * Настройки:
  * <pre>
  * $options = [
- *   'regexp' => '/.+@.+\..+/', // значение по умолчанию
+ *   'regexp' => '/\S+@\S+\.\S+/', // значение по умолчанию
  *   'black_servers' => array | NULL
  * ]
  * </pre>
@@ -26,7 +26,7 @@ class Email extends AbstractValidator
      * @var array
      */
     protected $options = [
-        'regexp'        => '/.+@.+\..+/',
+        'regexp'        => '/\S+@\S+\.\S+/',
         'black_servers' => null,
     ];
 
