@@ -292,6 +292,7 @@ class Response
      * Доступ - весь сайт
      * Безопасную передачу отключить
      * Отдавать только по http-протоколу
+     * sameSite - см. https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
      * </pre>
      *
      * @param string $name  имя печеньки
@@ -299,6 +300,17 @@ class Response
      */
     public static function setDefaultCookie($name, $value)
     {
-        setcookie($name, $value, strtotime('+1 year'), '/', '', false, true);
+        setcookie(
+            $name,
+            $value,
+            [
+                'expires' => strtotime('+1 year'),
+                'path' => '/',
+                'domain' => '',
+                'secure' => false,
+                'httponly' => true,
+                'sameSite' => 'Lax',
+            ]
+        );
     }
 }

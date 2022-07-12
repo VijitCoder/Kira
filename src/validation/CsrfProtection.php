@@ -40,7 +40,11 @@ class CsrfProtection
         $name = self::KEY_NAME;
         $token = Strings::randomString(32);
         if ($clientStore) {
-            setcookie($name, $token, 0, '/', '', false, false);
+            setcookie(
+                $name,
+                $token,
+                ['expires' => 0, 'path' => '/', 'secure' => false, 'httponly' => false, 'sameSite' => 'Lax']
+            );
         } else {
             Session::write($name, $token);
         }
